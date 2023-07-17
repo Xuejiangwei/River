@@ -13,11 +13,12 @@
 
 #include "RiverPch.h"
 #include "RiverEditorApplication.h"
-
+#include "RiverEditorLayer.h"
 
 RiverEditorApplication::RiverEditorApplication()
 	: Application()
 {
+	AddLayer(MakeShare<RiverEditorLayer>());
 }
 
 RiverEditorApplication::~RiverEditorApplication()

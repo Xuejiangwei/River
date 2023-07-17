@@ -75,6 +75,18 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12VertexBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\UniformBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12UniformBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12MeshGeometry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -138,6 +150,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Header\FrameBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\UniformBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12UniformBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\RendererUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\MeshGeometry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12MeshGeometry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

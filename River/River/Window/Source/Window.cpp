@@ -5,7 +5,7 @@
     #include "../Windows/Header/WindowsWindow.h"
 #endif // _WIN32
 
-Window::Window()
+Window::Window() : m_WindowHandle(nullptr)
 {
 }
 

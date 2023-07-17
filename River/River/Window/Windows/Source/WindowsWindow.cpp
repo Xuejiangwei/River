@@ -157,8 +157,6 @@ WindowsWindow::~WindowsWindow()
 
 void WindowsWindow::Init(const WindowParam& Param)
 {
-	HWND mhMainWnd;
-
 	HINSTANCE hInstance = ::GetModuleHandle(NULL);
 
 	WNDCLASS wc;
@@ -185,15 +183,16 @@ void WindowsWindow::Init(const WindowParam& Param)
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
-	mhMainWnd = CreateWindow(L"MainWnd", L"River´°¿Ú", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, hInstance, 0);
-	if (!mhMainWnd)
+	auto Handle = CreateWindow(L"MainWnd", L"River´°¿Ú", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, hInstance, 0);
+	if (!Handle)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
 		return;
 	}
+	m_WindowHandle = (void*)Handle;
 
-	ShowWindow(mhMainWnd, SW_SHOW);
-	UpdateWindow(mhMainWnd);
+	ShowWindow(Handle, SW_SHOW);
+	UpdateWindow(Handle);
 }
 
 void WindowsWindow::OnUpdate()

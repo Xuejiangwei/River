@@ -20,6 +20,8 @@ public:
 	
 	virtual void OnUpdate() = 0;
 
-private:
+	virtual void* GetWindowHandle() const { return m_WindowHandle; }
 
+protected:
+	void* m_WindowHandle;
 };

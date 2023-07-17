@@ -131,10 +131,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Util.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12FrameBuffer.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12MeshGeometry.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12PipelineState.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RHI.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Shader.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12UniformBuffer.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12VertexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Camera.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
@@ -142,6 +145,7 @@
     <ClCompile Include="Renderer\Source\PipelineState.cpp" />
     <ClCompile Include="Renderer\Source\RHI.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
+    <ClCompile Include="Renderer\Source\UniformBuffer.cpp" />
     <ClCompile Include="Renderer\Source\VertexBuffer.cpp" />
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
@@ -162,16 +166,22 @@
     <ClInclude Include="Header\RiverPch.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\d3dx12.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12FrameBuffer.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12MeshGeometry.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12PipelineState.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RHI.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Shader.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12UniformBuffer.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12VertexBuffer.h" />
     <ClInclude Include="Renderer\Header\Camera.h" />
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
+    <ClInclude Include="Renderer\Header\MeshGeometry.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
+    <ClInclude Include="Renderer\Header\RendererUtil.h" />
     <ClInclude Include="Renderer\Header\RHI.h" />
     <ClInclude Include="Renderer\Header\Shader.h" />
+    <ClInclude Include="Renderer\Header\UniformBuffer.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />

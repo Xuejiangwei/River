@@ -8,3 +8,8 @@ RiverEditorLayer::RiverEditorLayer()
 RiverEditorLayer::~RiverEditorLayer()
 {
 }
+
+void RiverEditorLayer::OnUpdate()
+{
+
+}

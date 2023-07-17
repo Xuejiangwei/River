@@ -4,7 +4,9 @@ class Layer
 {
 public:
 	Layer();
-	~Layer();
+	virtual ~Layer();
+
+	virtual void OnUpdate() = 0;
 
 private:
 

@@ -8,6 +8,8 @@ public:
 	RiverEditorLayer();
 	~RiverEditorLayer();
 
+	virtual void OnUpdate() override;
+
 private:
 
 };
