@@ -23,6 +23,8 @@ public:
 
 	virtual void Render() = 0;
 
+	virtual void OnUpdate() = 0;
+
 	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout) = 0;
 
 	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, const VertexBufferLayout& layout) = 0;

@@ -13,7 +13,8 @@ Application::Application()
 	s_Instance = this;
 
 	m_Window = Window::Create();
-	m_Window->Init({ 720, 720 });
+	WindowParam param = { 720, 720 };
+	m_Window->Init(param);
 
 	RHIInitializeParam rhiParam =
 	{
@@ -32,13 +33,17 @@ void Application::Run()
 {
 	while (m_Running)
 	{
+		if (!m_Window->PeekProcessMessage())
+		{
+			continue;
+		}
 
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate();
 		}
 
-		RHI::Get()->Render();
+		RHI::Get()->OnUpdate();
 
 		m_Window->OnUpdate();
 	}

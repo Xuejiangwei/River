@@ -2,12 +2,30 @@
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 
+#include <comdef.h>
+
+DxException::DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
+    ErrorCode(hr),
+    FunctionName(functionName),
+    Filename(filename),
+    LineNumber(lineNumber)
+{
+}
+
+std::wstring DxException::ToString()const
+{
+    _com_error err(ErrorCode);
+    std::wstring msg = err.ErrorMessage();
+
+    return FunctionName + L" failed in " + Filename + L"; line " + std::to_wstring(LineNumber) + L"; error: " + msg;
+}
+
 Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* initData, UINT64 byteSize, Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer)
 {
     Microsoft::WRL::ComPtr<ID3D12Resource> defaultBuffer;
 
     auto heapDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    auto heapUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto heapUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
    device->CreateCommittedResource(&heapDefault, D3D12_HEAP_FLAG_NONE,
         &bufferDesc,

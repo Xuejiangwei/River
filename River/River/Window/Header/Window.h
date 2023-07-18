@@ -20,6 +20,8 @@ public:
 	
 	virtual void OnUpdate() = 0;
 
+	virtual bool PeekProcessMessage() { return false; }
+
 	virtual void* GetWindowHandle() const { return m_WindowHandle; }
 
 protected:

@@ -12,6 +12,8 @@
 
 #include <d3dcompiler.h>
 
+#include "strsafe.h"
+
 struct Vertex
 {
 	DirectX::XMFLOAT4 Pos;
@@ -45,6 +47,12 @@ DirectX::XMFLOAT4X4 mWorld = DirectX::XMFLOAT4X4(
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f);
 
+struct GRS_VERTEX
+{
+	DirectX::XMFLOAT4 m_vtPos;
+	DirectX::XMFLOAT4 m_vtColor;
+};
+float fTrangleSize = 3.0f;
 
 DX12RHI::DX12RHI() : m_CurrentFence(0), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
 {
@@ -54,93 +62,138 @@ DX12RHI::~DX12RHI()
 {
 }
 
+Share<DX12VertexBuffer> mVertexBuffer;
+
 void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
-	CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory));
+	m_Viewport = { 0.0f, 0.0f, static_cast<float>(param.WindowWidth), static_cast<float>(param.WindowHeight), D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+	m_ScissorRect = { 0, 0, static_cast<LONG>(param.WindowWidth), static_cast<LONG>(param.WindowHeight) };
 
-	HRESULT hardwareResult = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_Device));
-	if (FAILED(hardwareResult))
-	{
-		Microsoft::WRL::ComPtr<IDXGIAdapter> pWarpAdapter;
-		m_Factory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter));
-		D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_Device));
-	}
+	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
 
-	m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
+	EnumAdaptersAndCreateDevice();
 
-	m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
-	msQualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	msQualityLevels.SampleCount = 4;
-	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-	msQualityLevels.NumQualityLevels = 0;
-	m_Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels, sizeof(msQualityLevels));
-
-	m_4xMsaaQuality = msQualityLevels.NumQualityLevels;
-	assert(m_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
-
-
-	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
-	m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_CommandAllocator.GetAddressOf()));
-	m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocator.Get(), nullptr, IID_PPV_ARGS(m_CommandList.GetAddressOf()));
-	m_CommandList->Close();
+	CreateCommandQueue();
 
 	CreateSwapChain(param);
 
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	rtvHeapDesc.NumDescriptors = s_SwapChainBufferCount;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask = 0;
-	m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_RtvHeap.GetAddressOf()));
+	CreateRtvHeapAndDescriptor();
 
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	dsvHeapDesc.NodeMask = 0;
-	m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_DsvHeap.GetAddressOf()));
-
-	Resize(param);
-	
-	m_CommandList->Reset(m_CommandAllocator.Get(), nullptr);
-
-	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = 1;
-	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbvHeapDesc.NodeMask = 0;
-	m_Device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_CbvHeap));
-
-	m_UniformBuffer = MakeUnique<DX12UniformBuffer>(m_Device.Get(), (unsigned int)sizeof(ObjectConstants),1, true);
-	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
-
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = m_UniformBuffer->Resource()->GetGPUVirtualAddress();
-	int boxCBufIndex = 0;
-	cbAddress += boxCBufIndex * objCBByteSize;
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = cbAddress;
-	cbvDesc.SizeInBytes = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
-	m_Device->CreateConstantBufferView(&cbvDesc, m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-	BuildMeshGeometry();
+	/*m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
 
 	auto Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\shaders.hlsl");
-
 	m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), Shader));
 
-	m_CommandList->Close();
-	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
-	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	ThrowIfFailed(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
+	ThrowIfFailed(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocator.Get(),
+		m_PSOs[0]->m_PipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
 
-	FlushCommandQueue();
+	// 定义三角形的3D数据结构，每个顶点使用三原色之一
+	GRS_VERTEX stTriangleVertices[] =
+	{
+		{ { 0.0f, 0.25f * fTrangleSize, 0.0f ,1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+		{ { 0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f ,1.0f  }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+		{ { -0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f  ,1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+	};
+
+	mVertexBuffer = MakeShare<DX12VertexBuffer>(m_Device.Get(), (float*)(&stTriangleVertices),
+		(uint32_t)sizeof(stTriangleVertices), (uint32_t)sizeof(GRS_VERTEX));
+	//auto mDX12VertexBuffer = dynamic_cast<DX12VertexBuffer*>(VertexBuffer.get());
+
+	CreateFence();
+	DWORD dwRet = 0;
+	ThrowIfFailed(m_CommandList->Close());
+	SetEvent(hEventFence);
+}
+
+void DX12RHI::OnUpdate()
+{
+	MSG	msg = {};
+	D3D12_CPU_DESCRIPTOR_HANDLE stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
+	// 填充资源屏障结构
+	D3D12_RESOURCE_BARRIER stBeginResBarrier = {};
+	stBeginResBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	stBeginResBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	stBeginResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
+	stBeginResBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	stBeginResBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	stBeginResBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	D3D12_RESOURCE_BARRIER stEndResBarrier = {};
+	stEndResBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	stEndResBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	stEndResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
+	stEndResBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	stEndResBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	stEndResBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	DWORD dwRet = ::MsgWaitForMultipleObjects(1, &hEventFence, FALSE, INFINITE, QS_ALLINPUT);
+
+	if (dwRet - WAIT_OBJECT_0 == 0)
+	{
+		//获取新的后缓冲序号，因为Present真正完成时后缓冲的序号就更新了
+		m_CurrBackBuffer = m_SwapChain3->GetCurrentBackBufferIndex();
+
+		//命令分配器先Reset一下
+		ThrowIfFailed(m_CommandAllocator->Reset());
+		//Reset命令列表，并重新指定命令分配器和PSO对象
+		ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), m_PSOs[0]->m_PipelineState.Get()));
+
+		//开始记录命令
+		m_CommandList->SetGraphicsRootSignature(m_PSOs[0]->m_RootSignature.Get());
+		m_CommandList->SetPipelineState(m_PSOs[0]->m_PipelineState.Get());
+		m_CommandList->RSSetViewports(1, &m_Viewport);
+		m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
+
+		// 通过资源屏障判定后缓冲已经切换完毕可以开始渲染了
+		stBeginResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
+		m_CommandList->ResourceBarrier(1, &stBeginResBarrier);
+
+		stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
+		stRTVHandle.ptr += m_CurrBackBuffer * m_RtvDescriptorSize;
+		//设置渲染目标
+		m_CommandList->OMSetRenderTargets(1, &stRTVHandle, FALSE, nullptr);
+
+		// 继续记录命令，并真正开始新一帧的渲染
+		const float	faClearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+		m_CommandList->ClearRenderTargetView(stRTVHandle, faClearColor, 0, nullptr);
+		m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		m_CommandList->IASetVertexBuffers(0, 1, &mVertexBuffer->mVertexBufferView);
+
+		//Draw Call！！！
+		m_CommandList->DrawInstanced(3, 1, 0, 0);
+
+		//又一个资源屏障，用于确定渲染已经结束可以提交画面去显示了
+		stEndResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
+		m_CommandList->ResourceBarrier(1, &stEndResBarrier);
+		//关闭命令列表，可以去执行了
+		ThrowIfFailed(m_CommandList->Close());
+
+		//执行命令列表
+		ID3D12CommandList* ppCommandLists[] = { m_CommandList.Get() };
+		m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+		//提交画面
+		ThrowIfFailed(m_SwapChain3->Present(1, 0));
+
+		//开始同步GPU与CPU的执行，先记录围栏标记值
+		const UINT64 n64CurrentFenceValue = m_CurrentFence;
+		ThrowIfFailed(m_CommandQueue->Signal(m_Fence.Get(), n64CurrentFenceValue));
+		m_CurrentFence++;
+		ThrowIfFailed(m_Fence->SetEventOnCompletion(n64CurrentFenceValue, hEventFence));
+	}
+	/*else if (dwRet - WAIT_OBJECT_0 == 1)
+	{
+		while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (WM_QUIT != msg.message)
+			{
+				::TranslateMessage(&msg);
+				::DispatchMessage(&msg);
+			}
+		}
+	}*/
 }
 
 void DX12RHI::Render()
@@ -219,7 +272,7 @@ void DX12RHI::Render()
 		ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
 		m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-		m_SwapChain->Present(0, 0);
+		//m_SwapChain->Present(0, 0);
 		m_CurrBackBuffer = (m_CurrBackBuffer + 1) % s_SwapChainBufferCount;
 
 		FlushCommandQueue();
@@ -233,7 +286,7 @@ Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<Shader
 
 Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, const VertexBufferLayout& layout)
 {
-	return MakeShare<DX12VertexBuffer>(m_Device.Get(), vertices, size);
+	return MakeShare<DX12VertexBuffer>(m_Device.Get(), vertices, size, 0);
 }
 
 void DX12RHI::Resize(const RHIInitializeParam& param)
@@ -247,13 +300,13 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	}
 	m_DepthStencilBuffer.Reset();
 
-	m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+	//m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
 	m_CurrBackBuffer = 0;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_RtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < s_SwapChainBufferCount; i++)
 	{
-		m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i]));
+		//m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i]));
 		m_Device->CreateRenderTargetView(m_SwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		rtvHeapHandle.Offset(1, m_RtvDescriptorSize);
 	}
@@ -310,28 +363,97 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	XMStoreFloat4x4(&mProj, P);
 }
 
+void DX12RHI::EnumAdaptersAndCreateDevice()
+{
+	D3D_FEATURE_LEVEL emFeatureLevel = D3D_FEATURE_LEVEL_12_1;
+	DXGI_ADAPTER_DESC1 stAdapterDesc = {};
+	Microsoft::WRL::ComPtr<IDXGIAdapter1> pWarpAdapter;
+	for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_Factory->EnumAdapters1(adapterIndex, &pWarpAdapter); ++adapterIndex)
+	{
+		pWarpAdapter->GetDesc1(&stAdapterDesc);
+
+		if (stAdapterDesc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+		{//跳过软件虚拟适配器设备
+			continue;
+		}
+		//检查适配器对D3D支持的兼容级别，这里直接要求支持12.1的能力，注意返回接口的那个参数被置为了nullptr，这样
+		//就不会实际创建一个设备了，也不用我们啰嗦的再调用release来释放接口。这也是一个重要的技巧，请记住！
+		if (SUCCEEDED(D3D12CreateDevice(pWarpAdapter.Get(), emFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+		{
+			break;
+		}
+	}
+
+	ThrowIfFailed(D3D12CreateDevice(pWarpAdapter.Get(), emFeatureLevel, IID_PPV_ARGS(&m_Device)));
+}
+
+void DX12RHI::CreateCommandQueue()
+{
+	D3D12_COMMAND_QUEUE_DESC stQueueDesc = {};
+	stQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	ThrowIfFailed(m_Device->CreateCommandQueue(&stQueueDesc, IID_PPV_ARGS(&m_CommandQueue)));
+}
+
 void DX12RHI::CreateSwapChain(const RHIInitializeParam& param)
 {
-	m_SwapChain.Reset();
+	DXGI_SWAP_CHAIN_DESC1 stSwapChainDesc = {};
+	stSwapChainDesc.BufferCount = s_SwapChainBufferCount;
+	stSwapChainDesc.Width = param.WindowWidth;
+	stSwapChainDesc.Height = param.WindowHeight;
+	stSwapChainDesc.Format = m_RenderTargetFormat;
+	stSwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	stSwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	stSwapChainDesc.SampleDesc.Count = 1;
 
-	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = param.WindowWidth;
-	sd.BufferDesc.Height = param.WindowHeight;
-	sd.BufferDesc.RefreshRate.Numerator = 60;
-	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	sd.SampleDesc.Count = 1;
-	sd.SampleDesc.Quality = 0;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount = s_SwapChainBufferCount;
-	sd.OutputWindow = (HWND)param.HWnd;
-	sd.Windowed = true;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	ThrowIfFailed(m_Factory->CreateSwapChainForHwnd(
+		m_CommandQueue.Get(),		// 交换链需要命令队列，Present命令要执行
+		(HWND)param.HWnd,
+		&stSwapChainDesc,
+		nullptr,
+		nullptr,
+		&m_SwapChain1
+	));
 
-	m_Factory->CreateSwapChain(m_CommandQueue.Get(), &sd, m_SwapChain.GetAddressOf());
+	ThrowIfFailed(m_SwapChain1.As(&m_SwapChain3));
+	//得到当前后缓冲区的序号，也就是下一个将要呈送显示的缓冲区的序号
+	//注意此处使用了高版本的SwapChain接口的函数
+	m_CurrBackBuffer = m_SwapChain3->GetCurrentBackBufferIndex();
+}
+
+void DX12RHI::CreateRtvHeapAndDescriptor()
+{
+	D3D12_DESCRIPTOR_HEAP_DESC stRTVHeapDesc = {};
+	stRTVHeapDesc.NumDescriptors = s_SwapChainBufferCount;
+	stRTVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	stRTVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&stRTVHeapDesc, IID_PPV_ARGS(&m_RtvHeap)));
+
+	//得到每个描述符元素的大小
+	m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
+	for (UINT i = 0; i < s_SwapChainBufferCount; i++)
+	{
+		ThrowIfFailed(m_SwapChain3->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i])));
+
+		m_Device->CreateRenderTargetView(m_SwapChainBuffer[i].Get(), nullptr, stRTVHandle);
+
+		stRTVHandle.ptr += m_RtvDescriptorSize;
+	}
+}
+
+void DX12RHI::CreateFence()
+{
+	ThrowIfFailed(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+	m_CurrentFence = 1;
+
+	// 创建一个Event同步对象，用于等待围栏事件通知
+	hEventFence = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (hEventFence == nullptr)
+	{
+		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
+	}
 }
 
 void DX12RHI::FlushCommandQueue()
@@ -359,11 +481,10 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 		m_RtvDescriptorSize);
 }
 
-void DX12RHI::BuildMeshGeometry()
+void DX12RHI::BuildMeshGeometry(const String& MeshName)
 {
 	std::array<Vertex, 8> vertices =
 	{
-	
 		Vertex({ DirectX::XMFLOAT4(0.0f, 0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f ) }),
 		Vertex({ DirectX::XMFLOAT4(0.25f * 3, -0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4( 0.0f, 1.0f, 0.0f, 1.0f ) }),
 		Vertex({ DirectX::XMFLOAT4(-0.25f * 3, -0.25f * 3, 0.0f  ,1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f ) })
@@ -408,7 +529,7 @@ void DX12RHI::BuildMeshGeometry()
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	m_BoxGeo = MakeUnique<DX12MeshGeometry>();
-	m_BoxGeo->Name = "boxGeo";
+	m_BoxGeo->Name = MeshName;
 
 	D3DCreateBlob(vbByteSize, &m_BoxGeo->VertexBufferCPU);
 	CopyMemory(m_BoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);

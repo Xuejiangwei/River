@@ -16,6 +16,11 @@ public:
 	friend class DX12RHI;
 
 private:
+	void InitRootSignature(ID3D12Device* device);
+
+	void InitPipelineState(ID3D12Device* device);
+
+private:
 	Share<Shader> m_Shader;
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;

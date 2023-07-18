@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Window.h"
+#include <Windows.h>
+
+#define WINDOW_CLASS_NAME L"RiverWindowClass"
 
 class WindowsWindow : public Window
 {
@@ -12,6 +15,8 @@ public:
 
 	virtual void OnUpdate() override;
 
-private:
+	virtual bool PeekProcessMessage() override;
 
+private:
+	MSG m_Msg;
 };

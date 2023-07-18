@@ -1,7 +1,56 @@
 #include "RiverPch.h"
 #include "../Header/WindowsWindow.h"
 
-#include <Windows.h>
+#include <SDKDDKVer.h>
+#define WIN32_LEAN_AND_MEAN // 从 Windows 头中排除极少使用的资料
+#include <windows.h>
+#include <tchar.h>
+#include <wrl.h>  //添加WTL支持 方便使用COM
+#include <strsafe.h>
+#include <dxgi1_6.h>
+#include <DirectXMath.h>
+#include <d3d12.h>	//for d3d12
+#include <d3d12shader.h>
+#include <d3dcompiler.h>
+#if defined(_DEBUG)
+#include <dxgidebug.h>
+#endif
+
+using namespace Microsoft;
+using namespace Microsoft::WRL;
+using namespace DirectX;
+
+//linker
+#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
+
+#define GRS_WND_CLASS_NAME _T("GRS Game Window Class")
+#define GRS_WND_TITLE	_T("GRS DirectX12 Trigger Sample")
+
+#define GRS_THROW_IF_FAILED(hr) {HRESULT _hr = (hr);if (FAILED(_hr)){ throw CGRSCOMException(_hr); }}
+
+class CGRSCOMException
+{
+public:
+	CGRSCOMException(HRESULT hr) : m_hrError(hr)
+	{
+	}
+	HRESULT Error() const
+	{
+		return m_hrError;
+	}
+private:
+	const HRESULT m_hrError;
+};
+
+struct GRS_VERTEX
+{
+	XMFLOAT4 m_vtPos;
+	XMFLOAT4 m_vtColor;
+};
 
 LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -159,42 +208,57 @@ void WindowsWindow::Init(const WindowParam& Param)
 {
 	HINSTANCE hInstance = ::GetModuleHandle(NULL);
 
-	WNDCLASS wc;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
+	WNDCLASSEX wc = {};
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.style = CS_GLOBALCLASS;
 	wc.lpfnWndProc = MainWndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(0, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-	wc.lpszMenuName = 0;
-	wc.lpszClassName = L"MainWnd";
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);		//防止无聊的背景重绘
+	wc.lpszClassName = WINDOW_CLASS_NAME;
+	RegisterClassEx(&wc);
 
-	if (!RegisterClass(&wc))
-	{
-		MessageBox(0, L"RegisterClass Failed.", 0, 0);
-		return;
-	}
+	DWORD dwWndStyle = WS_OVERLAPPED | WS_SYSMENU;
+	RECT rtWnd = { 0, 0, Param.WindowWidth, Param.WindowHeight };
+	AdjustWindowRect(&rtWnd, dwWndStyle, FALSE);
 
-	// Compute window rectangle dimensions based on requested client area dimensions.
-	RECT R = { 0, 0, Param.WindowHeight, Param.WindowHeight };
+	RECT R = { 0, 0, Param.WindowWidth, Param.WindowHeight };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
-	auto Handle = CreateWindow(L"MainWnd", L"River窗口", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, hInstance, 0);
-	if (!Handle)
+	INT posX = (GetSystemMetrics(SM_CXSCREEN) - R.right - R.left) / 2;
+	INT posY = (GetSystemMetrics(SM_CYSCREEN) - R.bottom - R.top) / 2;
+
+	auto hWnd = CreateWindowW(WINDOW_CLASS_NAME, L"River窗口", WS_OVERLAPPED | WS_SYSMENU, posX, posY, width, height, nullptr, nullptr, hInstance, nullptr);
+	if (!hWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
 		return;
 	}
-	m_WindowHandle = (void*)Handle;
 
-	ShowWindow(Handle, SW_SHOW);
-	UpdateWindow(Handle);
+	m_WindowHandle = (void*)hWnd;
+
+	ShowWindow(hWnd, SW_SHOW);
+	UpdateWindow(hWnd);
 }
 
 void WindowsWindow::OnUpdate()
 {
+
+}
+
+bool WindowsWindow::PeekProcessMessage()
+{
+	if (PeekMessage(&m_Msg, 0, 0, 0, PM_REMOVE))
+	{
+		TranslateMessage(&m_Msg);
+		DispatchMessage(&m_Msg);
+
+		return true;
+	}
+
+	return false;
 }
