@@ -33,7 +33,7 @@ void Application::Run()
 {
 	while (m_Running)
 	{
-		if (!m_Window->PeekProcessMessage())
+		/*if (!m_Window->PeekProcessMessage())
 		{
 			continue;
 		}
@@ -41,9 +41,9 @@ void Application::Run()
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate();
-		}
+		}*/
 
-		RHI::Get()->OnUpdate();
+		
 
 		m_Window->OnUpdate();
 	}

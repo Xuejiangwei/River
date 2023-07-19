@@ -17,27 +17,31 @@ DX12PipelineState::~DX12PipelineState()
 
 void DX12PipelineState::InitRootSignature(ID3D12Device* device)
 {
-	D3D12_ROOT_SIGNATURE_DESC stRootSignatureDesc =
-	{
-		0
-		, nullptr
-		, 0
-		, nullptr
-		, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
-	};
+	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+	CD3DX12_DESCRIPTOR_RANGE cbvTable;
+	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
+
+	CD3DX12_ROOT_SIGNATURE_DESC stRootSignatureDesc(1, slotRootParameter, 0, nullptr
+		, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> pISignatureBlob;
 	Microsoft::WRL::ComPtr<ID3DBlob> pIErrorBlob;
 
-	ThrowIfFailed(D3D12SerializeRootSignature(
+	HRESULT hr = D3D12SerializeRootSignature(
 		&stRootSignatureDesc
 		, D3D_ROOT_SIGNATURE_VERSION_1
 		, &pISignatureBlob
-		, &pIErrorBlob));
+		, &pIErrorBlob);
 
-	ThrowIfFailed(device->CreateRootSignature(0
-		, pISignatureBlob->GetBufferPointer()
-		, pISignatureBlob->GetBufferSize()
+	if (pIErrorBlob!= nullptr)
+	{
+		::OutputDebugStringA((char*)pIErrorBlob->GetBufferPointer());
+	}
+	ThrowIfFailed(hr);
+
+
+	ThrowIfFailed(device->CreateRootSignature(0, pISignatureBlob->GetBufferPointer(), pISignatureBlob->GetBufferSize()
 		, IID_PPV_ARGS(&m_RootSignature)));
 }
 

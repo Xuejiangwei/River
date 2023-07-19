@@ -7,26 +7,20 @@
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12MeshGeometry.h"
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
-#include "DirectXMath.h"
+#include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 
+#include "DirectXMath.h"
 #include <d3dcompiler.h>
+#include <iostream>
+#include <chrono>
 
-#include "strsafe.h"
+PassUniform g_MainPassCB;
 
 struct Vertex
 {
 	DirectX::XMFLOAT4 Pos;
 	DirectX::XMFLOAT4 Color;
-};
-
-struct ObjectConstants
-{
-	DirectX::XMFLOAT4X4 WorldViewProj = DirectX::XMFLOAT4X4(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
 };
 
 DirectX::XMFLOAT4X4 mProj = DirectX::XMFLOAT4X4(
@@ -52,9 +46,9 @@ struct GRS_VERTEX
 	DirectX::XMFLOAT4 m_vtPos;
 	DirectX::XMFLOAT4 m_vtColor;
 };
-float fTrangleSize = 3.0f;
 
-DX12RHI::DX12RHI() : m_CurrentFence(0), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
+DX12RHI::DX12RHI() 
+	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
 {
 }
 
@@ -63,221 +57,156 @@ DX12RHI::~DX12RHI()
 }
 
 Share<DX12VertexBuffer> mVertexBuffer;
+Share<DX12UniformBuffer> mUniformBuffer;
 
 void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
+	m_InitParam = param;
+
 	m_Viewport = { 0.0f, 0.0f, static_cast<float>(param.WindowWidth), static_cast<float>(param.WindowHeight), D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
 	m_ScissorRect = { 0, 0, static_cast<LONG>(param.WindowWidth), static_cast<LONG>(param.WindowHeight) };
 
-	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
+	{
+		ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
 
-	EnumAdaptersAndCreateDevice();
+		EnumAdaptersAndCreateDevice();
 
-	CreateCommandQueue();
+		CreateFence();
 
-	CreateSwapChain(param);
+		//得到每个描述符元素的大小
+		m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	CreateRtvHeapAndDescriptor();
+		CheckQualityLevel();
 
-	/*m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
+		CreateCommandQueue();
+
+		CreateSwapChain();
+
+		CreateRtvAndDsvHeaps();
+
+		Resize(param);
+	}
+
+	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
+
+	mUniformBuffer = MakeUnique<DX12UniformBuffer>(m_Device.Get(), sizeof(ObjectUnifrom), 1, true);
+
+	{
+		// 定义三角形的3D数据结构，每个顶点使用三原色之一
+		float fTrangleSize = 3.0f;
+		GRS_VERTEX stTriangleVertices[] =
+		{
+			{ { 0.0f, 0.25f * fTrangleSize, 0.0f ,1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+			{ { 0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f ,1.0f  }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+			{ { -0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f  ,1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+		};
+
+		mVertexBuffer = MakeShare<DX12VertexBuffer>(m_Device.Get(), (float*)(&stTriangleVertices),
+			(uint32_t)sizeof(stTriangleVertices), (uint32_t)sizeof(GRS_VERTEX));
+	}
+
+	/*for (size_t i = 0; i < s_SwapChainBufferCount; i++)
+	{
+		m_FrameBuffers[i] = MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, 1);
+	}*/
 
 	auto Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\shaders.hlsl");
 	m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), Shader));
 
-	ThrowIfFailed(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator)));
-	ThrowIfFailed(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocator.Get(),
-		m_PSOs[0]->m_PipelineState.Get(), IID_PPV_ARGS(&m_CommandList)));
-
-	// 定义三角形的3D数据结构，每个顶点使用三原色之一
-	GRS_VERTEX stTriangleVertices[] =
-	{
-		{ { 0.0f, 0.25f * fTrangleSize, 0.0f ,1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-		{ { 0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f ,1.0f  }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-		{ { -0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f  ,1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
-	};
-
-	mVertexBuffer = MakeShare<DX12VertexBuffer>(m_Device.Get(), (float*)(&stTriangleVertices),
-		(uint32_t)sizeof(stTriangleVertices), (uint32_t)sizeof(GRS_VERTEX));
-	//auto mDX12VertexBuffer = dynamic_cast<DX12VertexBuffer*>(VertexBuffer.get());
-
-	CreateFence();
-	DWORD dwRet = 0;
 	ThrowIfFailed(m_CommandList->Close());
-	SetEvent(hEventFence);
+	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	FlushCommandQueue();
 }
 
 void DX12RHI::OnUpdate()
 {
-	MSG	msg = {};
-	D3D12_CPU_DESCRIPTOR_HANDLE stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
-	// 填充资源屏障结构
-	D3D12_RESOURCE_BARRIER stBeginResBarrier = {};
-	stBeginResBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	stBeginResBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	stBeginResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
-	stBeginResBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	stBeginResBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	stBeginResBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	//auto& CurrFrameBuffer = m_FrameBuffers[0];
+	//std::cout << m_CurrentFence << " " << CurrFrameBuffer->m_FenceValue << std::endl;
+	//if (CurrFrameBuffer->m_FenceValue != 0 && m_Fence->GetCompletedValue() < m_CurrentFence)
+	//{
+	//	HANDLE eventHandle = CreateEvent(nullptr, false, false, nullptr);
+	//	ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrentFence, eventHandle));
+	//	
+	//	auto pre = std::chrono::system_clock::now();
+	//	WaitForSingleObject(eventHandle, 2000);// INFINITE);
 
-	D3D12_RESOURCE_BARRIER stEndResBarrier = {};
-	stEndResBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	stEndResBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	stEndResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
-	stEndResBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	stEndResBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	stEndResBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	//	CloseHandle(eventHandle);
 
-	DWORD dwRet = ::MsgWaitForMultipleObjects(1, &hEventFence, FALSE, INFINITE, QS_ALLINPUT);
+	//	auto now = std::chrono::system_clock::now();
+	//	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - pre);
+	//	std::cout << "time " << time_span.count() << std::endl;
+	//}
 
-	if (dwRet - WAIT_OBJECT_0 == 0)
-	{
-		//获取新的后缓冲序号，因为Present真正完成时后缓冲的序号就更新了
-		m_CurrBackBuffer = m_SwapChain3->GetCurrentBackBufferIndex();
+	ObjectUnifrom objConstants;
 
-		//命令分配器先Reset一下
-		ThrowIfFailed(m_CommandAllocator->Reset());
-		//Reset命令列表，并重新指定命令分配器和PSO对象
-		ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), m_PSOs[0]->m_PipelineState.Get()));
-
-		//开始记录命令
-		m_CommandList->SetGraphicsRootSignature(m_PSOs[0]->m_RootSignature.Get());
-		m_CommandList->SetPipelineState(m_PSOs[0]->m_PipelineState.Get());
-		m_CommandList->RSSetViewports(1, &m_Viewport);
-		m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
-
-		// 通过资源屏障判定后缓冲已经切换完毕可以开始渲染了
-		stBeginResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
-		m_CommandList->ResourceBarrier(1, &stBeginResBarrier);
-
-		stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
-		stRTVHandle.ptr += m_CurrBackBuffer * m_RtvDescriptorSize;
-		//设置渲染目标
-		m_CommandList->OMSetRenderTargets(1, &stRTVHandle, FALSE, nullptr);
-
-		// 继续记录命令，并真正开始新一帧的渲染
-		const float	faClearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-		m_CommandList->ClearRenderTargetView(stRTVHandle, faClearColor, 0, nullptr);
-		m_CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-		m_CommandList->IASetVertexBuffers(0, 1, &mVertexBuffer->mVertexBufferView);
-
-		//Draw Call！！！
-		m_CommandList->DrawInstanced(3, 1, 0, 0);
-
-		//又一个资源屏障，用于确定渲染已经结束可以提交画面去显示了
-		stEndResBarrier.Transition.pResource = m_SwapChainBuffer[m_CurrBackBuffer].Get();
-		m_CommandList->ResourceBarrier(1, &stEndResBarrier);
-		//关闭命令列表，可以去执行了
-		ThrowIfFailed(m_CommandList->Close());
-
-		//执行命令列表
-		ID3D12CommandList* ppCommandLists[] = { m_CommandList.Get() };
-		m_CommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-		//提交画面
-		ThrowIfFailed(m_SwapChain3->Present(1, 0));
-
-		//开始同步GPU与CPU的执行，先记录围栏标记值
-		const UINT64 n64CurrentFenceValue = m_CurrentFence;
-		ThrowIfFailed(m_CommandQueue->Signal(m_Fence.Get(), n64CurrentFenceValue));
-		m_CurrentFence++;
-		ThrowIfFailed(m_Fence->SetEventOnCompletion(n64CurrentFenceValue, hEventFence));
-	}
-	/*else if (dwRet - WAIT_OBJECT_0 == 1)
-	{
-		while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			if (WM_QUIT != msg.message)
-			{
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-			}
-		}
-	}*/
+	XMStoreFloat4(&objConstants.World, DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f));
+	//CurrFrameBuffer->ObjectCB->CopyData(0, &objConstants, sizeof(objConstants));
+	mUniformBuffer->CopyData(0, &objConstants, sizeof(objConstants));
 }
 
 void DX12RHI::Render()
 {
-	float mRadius = 5.0f;
-	float mTheta = 1.5f * 3.141592654f;
-	float mPhi = 0.785398163f;
-	// Convert Spherical to Cartesian coordinates.
-	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-	float y = mRadius * cosf(mPhi);
+	ThrowIfFailed(m_CommandAllocator->Reset());
 
-	// Build the view matrix.
-	DirectX::XMVECTOR pos = DirectX::XMVectorSet(x, y, z, 1.0f);
-	DirectX::XMVECTOR target = DirectX::XMVectorZero();
-	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
+	// Reusing the command list reuses memory.
+	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), m_PSOs[0]->m_PipelineState.Get()));
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&mView, view);
+	m_CommandList->RSSetViewports(1, &m_Viewport);
+	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	DirectX::XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	DirectX::XMMATRIX proj = XMLoadFloat4x4(&mProj);
-	DirectX::XMMATRIX worldViewProj = world * view * proj;
+	// Indicate a state transition on the resource usage.
+	auto rb1 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_CommandList->ResourceBarrier(1, &rb1);
 
-	// Update the constant buffer with the latest worldViewProj matrix.
-	ObjectConstants objConstants;
-	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-	m_UniformBuffer->CopyData(0, &objConstants, sizeof(objConstants));
+	// Clear the back buffer and depth buffer.
+	m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	m_CommandList->ClearDepthStencilView(m_DsvHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	for (auto& pso : m_PSOs)
-	{
-		m_CommandAllocator->Reset();
+	// Specify the buffers we are going to render to.
+	auto vv = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
+	auto bv = CurrentBackBufferView();
+	m_CommandList->OMSetRenderTargets(1, &bv, true, &vv);
 
-		m_CommandList->Reset(m_CommandAllocator.Get(), pso->m_PipelineState.Get());
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mUniformBuffer->m_UniformBufferHeap.Get() };
+	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-		m_CommandList->RSSetViewports(1, &m_Viewport);
-		m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
+	m_CommandList->SetGraphicsRootSignature(m_PSOs[0]->m_RootSignature.Get());
 
-		// Indicate a state transition on the resource usage.
-		auto rb_p2t = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		auto rb_t2p = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_CommandList->IASetVertexBuffers(0, 1, &mVertexBuffer->mVertexBufferView);
+	m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		m_CommandList->ResourceBarrier(1, &rb_p2t);
+	m_CommandList->SetGraphicsRootDescriptorTable(0, mUniformBuffer->m_UniformBufferHeap->GetGPUDescriptorHandleForHeapStart());
 
-		// Clear the back buffer and depth buffer.
-		auto DsvHeapStart = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
-		auto backBufferView = CurrentBackBufferView();
+	m_CommandList->DrawInstanced(3, 1, 0, 0);
 
-		m_CommandList->ClearRenderTargetView(backBufferView, DirectX::Colors::LightYellow, 0, nullptr);
-		m_CommandList->ClearDepthStencilView(DsvHeapStart,
-			D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	// Indicate a state transition on the resource usage.
+	auto rb2 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	m_CommandList->ResourceBarrier(1, &rb2);
 
-		// Specify the buffers we are going to render to.
-		m_CommandList->OMSetRenderTargets(1, &backBufferView, true, &DsvHeapStart);
+	// Done recording commands.
+	ThrowIfFailed(m_CommandList->Close());
 
-		ID3D12DescriptorHeap* descriptorHeaps[] = { m_CbvHeap.Get() };
-		m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	// Add the command list to the queue for execution.
+	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-		m_CommandList->SetGraphicsRootSignature(pso->m_RootSignature.Get());
+	// swap the back and front buffers
+	ThrowIfFailed(m_SwapChain1->Present(0, 0));
+	m_CurrBackBuffer = (m_CurrBackBuffer + 1) % s_SwapChainBufferCount;
 
-		auto vbv = m_BoxGeo->VertexBufferView();
-		auto ibv = m_BoxGeo->IndexBufferView();
-		m_CommandList->IASetVertexBuffers(0, 1, &vbv);
-		m_CommandList->IASetIndexBuffer(&ibv);
-		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		m_CommandList->SetGraphicsRootDescriptorTable(0, m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
-
-		m_CommandList->DrawIndexedInstanced(m_BoxGeo->DrawArgs["box"].IndexCount,
-			1, 0, 0, 0);
-
-		m_CommandList->ResourceBarrier(1, &rb_t2p);
-
-		m_CommandList->Close();
-
-		ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
-		m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
-
-		//m_SwapChain->Present(0, 0);
-		m_CurrBackBuffer = (m_CurrBackBuffer + 1) % s_SwapChainBufferCount;
-
-		FlushCommandQueue();
-	}
+	// Wait until frame commands are complete.  This waiting is inefficient and is
+	// done for simplicity.  Later we will show how to organize our rendering code
+	// so we do not have to wait per frame.
+	FlushCommandQueue();
 }
+
 
 Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout)
 {
@@ -292,7 +221,8 @@ Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, 
 void DX12RHI::Resize(const RHIInitializeParam& param)
 {
 	FlushCommandQueue();
-	m_CommandList->Reset(m_CommandAllocator.Get(), nullptr);
+	
+	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
 	for (size_t i = 0; i < s_SwapChainBufferCount; i++)
 	{
@@ -300,13 +230,14 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	}
 	m_DepthStencilBuffer.Reset();
 
-	//m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+	ThrowIfFailed(m_SwapChain1->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, 
+		DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 	m_CurrBackBuffer = 0;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_RtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < s_SwapChainBufferCount; i++)
 	{
-		//m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i]));
+		ThrowIfFailed(m_SwapChain1->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i])));
 		m_Device->CreateRenderTargetView(m_SwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
 		rtvHeapHandle.Offset(1, m_RtvDescriptorSize);
 	}
@@ -319,8 +250,8 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
+	depthStencilDesc.SampleDesc.Quality = m_4xMsaaState ? (m_4xMsaaQuality - 1) : 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
@@ -344,7 +275,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	m_CommandList->ResourceBarrier(1, &sb_2w);
 
-	m_CommandList->Close();
+	ThrowIfFailed(m_CommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
@@ -358,9 +289,6 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	m_Viewport.MaxDepth = 1.0f;
 
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
-
-	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight, 1.0f, 1000.0f);
-	XMStoreFloat4x4(&mProj, P);
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -391,15 +319,23 @@ void DX12RHI::CreateCommandQueue()
 {
 	D3D12_COMMAND_QUEUE_DESC stQueueDesc = {};
 	stQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	stQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	ThrowIfFailed(m_Device->CreateCommandQueue(&stQueueDesc, IID_PPV_ARGS(&m_CommandQueue)));
+
+	ThrowIfFailed(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_CommandAllocator.GetAddressOf())));
+
+	ThrowIfFailed(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocator.Get(),
+		nullptr, IID_PPV_ARGS(m_CommandList.GetAddressOf())));
+
+	m_CommandList->Close();
 }
 
-void DX12RHI::CreateSwapChain(const RHIInitializeParam& param)
+void DX12RHI::CreateSwapChain()
 {
 	DXGI_SWAP_CHAIN_DESC1 stSwapChainDesc = {};
 	stSwapChainDesc.BufferCount = s_SwapChainBufferCount;
-	stSwapChainDesc.Width = param.WindowWidth;
-	stSwapChainDesc.Height = param.WindowHeight;
+	stSwapChainDesc.Width = m_InitParam.WindowWidth;
+	stSwapChainDesc.Height = m_InitParam.WindowHeight;
 	stSwapChainDesc.Format = m_RenderTargetFormat;
 	stSwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	stSwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -407,7 +343,7 @@ void DX12RHI::CreateSwapChain(const RHIInitializeParam& param)
 
 	ThrowIfFailed(m_Factory->CreateSwapChainForHwnd(
 		m_CommandQueue.Get(),		// 交换链需要命令队列，Present命令要执行
-		(HWND)param.HWnd,
+		(HWND)m_InitParam.HWnd,
 		&stSwapChainDesc,
 		nullptr,
 		nullptr,
@@ -420,7 +356,7 @@ void DX12RHI::CreateSwapChain(const RHIInitializeParam& param)
 	m_CurrBackBuffer = m_SwapChain3->GetCurrentBackBufferIndex();
 }
 
-void DX12RHI::CreateRtvHeapAndDescriptor()
+void DX12RHI::CreateRtvAndDsvHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC stRTVHeapDesc = {};
 	stRTVHeapDesc.NumDescriptors = s_SwapChainBufferCount;
@@ -429,10 +365,14 @@ void DX12RHI::CreateRtvHeapAndDescriptor()
 
 	ThrowIfFailed(m_Device->CreateDescriptorHeap(&stRTVHeapDesc, IID_PPV_ARGS(&m_RtvHeap)));
 
-	//得到每个描述符元素的大小
-	m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	dsvHeapDesc.NodeMask = 0;
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_DsvHeap.GetAddressOf())));
 
-	D3D12_CPU_DESCRIPTOR_HANDLE stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
+	/*D3D12_CPU_DESCRIPTOR_HANDLE stRTVHandle = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < s_SwapChainBufferCount; i++)
 	{
 		ThrowIfFailed(m_SwapChain3->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i])));
@@ -440,20 +380,56 @@ void DX12RHI::CreateRtvHeapAndDescriptor()
 		m_Device->CreateRenderTargetView(m_SwapChainBuffer[i].Get(), nullptr, stRTVHandle);
 
 		stRTVHandle.ptr += m_RtvDescriptorSize;
-	}
+	}*/
 }
 
 void DX12RHI::CreateFence()
 {
 	ThrowIfFailed(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
-	m_CurrentFence = 1;
+}
 
-	// 创建一个Event同步对象，用于等待围栏事件通知
-	hEventFence = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (hEventFence == nullptr)
-	{
-		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
-	}
+void DX12RHI::CheckQualityLevel()
+{
+	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
+	msQualityLevels.Format = m_BackBufferFormat;
+	msQualityLevels.SampleCount = 4;
+	msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+	msQualityLevels.NumQualityLevels = 0;
+	ThrowIfFailed(m_Device->CheckFeatureSupport(
+		D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+		&msQualityLevels,
+		sizeof(msQualityLevels)));
+
+	m_4xMsaaQuality = msQualityLevels.NumQualityLevels;
+	assert(m_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
+}
+
+void DX12RHI::UpdateMainPass()
+{
+	//DirectX::XMMATRIX view = XMLoadFloat4x4(&mView);
+	//DirectX::XMMATRIX proj = XMLoadFloat4x4(&mProj);
+
+	//DirectX::XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+	//DirectX::XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+	//DirectX::XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
+	//DirectX::XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+	//XMStoreFloat4x4(&g_MainPassCB.View, XMMatrixTranspose(view));
+	//XMStoreFloat4x4(&g_MainPassCB.InvView, XMMatrixTranspose(invView));
+	//XMStoreFloat4x4(&g_MainPassCB.Proj, XMMatrixTranspose(proj));
+	//XMStoreFloat4x4(&g_MainPassCB.InvProj, XMMatrixTranspose(invProj));
+	//XMStoreFloat4x4(&g_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	//XMStoreFloat4x4(&g_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	//g_MainPassCB.EyePosW = { 0.0f, 0.0f, 0.0f };// mEyePos;
+	//g_MainPassCB.RenderTargetSize = DirectX::XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
+	//g_MainPassCB.InvRenderTargetSize = DirectX::XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
+	//g_MainPassCB.NearZ = 1.0f;
+	//g_MainPassCB.FarZ = 1000.0f;
+	///*g_MainPassCB.TotalTime = gt.TotalTime();
+	//g_MainPassCB.DeltaTime = gt.DeltaTime();*/
+
+	//auto currPassCB = mCurrFrameResource->PassCB.get();
+	//currPassCB->CopyData(0, g_MainPassCB);
 }
 
 void DX12RHI::FlushCommandQueue()
@@ -466,7 +442,7 @@ void DX12RHI::FlushCommandQueue()
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
-		m_Fence->SetEventOnCompletion(m_CurrentFence, eventHandle);
+		ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrentFence, eventHandle));
 
 		WaitForSingleObject(eventHandle, INFINITE);
 		CloseHandle(eventHandle);

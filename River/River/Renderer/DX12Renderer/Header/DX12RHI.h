@@ -41,11 +41,15 @@ private:
 
 	void CreateCommandQueue();
 
-	void CreateSwapChain(const RHIInitializeParam& param);
+	void CreateSwapChain();
 
-	void CreateRtvHeapAndDescriptor();
+	void CreateRtvAndDsvHeaps();
 
 	void CreateFence();
+
+	void CheckQualityLevel();
+
+	void UpdateMainPass();
 
 	void FlushCommandQueue();
 
@@ -64,8 +68,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandList;
 	
-	static const int s_SwapChainBufferCount = 3;
+	static const int s_SwapChainBufferCount = 2;
+	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
+
+	bool m_4xMsaaState = false;
 	UINT m_4xMsaaQuality;
 
 	UINT m_RtvDescriptorSize;
@@ -96,4 +103,9 @@ private:
 	std::vector<Share<DX12PipelineState>> m_PSOs;
 
 	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	Unique<class DX12FrameBuffer> m_FrameBuffers[s_SwapChainBufferCount];
+
+	RHIInitializeParam m_InitParam;
 };

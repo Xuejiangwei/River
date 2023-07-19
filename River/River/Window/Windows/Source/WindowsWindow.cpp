@@ -32,6 +32,8 @@ using namespace DirectX;
 
 #define GRS_THROW_IF_FAILED(hr) {HRESULT _hr = (hr);if (FAILED(_hr)){ throw CGRSCOMException(_hr); }}
 
+#include "RHI.h"
+
 class CGRSCOMException
 {
 public:
@@ -247,7 +249,21 @@ void WindowsWindow::Init(const WindowParam& Param)
 
 void WindowsWindow::OnUpdate()
 {
-
+	while (m_Msg.message != WM_QUIT)
+	{
+		// If there are Window messages then process them.
+		if (PeekMessage(&m_Msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&m_Msg);
+			DispatchMessage(&m_Msg);
+		}
+		// Otherwise, do animation/game stuff.
+		else
+		{
+			RHI::Get()->OnUpdate();
+			RHI::Get()->Render();
+		}
+	}
 }
 
 bool WindowsWindow::PeekProcessMessage()

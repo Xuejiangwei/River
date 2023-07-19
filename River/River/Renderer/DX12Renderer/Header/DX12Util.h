@@ -2,6 +2,7 @@
 
 #include <wrl.h>
 #include <d3d12.h>
+#include "DirectXMath.h"
 
 inline std::wstring AnsiToWString(const std::string& str)
 {
@@ -39,3 +40,6 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
     const void* initData,
     UINT64 byteSize,
     Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
+
+DirectX::XMFLOAT4X4 Identity4x4();
+

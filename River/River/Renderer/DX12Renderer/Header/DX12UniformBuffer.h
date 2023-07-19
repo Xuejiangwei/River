@@ -12,6 +12,8 @@ public:
    
     virtual ~DX12UniformBuffer() override;
 
+    friend class DX12RHI;
+
     DX12UniformBuffer(const DX12UniformBuffer& rhs) = delete;
     DX12UniformBuffer& operator=(const DX12UniformBuffer& rhs) = delete;
 
@@ -20,7 +22,9 @@ public:
     void CopyData(int elementIndex, void* data, UINT size) { memcpy(&m_MappedData[elementIndex * m_ElementByteSize], &data, size); }
 
 private:
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadBuffer;
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_UniformBufferHeap;
+
 	BYTE* m_MappedData;
 	UINT m_ElementByteSize;
 };
