@@ -47,13 +47,17 @@ struct GRS_VERTEX
 	DirectX::XMFLOAT4 m_vtColor;
 };
 
-DX12RHI::DX12RHI() 
+DX12RHI::DX12RHI()
 	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
 {
 }
 
 DX12RHI::~DX12RHI()
 {
+	if (m_Device)
+	{
+		FlushCommandQueue();
+	}
 }
 
 Share<DX12VertexBuffer> mVertexBuffer;
@@ -91,7 +95,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
-	mUniformBuffer = MakeUnique<DX12UniformBuffer>(m_Device.Get(), sizeof(ObjectUnifrom), 1, true);
+	mUniformBuffer = MakeShare<DX12UniformBuffer>(m_Device.Get(), (unsigned int)sizeof(ObjectUnifrom), 1, true);
 
 	{
 		// 定义三角形的3D数据结构，每个顶点使用三原色之一
@@ -112,7 +116,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_FrameBuffers[i] = MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, 1);
 	}*/
 
-	auto Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\shaders.hlsl");
+	auto Shader = MakeShare<DX12Shader>("D:\\GitHub\\River\\River\\Shaders\\shaders.hlsl");
 	m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), Shader));
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -130,7 +134,7 @@ void DX12RHI::OnUpdate()
 	//{
 	//	HANDLE eventHandle = CreateEvent(nullptr, false, false, nullptr);
 	//	ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrentFence, eventHandle));
-	//	
+	//
 	//	auto pre = std::chrono::system_clock::now();
 	//	WaitForSingleObject(eventHandle, 2000);// INFINITE);
 
@@ -143,7 +147,7 @@ void DX12RHI::OnUpdate()
 
 	ObjectUnifrom objConstants;
 
-	XMStoreFloat4(&objConstants.World, DirectX::XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f));
+	XMStoreFloat4(&objConstants.World, DirectX::XMVectorSet(1.0f, 1.0f, 0.0f, 1.0f));
 	//CurrFrameBuffer->ObjectCB->CopyData(0, &objConstants, sizeof(objConstants));
 	mUniformBuffer->CopyData(0, &objConstants, sizeof(objConstants));
 }
@@ -207,7 +211,6 @@ void DX12RHI::Render()
 	FlushCommandQueue();
 }
 
-
 Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout)
 {
 	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader);
@@ -221,7 +224,7 @@ Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, 
 void DX12RHI::Resize(const RHIInitializeParam& param)
 {
 	FlushCommandQueue();
-	
+
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
 	for (size_t i = 0; i < s_SwapChainBufferCount; i++)
@@ -230,7 +233,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	}
 	m_DepthStencilBuffer.Reset();
 
-	ThrowIfFailed(m_SwapChain1->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, 
+	ThrowIfFailed(m_SwapChain1->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight,
 		DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 	m_CurrBackBuffer = 0;
 
@@ -461,9 +464,9 @@ void DX12RHI::BuildMeshGeometry(const String& MeshName)
 {
 	std::array<Vertex, 8> vertices =
 	{
-		Vertex({ DirectX::XMFLOAT4(0.0f, 0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f ) }),
-		Vertex({ DirectX::XMFLOAT4(0.25f * 3, -0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4( 0.0f, 1.0f, 0.0f, 1.0f ) }),
-		Vertex({ DirectX::XMFLOAT4(-0.25f * 3, -0.25f * 3, 0.0f  ,1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f ) })
+		Vertex({ DirectX::XMFLOAT4(0.0f, 0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) }),
+		Vertex({ DirectX::XMFLOAT4(0.25f * 3, -0.25f * 3, 0.0f ,1.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) }),
+		Vertex({ DirectX::XMFLOAT4(-0.25f * 3, -0.25f * 3, 0.0f  ,1.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) })
 		/*Vertex({ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::White) }),
 		Vertex({ DirectX::XMFLOAT3(-1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
 		Vertex({ DirectX::XMFLOAT3(+1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Red) }),
