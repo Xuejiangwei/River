@@ -2,6 +2,7 @@
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 
+#include <d3dcompiler.h>
 #include <comdef.h>
 
 DxException::DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
@@ -67,4 +68,25 @@ DirectX::XMFLOAT4X4 Identity4x4()
         0.0f, 0.0f, 0.0f, 1.0f);
 
     return I;
+}
+
+Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename, const D3D_SHADER_MACRO* defines, const std::string& entrypoint, const std::string& target)
+{
+    {
+        UINT compileFlags = 0;
+
+        HRESULT hr = S_OK;
+
+        Microsoft::WRL::ComPtr<ID3DBlob> byteCode = nullptr;
+        Microsoft::WRL::ComPtr<ID3DBlob> errors;
+        hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+
+        if (errors != nullptr)
+            OutputDebugStringA((char*)errors->GetBufferPointer());
+
+        ThrowIfFailed(hr);
+
+        return byteCode;
+    }
 }

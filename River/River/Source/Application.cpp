@@ -21,7 +21,6 @@ Application::Application()
 		720, 720, m_Window->GetWindowHandle()
 	};
 	RHI::Get()->Initialize(rhiParam);
-
 }
 
 Application::~Application()

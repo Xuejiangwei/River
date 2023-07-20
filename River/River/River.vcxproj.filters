@@ -170,5 +170,8 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\UploadBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 #include "RiverPch.h"
+#include "RHI.h"
 #include "VertexBuffer.h"
 
 #ifdef _WIN32

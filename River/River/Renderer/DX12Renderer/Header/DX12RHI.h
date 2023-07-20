@@ -10,6 +10,8 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
+#include "Renderer/DX12Renderer/Header/UploadBuffer.h"
+
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -17,6 +19,12 @@
 class DX12PipelineState;
 class DX12UniformBuffer;
 class DX12MeshGeometry;
+
+struct ObjectConstants
+{
+	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
+	DirectX::XMFLOAT4 Color;
+};
 
 class DX12RHI : public RHI
 {
@@ -59,6 +67,32 @@ private:
 
 	void BuildMeshGeometry(const String& MeshName);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const
+	{
+		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
+	}
+
+	void BuildDescriptorHeaps()
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+		cbvHeapDesc.NumDescriptors = 1;
+		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		cbvHeapDesc.NodeMask = 0;
+		ThrowIfFailed(m_Device->CreateDescriptorHeap(&cbvHeapDesc,
+			IID_PPV_ARGS(&m_CbvHeap)));
+	}
+
+	void BuildConstantBuffers();
+
+	void BuildShadersAndInputLayout();
+
+	void BuildRootSignature();
+
+	void BuildPSO();
+
+	void BuildTestVertexBuffer();
+
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
 	Microsoft::WRL::ComPtr<ID3D12Device4> m_Device;
@@ -79,8 +113,7 @@ private:
 	UINT m_DsvDescriptorSize;
 	UINT m_CbvSrvUavDescriptorSize;
 
-	Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain1;
-	Microsoft::WRL::ComPtr<IDXGISwapChain3>	m_SwapChain3;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> m_SwapChain;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DsvHeap;
@@ -103,9 +136,20 @@ private:
 	std::vector<Share<DX12PipelineState>> m_PSOs;
 
 	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	Unique<class DX12FrameBuffer> m_FrameBuffers[s_SwapChainBufferCount];
 
 	RHIInitializeParam m_InitParam;
+
+	Unique<UploadBuffer<ObjectConstants>> m_ObjectCB = nullptr;
+
+	Microsoft::WRL::ComPtr<ID3DBlob> m_vsByteCode = nullptr;
+	Microsoft::WRL::ComPtr<ID3DBlob> m_psByteCode = nullptr;
+	std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputLayout;
+
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PSO = nullptr;
+
 };

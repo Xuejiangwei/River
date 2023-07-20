@@ -8,7 +8,7 @@
 class DX12VertexBuffer : public VertexBuffer
 {
 public:
-	DX12VertexBuffer(ID3D12Device* Device, float* vertices, uint32_t size, uint32_t elementSize);
+	DX12VertexBuffer(ID3D12Device* Device, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout);
 	~DX12VertexBuffer();
 
 	friend class DX12RHI;

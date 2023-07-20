@@ -4,7 +4,7 @@
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 
 
-DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* Device, float* vertices, uint32_t size, uint32_t elementSize)
+DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* Device, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
 {
 	D3D12_HEAP_PROPERTIES stHeapProp = { D3D12_HEAP_TYPE_UPLOAD };
 
