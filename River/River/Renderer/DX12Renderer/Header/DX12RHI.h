@@ -11,14 +11,13 @@
 #include <DirectXColors.h>
 
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
+#include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
 class DX12PipelineState;
-class DX12UniformBuffer;
-class DX12MeshGeometry;
 
 struct ObjectConstants
 {
@@ -67,8 +66,6 @@ private:
 
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
 
-	void BuildMeshGeometry(const String& MeshName);
-
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const
 	{
 		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -87,11 +84,8 @@ private:
 
 	void BuildConstantBuffers();
 
-	void BuildShadersAndInputLayout();
-
 	void BuildRootSignature();
 
-	void BuildPSO();
 
 	void BuildTestVertexBufferAndIndexBuffer();
 
@@ -131,9 +125,7 @@ private:
 	D3D12_RECT m_ScissorRect;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
-	Unique<DX12UniformBuffer> m_UniformBuffer;
-
-	Unique<DX12MeshGeometry> m_BoxGeo;
+	//Unique<DX12UniformBuffer> m_UniformBuffer;
 
 	std::vector<Share<DX12PipelineState>> m_PSOs;
 
@@ -145,13 +137,5 @@ private:
 
 	RHIInitializeParam m_InitParam;
 
-	Unique<UploadBuffer<ObjectConstants>> m_ObjectCB = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3DBlob> m_vsByteCode = nullptr;
-	Microsoft::WRL::ComPtr<ID3DBlob> m_psByteCode = nullptr;
-	std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputLayout;
-
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PSO = nullptr;
-
+	Unique<DX12UniformBuffer<ObjectConstants>> mUniformBuffer = nullptr;
 };

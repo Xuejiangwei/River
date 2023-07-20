@@ -31,7 +31,6 @@ struct PassUniform
     float DeltaTime = 0.0f;
 };
 
-class DX12UniformBuffer;
 
 class DX12FrameBuffer : public FrameBuffer
 {
@@ -41,7 +40,7 @@ public:
 
     friend class DX12RHI;
 private:
-    Unique<DX12UniformBuffer> PassCB;
-    Unique<DX12UniformBuffer> ObjectCB;
+    //Unique<DX12UniformBuffer> PassCB;
+    //Unique<DX12UniformBuffer> ObjectCB;
     UINT64 m_FenceValue;
 };

@@ -14,12 +14,20 @@ struct RHIInitializeParam
 	void* HWnd;
 };
 
+enum class APIMode
+{
+	DX12,
+	Vulkan
+};
+
 class RHI
 {
 public:
 	RHI();
 	virtual ~RHI();
-	
+
+	friend class std::unique_ptr<RHI>;
+
 	virtual void Initialize(const RHIInitializeParam& Param) = 0;
 
 	virtual void Render() = 0;
@@ -35,8 +43,12 @@ public:
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
 	static Unique<RHI>& Get();
+
+	APIMode GetAPIMode() const { return s_APIMode; }
+
 private:
-	
+	static APIMode s_APIMode;
+
 	static Unique<RHI> s_Instance;
 };
 
