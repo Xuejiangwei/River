@@ -47,13 +47,17 @@ struct GRS_VERTEX
 	DirectX::XMFLOAT4 m_vtColor;
 };
 
-DX12RHI::DX12RHI() 
+DX12RHI::DX12RHI()
 	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
 {
 }
 
 DX12RHI::~DX12RHI()
 {
+	if (m_Device)
+	{
+		FlushCommandQueue();
+	}
 }
 
 Share<VertexBuffer> mVertexBuffer;
@@ -121,9 +125,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 			(uint32_t)sizeof(stTriangleVertices), (uint32_t)sizeof(GRS_VERTEX));*/
 	}
 
-	//auto Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\shaders.hlsl");
-	//m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), Shader));
-
 	ThrowIfFailed(m_CommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
@@ -157,9 +158,6 @@ void DX12RHI::OnUpdate()
 
 	// Update the constant buffer with the latest worldViewProj matrix.
 	DirectX::XMStoreFloat4(&objConstants.Color, DirectX::XMVectorSet(1.0f, 1.0f, 0.f, 1.0f));
-
-	//CurrFrameBuffer->ObjectCB->CopyData(0, &objConstants, sizeof(objConstants));
-	//mUniformBuffer->CopyData(0, &objConstants, sizeof(objConstants));
 
 	m_ObjectCB->CopyData(0, objConstants);
 }
@@ -230,7 +228,6 @@ void DX12RHI::Render()
 	FlushCommandQueue();
 }
 
-
 Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout)
 {
 	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader);
@@ -244,7 +241,7 @@ Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, 
 void DX12RHI::Resize(const RHIInitializeParam& param)
 {
 	FlushCommandQueue();
-	
+
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
 	for (size_t i = 0; i < s_SwapChainBufferCount; i++)
@@ -255,7 +252,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 
 	ThrowIfFailed(m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, 
 		m_BackBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
-	
+
 	m_CurrBackBuffer = 0;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(m_RtvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -666,3 +663,4 @@ void DX12RHI::BuildTestVertexBuffer()
 
 	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), layout);
 }
+
