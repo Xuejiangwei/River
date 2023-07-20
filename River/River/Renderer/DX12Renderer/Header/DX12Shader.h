@@ -20,6 +20,4 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D10Blob> m_VertexShaderByteCode;
 	Microsoft::WRL::ComPtr<ID3D10Blob> m_PixelShaderByteCode;
-
-	std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputLayout;
 };

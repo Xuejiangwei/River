@@ -1,38 +1,14 @@
 #pragma once
 
 #include "RiverHead.h"
-
-enum class ShaderDataType
-{
-	None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
-};
-
-static uint32_t ShaderDataTypeSize(ShaderDataType type)
-{
-	switch (type)
-	{
-	case ShaderDataType::Float:    return 4;
-	case ShaderDataType::Float2:   return 4 * 2;
-	case ShaderDataType::Float3:   return 4 * 3;
-	case ShaderDataType::Float4:   return 4 * 4;
-	case ShaderDataType::Mat3:     return 4 * 3 * 3;
-	case ShaderDataType::Mat4:     return 4 * 4 * 4;
-	case ShaderDataType::Int:      return 4;
-	case ShaderDataType::Int2:     return 4 * 2;
-	case ShaderDataType::Int3:     return 4 * 3;
-	case ShaderDataType::Int4:     return 4 * 4;
-	case ShaderDataType::Bool:     return 1;
-	}
-
-	return 0;
-}
+#include "ShaderDataType.h"
 
 struct BufferElement
 {
 	std::string Name;
 	ShaderDataType Type;
 	uint32_t Size;
-	size_t Offset;
+	uint32_t Offset;
 	bool Normalized;
 
 	BufferElement() = default;
@@ -77,6 +53,8 @@ public:
 	uint32_t GetStride() const { return m_Stride; }
 	const std::vector<BufferElement>& GetElements() const { return m_Elements; }
 
+	size_t GetElementCount() const { return m_Elements.size(); }
+
 	std::vector<BufferElement>::iterator begin() { return m_Elements.begin(); }
 	std::vector<BufferElement>::iterator end() { return m_Elements.end(); }
 	std::vector<BufferElement>::const_iterator begin() const { return m_Elements.begin(); }
@@ -84,7 +62,7 @@ public:
 private:
 	void CalculateOffsetsAndStride()
 	{
-		size_t offset = 0;
+		uint32_t offset = 0;
 		m_Stride = 0;
 		for (auto& element : m_Elements)
 		{
@@ -101,14 +79,15 @@ private:
 class VertexBuffer
 {
 public:
-	VertexBuffer();
+	VertexBuffer(const VertexBufferLayout& layout);
 	virtual ~VertexBuffer();
+
+	const VertexBufferLayout& GetVertexBufferLayout() const { return m_Layout; };
 
 	/*virtual void SetVertexBufferData(void* data, uint32_t size) = 0;
 
-	virtual const VertexBufferLayout& GetVertexBufferLayout() const = 0;
 	virtual void SettVertexBufferLayout(const VertexBufferLayout& layout) = 0;*/
 
-private:
-
+protected:
+	VertexBufferLayout m_Layout;
 };

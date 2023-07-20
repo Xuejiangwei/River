@@ -87,6 +87,9 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Util.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -171,6 +174,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\UploadBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12IndexBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\ShaderDataType.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -90,3 +90,38 @@ Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename, con
         return byteCode;
     }
 }
+
+DXGI_FORMAT ShaderDateTypeToDXGIFormat(ShaderDataType type)
+{
+    switch (type)
+    {
+    case ShaderDataType::None:
+        return DXGI_FORMAT_UNKNOWN;
+    case ShaderDataType::Float:
+        return DXGI_FORMAT_R32_FLOAT;
+    case ShaderDataType::Float2:
+        return DXGI_FORMAT_R32G32_FLOAT;
+    case ShaderDataType::Float3:
+        return DXGI_FORMAT_R32G32B32_FLOAT;
+    case ShaderDataType::Float4:
+        return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        /*case ShaderDataType::Mat3:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case ShaderDataType::Mat4:
+            break;*/
+    case ShaderDataType::Int:
+        return DXGI_FORMAT_R32_UINT;
+    case ShaderDataType::Int2:
+        return DXGI_FORMAT_R32G32_UINT;
+    case ShaderDataType::Int3:
+        return DXGI_FORMAT_R32G32B32_UINT;
+    case ShaderDataType::Int4:
+        return DXGI_FORMAT_R32G32B32A32_UINT;
+    case ShaderDataType::Bool:
+        return DXGI_FORMAT_R8_UINT;
+    default:
+        break;
+    }
+
+    return DXGI_FORMAT_UNKNOWN;
+}

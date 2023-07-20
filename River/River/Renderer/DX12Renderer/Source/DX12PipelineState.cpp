@@ -1,14 +1,15 @@
 #include "RiverPch.h"
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
+#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12PipelineState.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 
-DX12PipelineState::DX12PipelineState(ID3D12Device* device, Share<Shader> shader) 
+DX12PipelineState::DX12PipelineState(ID3D12Device* device, Share<Shader> shader, Share<VertexBuffer> vertexBuffer)
 	:m_Shader(shader)
 {
 	InitRootSignature(device);
-	InitPipelineState(device);
+	InitPipelineState(device, vertexBuffer);
 }
 
 DX12PipelineState::~DX12PipelineState()
@@ -45,35 +46,14 @@ void DX12PipelineState::InitRootSignature(ID3D12Device* device)
 		, IID_PPV_ARGS(&m_RootSignature)));
 }
 
-void DX12PipelineState::InitPipelineState(ID3D12Device* device)
+void DX12PipelineState::InitPipelineState(ID3D12Device* device, Share<VertexBuffer> vertexBuffer)
 {
-	D3D12_INPUT_ELEMENT_DESC stInputElementDescs[] =
-	{
-		{
-			"POSITION"
-			, 0
-			, DXGI_FORMAT_R32G32B32A32_FLOAT
-			, 0
-			, 0
-			, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
-			, 0
-		},
-		{
-			"COLOR"
-			, 0
-			, DXGI_FORMAT_R32G32B32A32_FLOAT
-			, 0
-			, 16
-			, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
-			, 0
-		}
-	};
-
 	auto Shader = dynamic_cast<DX12Shader*>(m_Shader.get());
+	auto dx12VertexBuffer = dynamic_cast<DX12VertexBuffer*>(vertexBuffer.get());
 	DXGI_FORMAT	emRenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC stPSODesc = {};
-	stPSODesc.InputLayout = { stInputElementDescs, _countof(stInputElementDescs) };
+	stPSODesc.InputLayout = { dx12VertexBuffer->m_VertexLayout.data(), (uint32_t)dx12VertexBuffer->m_VertexLayout.size() };
 	stPSODesc.pRootSignature = m_RootSignature.Get();
 	stPSODesc.VS.pShaderBytecode = Shader->m_VertexShaderByteCode->GetBufferPointer();
 	stPSODesc.VS.BytecodeLength = Shader->m_VertexShaderByteCode->GetBufferSize();

@@ -7,6 +7,7 @@
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12MeshGeometry.h"
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
+#include "Renderer/DX12Renderer/Header/DX12IndexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 
@@ -61,6 +62,9 @@ DX12RHI::~DX12RHI()
 }
 
 Share<VertexBuffer> mVertexBuffer;
+Share<IndexBuffer> mIndexBuffer;
+Share<DX12Shader> mShader;
+Share<DX12PipelineState> mPipeline;
 Share<DX12UniformBuffer> mUniformBuffer;
 
 void DX12RHI::Initialize(const RHIInitializeParam& param)
@@ -95,34 +99,19 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 	
-	
 	{
 		BuildDescriptorHeaps();
 		BuildConstantBuffers();
 		BuildMeshGeometry("boxGeo");
 		BuildShadersAndInputLayout();
 	
+		mShader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\color.hlsl");
+		BuildTestVertexBufferAndIndexBuffer();
 
-		//BuildTestVertexBuffer();
+		mPipeline = MakeShare<DX12PipelineState>(m_Device.Get(), mShader, mVertexBuffer);
 
-		BuildRootSignature();
-		BuildPSO();
-	}
-	
-	//mUniformBuffer = MakeShare<DX12UniformBuffer>(m_Device.Get(), sizeof(ObjectUnifrom), 1, true);
-
-	{
-		// 定义三角形的3D数据结构，每个顶点使用三原色之一
-		/*float fTrangleSize = 3.0f;
-		GRS_VERTEX stTriangleVertices[] =
-		{
-			{ { 0.0f, 0.25f * fTrangleSize, 0.0f ,1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-			{ { 0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f ,1.0f  }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-			{ { -0.25f * fTrangleSize, -0.25f * fTrangleSize, 0.0f  ,1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
-		};
-
-		mVertexBuffer = MakeShare<DX12VertexBuffer>(m_Device.Get(), (float*)(&stTriangleVertices),
-			(uint32_t)sizeof(stTriangleVertices), (uint32_t)sizeof(GRS_VERTEX));*/
+		//BuildRootSignature();
+		//BuildPSO();
 	}
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -164,13 +153,16 @@ void DX12RHI::OnUpdate()
 
 void DX12RHI::Render()
 {
+	auto pso = mPipeline->m_PipelineState.Get(); //m_PSO.Get();
+	auto rootSignature = mPipeline->m_RootSignature.Get();// m_RootSignature.Get();
+
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(m_CommandAllocator->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 	// Reusing the command list reuses memory.
-	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), m_PSO.Get()));
+	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), pso));
 
 	m_CommandList->RSSetViewports(1, &m_Viewport);
 	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
@@ -192,10 +184,12 @@ void DX12RHI::Render()
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_CbvHeap.Get() };
 	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
+	m_CommandList->SetGraphicsRootSignature(rootSignature);
 
-	auto bbv = m_BoxGeo->VertexBufferView();
-	auto ibv = m_BoxGeo->IndexBufferView();
+	//dynamic_cast<DX12VertexBuffer*>(mVertexBuffer.get())->m_VertexBufferView; //
+	//dynamic_cast<DX12IndexBuffer*>(mIndexBuffer.get())->m_IndexBufferView; //
+	auto bbv = dynamic_cast<DX12VertexBuffer*>(mVertexBuffer.get())->m_VertexBufferView; //m_BoxGeo->VertexBufferView();
+	auto ibv = dynamic_cast<DX12IndexBuffer*>(mIndexBuffer.get())->m_IndexBufferView; // m_BoxGeo->IndexBufferView();
 	m_CommandList->IASetVertexBuffers(0, 1, &bbv);
 	m_CommandList->IASetIndexBuffer(&ibv);
 	m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -203,7 +197,7 @@ void DX12RHI::Render()
 	m_CommandList->SetGraphicsRootDescriptorTable(0, m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_CommandList->DrawIndexedInstanced(
-		m_BoxGeo->DrawArgs["box"].IndexCount,
+		mIndexBuffer->GetIndexCount(),//m_BoxGeo->DrawArgs["box"].IndexCount,
 		1, 0, 0, 0);
 
 	// Indicate a state transition on the resource usage.
@@ -230,12 +224,17 @@ void DX12RHI::Render()
 
 Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout)
 {
-	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader);
+	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader, nullptr);
 }
 
-Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, const VertexBufferLayout& layout)
+Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
 {
-	return MakeShare<DX12VertexBuffer>(m_Device.Get(), vertices, size, 0, layout);
+	return MakeShare<DX12VertexBuffer>(m_Device.Get(), vertices, size, elementSize, layout);
+}
+
+Share<IndexBuffer> DX12RHI::CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType)
+{
+	return MakeShare<DX12IndexBuffer>(m_Device.Get(), indices, count, indiceDataType);
 }
 
 void DX12RHI::Resize(const RHIInitializeParam& param)
@@ -316,6 +315,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 		1.0f, 1000.0f);*/
 	DirectX::XMStoreFloat4x4(&mProj, P);
 }
+
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
 {
@@ -645,7 +645,7 @@ void DX12RHI::BuildPSO()
 	ThrowIfFailed(m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PSO)));
 }
 
-void DX12RHI::BuildTestVertexBuffer()
+void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 {
 	std::array<Vertex, 8> vertices =
 	{
@@ -661,6 +661,36 @@ void DX12RHI::BuildTestVertexBuffer()
 
 	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float4, "COLOR" } };
 
-	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), layout);
+	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), (uint32_t)sizeof(Vertex), layout);
+	
+	std::array<std::uint32_t, 36> indices =
+	{
+		// front face
+		0, 1, 2,
+		0, 2, 3,
+
+		// back face
+		4, 6, 5,
+		4, 7, 6,
+
+		// left face
+		4, 5, 1,
+		4, 1, 0,
+
+		// right face
+		3, 2, 6,
+		3, 6, 7,
+
+		// top face
+		1, 5, 6,
+		1, 6, 2,
+
+		// bottom face
+		4, 0, 3,
+		4, 3, 7
+	};
+
+	mIndexBuffer= RHI::Get()->CreateIndexBuffer((uint32_t*)indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
+
 }
 

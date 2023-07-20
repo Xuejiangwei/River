@@ -7,7 +7,8 @@
 #endif // _WIN32
 
 
-VertexBuffer::VertexBuffer()
+VertexBuffer::VertexBuffer(const VertexBufferLayout& layout)
+	: m_Layout(std::move(layout))
 {
 }
 

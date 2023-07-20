@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 #include "DirectXMath.h"
+#include "ShaderDataType.h"
 
 inline std::wstring AnsiToWString(const std::string& str)
 {
@@ -48,3 +49,5 @@ Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,
     const std::string& target);
+
+DXGI_FORMAT ShaderDateTypeToDXGIFormat(ShaderDataType type);

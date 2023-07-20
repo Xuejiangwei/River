@@ -7,10 +7,12 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+class VertexBuffer;
+
 class DX12PipelineState : public PipelineState
 {
 public:
-	DX12PipelineState(ID3D12Device* device, Share<Shader> shader);
+	DX12PipelineState(ID3D12Device* device, Share<Shader> shader, Share<VertexBuffer> vertexBuffer);
 	virtual ~DX12PipelineState() override;
 
 	friend class DX12RHI;
@@ -18,7 +20,7 @@ public:
 private:
 	void InitRootSignature(ID3D12Device* device);
 
-	void InitPipelineState(ID3D12Device* device);
+	void InitPipelineState(ID3D12Device* device, Share<VertexBuffer> vertexBuffer);
 
 private:
 	Share<Shader> m_Shader;

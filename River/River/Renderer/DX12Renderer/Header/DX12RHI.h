@@ -40,7 +40,9 @@ public:
 
 	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout) override;
 
-	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, const VertexBufferLayout& layout) override;
+	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) override;
+
+	virtual Share<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) override;
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
@@ -91,7 +93,7 @@ private:
 
 	void BuildPSO();
 
-	void BuildTestVertexBuffer();
+	void BuildTestVertexBufferAndIndexBuffer();
 
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;

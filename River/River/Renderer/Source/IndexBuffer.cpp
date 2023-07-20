@@ -1,15 +1,11 @@
 #include "RiverPch.h"
 #include "IndexBuffer.h"
 
-IndexBuffer::IndexBuffer()
+IndexBuffer::IndexBuffer(uint32_t count, ShaderDataType indiceDataType)
+	: m_Count(count), m_IndiceDataType(indiceDataType)
 {
 }
 
 IndexBuffer::~IndexBuffer()
 {
-}
-
-Share<IndexBuffer> IndexBuffer::Create(uint32_t* indices, uint32_t count)
-{
-	return Share<IndexBuffer>();
 }
