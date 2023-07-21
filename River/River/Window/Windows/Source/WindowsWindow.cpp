@@ -1,58 +1,8 @@
 #include "RiverPch.h"
 #include "../Header/WindowsWindow.h"
+#include <windowsx.h>
 
-#include <SDKDDKVer.h>
-#define WIN32_LEAN_AND_MEAN // 从 Windows 头中排除极少使用的资料
-#include <windows.h>
-#include <tchar.h>
-#include <wrl.h>  //添加WTL支持 方便使用COM
-#include <strsafe.h>
-#include <dxgi1_6.h>
-#include <DirectXMath.h>
-#include <d3d12.h>	//for d3d12
-#include <d3d12shader.h>
-#include <d3dcompiler.h>
-#if defined(_DEBUG)
-#include <dxgidebug.h>
-#endif
-
-using namespace Microsoft;
-using namespace Microsoft::WRL;
-using namespace DirectX;
-
-//linker
-#pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3d12.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-
-
-#define GRS_WND_CLASS_NAME _T("GRS Game Window Class")
-#define GRS_WND_TITLE	_T("GRS DirectX12 Trigger Sample")
-
-#define GRS_THROW_IF_FAILED(hr) {HRESULT _hr = (hr);if (FAILED(_hr)){ throw CGRSCOMException(_hr); }}
-
-#include "RHI.h"
-
-class CGRSCOMException
-{
-public:
-	CGRSCOMException(HRESULT hr) : m_hrError(hr)
-	{
-	}
-	HRESULT Error() const
-	{
-		return m_hrError;
-	}
-private:
-	const HRESULT m_hrError;
-};
-
-struct GRS_VERTEX
-{
-	XMFLOAT4 m_vtPos;
-	XMFLOAT4 m_vtColor;
-};
+#include "Application.h"
 
 LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -149,6 +99,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// WM_DESTROY is sent when the window is being destroyed.
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		Application::Get().Close();
 		return 0;
 
 		// The WM_MENUCHAR message is sent when a menu is active and the user presses
@@ -166,15 +117,26 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-		//OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	{
+		MouseCode code = msg == WM_LBUTTONDOWN ? MouseCode::ButtonLeft : msg == WM_MBUTTONDOWN ? MouseCode::ButtonMiddle : MouseCode::ButtonRight;
+		MouseButtonPressedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		Application::Get().OnEvent(e);
+	}
 		return 0;
 	case WM_LBUTTONUP:
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
-		//OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	{
+		MouseCode code = msg == WM_LBUTTONUP ? MouseCode::ButtonLeft : msg == WM_MBUTTONUP ? MouseCode::ButtonMiddle : MouseCode::ButtonRight;
+		MouseButtonReleasedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		Application::Get().OnEvent(e);
+	}
 		return 0;
 	case WM_MOUSEMOVE:
-		//OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	{
+		MouseMovedEvent e((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
+		Application::Get().OnEvent(e);
+	}
 		return 0;
 	case WM_KEYUP:
 		/*if (wParam == VK_ESCAPE)
@@ -249,20 +211,16 @@ void WindowsWindow::Init(const WindowParam& Param)
 
 void WindowsWindow::OnUpdate()
 {
-	while (m_Msg.message != WM_QUIT)
+	// If there are Window messages then process them.
+	if (PeekMessage(&m_Msg, 0, 0, 0, PM_REMOVE))
 	{
-		// If there are Window messages then process them.
-		if (PeekMessage(&m_Msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&m_Msg);
-			DispatchMessage(&m_Msg);
-		}
-		// Otherwise, do animation/game stuff.
-		else
-		{
-			RHI::Get()->OnUpdate();
-			RHI::Get()->Render();
-		}
+		TranslateMessage(&m_Msg);
+		DispatchMessage(&m_Msg);
+	}
+	// Otherwise, do animation/game stuff.
+	else
+	{
+		
 	}
 }
 

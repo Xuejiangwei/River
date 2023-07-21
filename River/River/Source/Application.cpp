@@ -3,7 +3,8 @@
 #include "Layer.h"
 #include "Window.h"
 
-#include "Renderer/Header/RHI.h"
+#include "RHI.h"
+#include "Camera.h"
 
 Application* Application::s_Instance = nullptr;
 
@@ -32,23 +33,54 @@ void Application::Run()
 {
 	while (m_Running)
 	{
-		/*if (!m_Window->PeekProcessMessage())
-		{
-			continue;
-		}
-
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate();
-		}*/
-
-		
+		}
 
 		m_Window->OnUpdate();
+
+		RHI::Get()->OnUpdate();
+		RHI::Get()->Render();
 	}
+}
+
+void Application::Close()
+{
+	m_Running = false;
 }
 
 void Application::AddLayer(Share<Layer> layer)
 {
 	m_Layers.push_back(layer);
+}
+
+void Application::OnEvent(Event& e)
+{
+	for (auto& layer : m_Layers)
+	{
+		layer->OnEvent(e);
+	}
+
+	EventDispatcher dispatcher(e);
+	dispatcher.DispatchDirect<MouseButtonPressedEvent>(
+		[this](auto e) -> decltype(auto) 
+		{
+			auto& ce = dynamic_cast<MouseButtonPressedEvent&>(e);
+			RHI::Get()->GetMainCamera()->OnMousePressed(ce.GetMouseX(), ce.GetMouseY());
+		});
+
+	dispatcher.DispatchDirect<MouseButtonReleasedEvent>(
+		[this](auto e) -> decltype(auto)
+		{
+			auto& ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
+			RHI::Get()->GetMainCamera()->OnMouseReleased(ce.GetMouseX(), ce.GetMouseY());
+		});
+
+	dispatcher.DispatchDirect<MouseMovedEvent>(
+		[this](auto e) -> decltype(auto)
+		{
+			auto& ce = dynamic_cast<MouseMovedEvent&>(e);
+			RHI::Get()->GetMainCamera()->OnMouseMoved((int)ce.GetX(), (int)ce.GetY());
+		});
 }

@@ -3,6 +3,7 @@
 class Layer;
 class Window;
 
+#include "Event.h"
 
 class Application
 {
@@ -12,7 +13,15 @@ public:
 
 	void Run();
 
+	void Close();
+
 	void AddLayer(Share<Layer> layer);
+
+	void OnEvent(Event& e);
+
+	const Unique<Window>& GetWindow() const { return m_Window; }
+
+	static Application& Get() { return *s_Instance; }
 
 private:
 	bool m_Running;

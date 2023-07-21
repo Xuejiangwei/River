@@ -53,6 +53,8 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	m_Viewport = { 0.0f, 0.0f, static_cast<float>(param.WindowWidth), static_cast<float>(param.WindowHeight), D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
 	m_ScissorRect = { 0, 0, static_cast<LONG>(param.WindowWidth), static_cast<LONG>(param.WindowHeight) };
 
+	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
+
 	{
 		ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
 
@@ -96,6 +98,8 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 void DX12RHI::OnUpdate()
 {
+	m_PrespectiveCamera.OnUpdate();
+
 	ObjectConstants objConstants;
 	
 	float mTheta = 1.5f * DirectX::XM_PI;
@@ -115,7 +119,8 @@ void DX12RHI::OnUpdate()
 
 	DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
 	DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
-	DirectX::XMMATRIX worldViewProj = world * view * proj;
+	//DirectX::XMMATRIX worldViewProj = world * view * proj;
+	DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
 	DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 
 	// Update the constant buffer with the latest worldViewProj matrix.
@@ -282,12 +287,11 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 
-	DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(4, 4, 0, 1000);
-	/*DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight,
-		1.0f, 1000.0f);*/
+	//DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(4, 4, 0, 1000);
+	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight,
+		1.0f, 1000.0f);
 	DirectX::XMStoreFloat4x4(&mProj, P);
 }
-
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
 {
@@ -350,6 +354,11 @@ void DX12RHI::CreateSwapChain()
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	ThrowIfFailed(m_Factory->CreateSwapChain(m_CommandQueue.Get(), &sd, m_SwapChain.GetAddressOf()));
+}
+
+Camera* DX12RHI::GetMainCamera()
+{
+	return &m_PrespectiveCamera;
 }
 
 void DX12RHI::CreateRtvAndDsvHeaps()

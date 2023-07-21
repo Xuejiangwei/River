@@ -7,4 +7,5 @@
 #include <vector>
 #include <array>
 
+#include "Event.h"
 #include "RiverHead.h"

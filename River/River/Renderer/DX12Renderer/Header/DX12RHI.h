@@ -10,8 +10,11 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
+#include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
+
+#include "Event.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
@@ -44,6 +47,8 @@ public:
 	virtual Share<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) override;
 
 	virtual void Resize(const RHIInitializeParam& param) override;
+
+	virtual Camera* GetMainCamera() override;
 
 private:
 	void EnumAdaptersAndCreateDevice();
@@ -86,7 +91,6 @@ private:
 
 	void BuildRootSignature();
 
-
 	void BuildTestVertexBufferAndIndexBuffer();
 
 private:
@@ -123,6 +127,8 @@ private:
 
 	D3D12_VIEWPORT m_Viewport;
 	D3D12_RECT m_ScissorRect;
+
+	DX12Camera m_PrespectiveCamera;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 	//Unique<DX12UniformBuffer> m_UniformBuffer;

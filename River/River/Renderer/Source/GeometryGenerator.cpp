@@ -1,9 +1,7 @@
 #include "RiverPch.h"
 #include "GeometryGenerator.h"
+#include "MathHelper.h"
 #include "RHI.h"
-
-#define PI 3.141592654f
-#define _2_PI 6.283185307f
 
 Unique<GeometryGenerator>& GeometryGenerator::Get()
 {

@@ -13,3 +13,8 @@ void RiverEditorLayer::OnUpdate()
 {
 
 }
+
+bool RiverEditorLayer::OnEvent(const Event& e)
+{
+    return false;
+}

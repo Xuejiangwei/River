@@ -42,6 +42,8 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
+	virtual class Camera* GetMainCamera() = 0;
+
 	static Unique<RHI>& Get();
 
 	APIMode GetAPIMode() const { return s_APIMode; }

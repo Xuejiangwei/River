@@ -10,6 +10,8 @@ public:
 
 	virtual void OnUpdate() override;
 
+	virtual bool OnEvent(const class Event& e);
+
 private:
 
 };
