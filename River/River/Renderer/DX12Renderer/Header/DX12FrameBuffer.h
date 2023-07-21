@@ -2,15 +2,16 @@
 
 #include "FrameBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
+#include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 
 #include <d3d12.h>
 #include <wrl.h>
 #include "DirectXMath.h"
 
-struct ObjectUnifrom
+struct ObjectUniform
 {
-    DirectX::XMFLOAT4 World = {1, 0, 0, 1};
-    //DirectX::XMFLOAT4X4 World = Identity4x4();
+    DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
+    DirectX::XMFLOAT4 Color;
 };
 
 struct PassUniform
@@ -38,9 +39,14 @@ public:
 	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount);
 	virtual ~DX12FrameBuffer() override;
 
+    DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
+    DX12FrameBuffer& operator=(const DX12FrameBuffer& rhs) = delete;
+
     friend class DX12RHI;
 private:
-    //Unique<DX12UniformBuffer> PassCB;
-    //Unique<DX12UniformBuffer> ObjectCB;
+    Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
+    Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
     UINT64 m_FenceValue;
 };

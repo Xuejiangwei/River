@@ -10,23 +10,17 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
+#include "Event.h"
 #include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
-
-#include "Event.h"
+#include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
 class DX12PipelineState;
-
-struct ObjectConstants
-{
-	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
-	DirectX::XMFLOAT4 Color;
-};
 
 class DX12RHI : public RHI
 {
@@ -79,7 +73,7 @@ private:
 	void BuildDescriptorHeaps()
 	{
 		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-		cbvHeapDesc.NumDescriptors = 1;
+		cbvHeapDesc.NumDescriptors = (s_MaxRenderItem + 1) * 3; //1;
 		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		cbvHeapDesc.NodeMask = 0;
@@ -93,6 +87,10 @@ private:
 
 	void BuildTestVertexBufferAndIndexBuffer();
 
+	void IntiFrameBuffer();
+
+	void BuildConstantBufferViews();
+
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
 	Microsoft::WRL::ComPtr<ID3D12Device4> m_Device;
@@ -103,6 +101,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandList;
 	
 	static const int s_SwapChainBufferCount = 2;
+	static const int s_MaxRenderItem = 100;
 	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
 
@@ -130,8 +129,12 @@ private:
 
 	DX12Camera m_PrespectiveCamera;
 
+	std::vector<Unique<DX12FrameBuffer>> m_FrameBuffer;
+	DX12FrameBuffer* m_CurrFrameResource = nullptr;
+	int m_CurrFrameResourceIndex = 0;
+
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
-	//Unique<DX12UniformBuffer> m_UniformBuffer;
+	PassUniform m_MainPassUniformData;
 
 	std::vector<Share<DX12PipelineState>> m_PSOs;
 
@@ -139,9 +142,5 @@ private:
 	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	Unique<class DX12FrameBuffer> m_FrameBuffers[s_SwapChainBufferCount];
-
 	RHIInitializeParam m_InitParam;
-
-	Unique<DX12UniformBuffer<ObjectConstants>> mUniformBuffer = nullptr;
 };

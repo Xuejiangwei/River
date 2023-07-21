@@ -4,10 +4,8 @@
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 #include "Renderer/DX12Renderer/Header/DX12PipelineState.h"
-#include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12IndexBuffer.h"
-#include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 
 #include "DirectXMath.h"
@@ -15,17 +13,11 @@
 #include <iostream>
 #include <chrono>
 
-PassUniform g_MainPassCB;
-
 struct Vertex
 {
 	DirectX::XMFLOAT3 Pos;
 	DirectX::XMFLOAT4 Color;
 };
-
-DirectX::XMFLOAT4X4 mProj = Identity4x4();
-
-DirectX::XMFLOAT4X4 mView = Identity4x4();
 
 DirectX::XMFLOAT4X4 mWorld = Identity4x4();
 
@@ -80,9 +72,11 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 	
 	{
+		//BuildConstantBuffers();
+		IntiFrameBuffer();
 		BuildDescriptorHeaps();
-		BuildConstantBuffers();
-	
+		BuildConstantBufferViews();
+
 		mShader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\color.hlsl");
 		BuildTestVertexBufferAndIndexBuffer();
 
@@ -99,34 +93,40 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 void DX12RHI::OnUpdate()
 {
 	m_PrespectiveCamera.OnUpdate();
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % 3;
+	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 
-	ObjectConstants objConstants;
-	
-	float mTheta = 1.5f * DirectX::XM_PI;
-	float mPhi = DirectX::XM_PIDIV4;
-	float mRadius = 5.0f;
-	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-	float y = mRadius * cosf(mPhi);
+	if (m_CurrFrameResource->m_FenceValue != 0 && m_Fence->GetCompletedValue() < m_CurrFrameResource->m_FenceValue)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
-	// Build the view matrix.
-	DirectX::XMVECTOR pos = DirectX::XMVectorSet(x, y, z, 1.0f);
-	DirectX::XMVECTOR target = DirectX::XMVectorZero();
-	DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrFrameResource->m_FenceValue, eventHandle));
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(pos, target, up);
-	DirectX::XMStoreFloat4x4(&mView, view);
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
 
-	DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
-	DirectX::XMMATRIX proj = DirectX::XMLoadFloat4x4(&mProj);
-	//DirectX::XMMATRIX worldViewProj = world * view * proj;
-	DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
-	DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 
-	// Update the constant buffer with the latest worldViewProj matrix.
-	DirectX::XMStoreFloat4(&objConstants.Color, DirectX::XMVectorSet(1.0f, 1.0f, 0.f, 1.0f));
 
-	mUniformBuffer->CopyData(0, objConstants);
+	ObjectUniform objConstants;
+
+	auto currObjectCB = m_CurrFrameResource->m_ObjectUniform.get();
+	for (int i = 0; i < s_MaxRenderItem; i++)
+	{
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 *i, 1);
+		//DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
+		DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
+		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+
+		// Update the constant buffer with the latest worldViewProj matrix.
+		DirectX::XMStoreFloat4(&objConstants.Color, DirectX::XMVectorSet(1.0f, 1.0f, 0.f, 1.0f));
+
+		currObjectCB->CopyData(i, objConstants);
+	}
+	//mUniformBuffer->CopyData(0, objConstants);
+
+	DirectX::XMStoreFloat3(&m_MainPassUniformData.EyePosW, DirectX::XMVectorSet(1.0f, 0.f, 0.f, 1.0f));
+	m_CurrFrameResource->m_PassUniform->CopyData(0, m_MainPassUniformData);
 }
 
 void DX12RHI::Render()
@@ -134,13 +134,15 @@ void DX12RHI::Render()
 	auto pso = m_PSOs[0]->m_PipelineState.Get();
 	auto rootSignature = m_PSOs[0]->m_RootSignature.Get();
 
+	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
+
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
-	ThrowIfFailed(m_CommandAllocator->Reset());
+	ThrowIfFailed(cmdListAlloc->Reset());
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 	// Reusing the command list reuses memory.
-	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), pso));
+	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), pso));
 
 	m_CommandList->RSSetViewports(1, &m_Viewport);
 	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
@@ -164,18 +166,30 @@ void DX12RHI::Render()
 
 	m_CommandList->SetGraphicsRootSignature(rootSignature);
 
+	int passCbvIndex = s_MaxRenderItem * 3 + m_CurrFrameResourceIndex;
+	auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+	passCbvHandle.Offset(passCbvIndex, m_CbvSrvUavDescriptorSize);
+	m_CommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+
 	auto bbv = dynamic_cast<DX12VertexBuffer*>(mVertexBuffer.get())->m_VertexBufferView;
 	auto ibv = dynamic_cast<DX12IndexBuffer*>(mIndexBuffer.get())->m_IndexBufferView;
-	m_CommandList->IASetVertexBuffers(0, 1, &bbv);
-	m_CommandList->IASetIndexBuffer(&ibv);
-	m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	m_CommandList->SetGraphicsRootDescriptorTable(0, /*mUniformBuffer->m_UniformBufferHeap->GetGPUDescriptorHandleForHeapStart()*/
-		m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+	for (int i = 0; i < s_MaxRenderItem; i++)
+	{
+		m_CommandList->IASetVertexBuffers(0, 1, &bbv);
+		m_CommandList->IASetIndexBuffer(&ibv);
+		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	m_CommandList->DrawIndexedInstanced(
-		mIndexBuffer->GetIndexCount(),//m_BoxGeo->DrawArgs["box"].IndexCount,
-		1, 0, 0, 0);
+		UINT cbvIndex = m_CurrFrameResourceIndex * s_MaxRenderItem + i;
+		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+		cbvHandle.Offset(cbvIndex, m_CbvSrvUavDescriptorSize);
+
+		m_CommandList->SetGraphicsRootDescriptorTable(0, /*m_CbvHeap->GetGPUDescriptorHandleForHeapStart()*/cbvHandle);
+
+		m_CommandList->DrawIndexedInstanced(
+			mIndexBuffer->GetIndexCount(),//m_BoxGeo->DrawArgs["box"].IndexCount,
+			1, 0, 0, 0);
+	}
 
 	// Indicate a state transition on the resource usage.
 	auto rb2 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -192,6 +206,8 @@ void DX12RHI::Render()
 	// swap the back and front buffers
 	ThrowIfFailed(m_SwapChain->Present(0, 0));
 	m_CurrBackBuffer = (m_CurrBackBuffer + 1) % s_SwapChainBufferCount;
+
+	m_CurrFrameResource->m_FenceValue = ++m_CurrentFence;
 
 	// Wait until frame commands are complete.  This waiting is inefficient and is
 	// done for simplicity.  Later we will show how to organize our rendering code
@@ -288,9 +304,9 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 
 	//DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(4, 4, 0, 1000);
-	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight,
-		1.0f, 1000.0f);
-	DirectX::XMStoreFloat4x4(&mProj, P);
+	//DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight,
+	//	1.0f, 1000.0f);
+	//DirectX::XMStoreFloat4x4(&mProj, P);
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -432,16 +448,6 @@ void DX12RHI::FlushCommandQueue()
 	m_CurrentFence++;
 
 	m_CommandQueue->Signal(m_Fence.Get(), m_CurrentFence);
-
-	if (m_Fence->GetCompletedValue() < m_CurrentFence)
-	{
-		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-
-		ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrentFence, eventHandle));
-
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
-	}
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
@@ -454,23 +460,22 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 
 void DX12RHI::BuildConstantBuffers()
 {
-	//m_ObjectCB = MakeUnique<UploadBuffer<ObjectConstants>>(m_Device.Get(), 1, true);
-	mUniformBuffer = MakeUnique<DX12UniformBuffer<ObjectConstants>>(m_Device.Get(), 1, true);
+	//mUniformBuffer = MakeUnique<DX12UniformBuffer<ObjectConstants>>(m_Device.Get(), 1, true);
 
-	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
+	//UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
 
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mUniformBuffer->Resource()->GetGPUVirtualAddress();//m_ObjectCB->Resource()->GetGPUVirtualAddress();
-	// Offset to the ith object constant buffer in the buffer.
-	int boxCBufIndex = 0;
-	cbAddress += boxCBufIndex * objCBByteSize;
+	//D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mUniformBuffer->Resource()->GetGPUVirtualAddress();//m_ObjectCB->Resource()->GetGPUVirtualAddress();
+	//// Offset to the ith object constant buffer in the buffer.
+	//int boxCBufIndex = 0;
+	//cbAddress += boxCBufIndex * objCBByteSize;
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = cbAddress;
-	cbvDesc.SizeInBytes = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
+	//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	//cbvDesc.BufferLocation = cbAddress;
+	//cbvDesc.SizeInBytes = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
 
-	m_Device->CreateConstantBufferView(
-		&cbvDesc,
-		m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+	//m_Device->CreateConstantBufferView(
+	//	&cbvDesc,
+	//	m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
@@ -522,3 +527,56 @@ void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 
 }
 
+void DX12RHI::IntiFrameBuffer()
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, s_MaxRenderItem));
+	}
+}
+
+void DX12RHI::BuildConstantBufferViews()
+{
+	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+
+	for (int i = 0; i < m_FrameBuffer.size(); i++)
+	{
+		auto resource = m_FrameBuffer[i]->m_ObjectUniform->Resource();
+		for (int j = 0; j < s_MaxRenderItem; j++)
+		{
+			D3D12_GPU_VIRTUAL_ADDRESS cbAddress = resource->GetGPUVirtualAddress();
+			cbAddress += j * objCBByteSize;
+
+			int heapIndex = i * s_MaxRenderItem + j;
+			auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+			handle.Offset(heapIndex, m_CbvSrvUavDescriptorSize);
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+			cbvDesc.BufferLocation = cbAddress;
+			cbvDesc.SizeInBytes = objCBByteSize;
+
+			m_Device->CreateConstantBufferView(&cbvDesc, handle);
+		}
+	}
+	
+	int passCbvOffset = s_MaxRenderItem * (int)m_FrameBuffer.size();
+	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
+
+	// Last three descriptors are the pass CBVs for each frame resource.
+	for (int frameIndex = 0; frameIndex < m_FrameBuffer.size(); ++frameIndex)
+	{
+		auto passCB = m_FrameBuffer[frameIndex]->m_PassUniform->Resource();
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
+
+		// Offset to the pass cbv in the descriptor heap.
+		int heapIndex = passCbvOffset + frameIndex;
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+		handle.Offset(heapIndex, m_CbvSrvUavDescriptorSize);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		cbvDesc.BufferLocation = cbAddress;
+		cbvDesc.SizeInBytes = passCBByteSize;
+
+		m_Device->CreateConstantBufferView(&cbvDesc, handle);
+	}
+}

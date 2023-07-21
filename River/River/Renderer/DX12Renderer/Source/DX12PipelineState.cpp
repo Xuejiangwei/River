@@ -18,12 +18,17 @@ DX12PipelineState::~DX12PipelineState()
 
 void DX12PipelineState::InitRootSignature(ID3D12Device* device)
 {
-	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 	CD3DX12_DESCRIPTOR_RANGE cbvTable;
 	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
 	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
 
-	CD3DX12_ROOT_SIGNATURE_DESC stRootSignatureDesc(1, slotRootParameter, 0, nullptr
+	CD3DX12_DESCRIPTOR_RANGE cbvTable1;
+	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
+
+
+	CD3DX12_ROOT_SIGNATURE_DESC stRootSignatureDesc(2, slotRootParameter, 0, nullptr
 		, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	Microsoft::WRL::ComPtr<ID3DBlob> pISignatureBlob;
