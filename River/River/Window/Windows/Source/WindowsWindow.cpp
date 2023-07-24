@@ -122,7 +122,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		MouseButtonPressedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		Application::Get().OnEvent(e);
 	}
-		return 0;
+	return 0;
 	case WM_LBUTTONUP:
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
@@ -131,13 +131,13 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		MouseButtonReleasedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		Application::Get().OnEvent(e);
 	}
-		return 0;
+	return 0;
 	case WM_MOUSEMOVE:
 	{
 		MouseMovedEvent e((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
 		Application::Get().OnEvent(e);
 	}
-		return 0;
+	return 0;
 	case WM_KEYUP:
 		/*if (wParam == VK_ESCAPE)
 		{
@@ -165,7 +165,6 @@ WindowsWindow::WindowsWindow()
 
 WindowsWindow::~WindowsWindow()
 {
-
 }
 
 void WindowsWindow::Init(const WindowParam& Param)
@@ -220,7 +219,6 @@ void WindowsWindow::OnUpdate()
 	// Otherwise, do animation/game stuff.
 	else
 	{
-		
 	}
 }
 

@@ -3,8 +3,8 @@
 
 #ifdef _WIN32
 
-	#include "Renderer/DX12Renderer/Header/DX12RHI.h"
-	#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
+#include "Renderer/DX12Renderer/Header/DX12RHI.h"
+#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 
 #endif // _WIN32
 
@@ -36,8 +36,6 @@ Unique<RHI>& RHI::Get()
 		default:
 			break;
 		}
-
-
 	}
 
 	return s_Instance;

@@ -26,7 +26,7 @@ public:
 private:
 	bool m_Running;
 
-	Vector<Share<Layer>> m_Layers;
+	V_Array<Share<Layer>> m_Layers;
 	Unique<Window> m_Window;
 
 	static Application* s_Instance;

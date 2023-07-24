@@ -7,23 +7,23 @@
 
 inline std::wstring AnsiToWString(const std::string& str)
 {
-    WCHAR buffer[512];
-    MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, buffer, 512);
-    return std::wstring(buffer);
+	WCHAR buffer[512];
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, buffer, 512);
+	return std::wstring(buffer);
 }
 
 class DxException
 {
 public:
-    DxException() = default;
-    DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber);
+	DxException() = default;
+	DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber);
 
-    std::wstring ToString()const;
+	std::wstring ToString()const;
 
-    HRESULT ErrorCode = S_OK;
-    std::wstring FunctionName;
-    std::wstring Filename;
-    int LineNumber = -1;
+	HRESULT ErrorCode = S_OK;
+	std::wstring FunctionName;
+	std::wstring Filename;
+	int LineNumber = -1;
 };
 
 #ifndef ThrowIfFailed
@@ -36,18 +36,18 @@ public:
 #endif
 
 Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
-    ID3D12Device* device,
-    ID3D12GraphicsCommandList* cmdList,
-    const void* initData,
-    UINT64 byteSize,
-    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
+	ID3D12Device* device,
+	ID3D12GraphicsCommandList* cmdList,
+	const void* initData,
+	UINT64 byteSize,
+	Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
 
 DirectX::XMFLOAT4X4 Identity4x4();
 
 Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
-    const std::wstring& filename,
-    const D3D_SHADER_MACRO* defines,
-    const std::string& entrypoint,
-    const std::string& target);
+	const std::wstring& filename,
+	const D3D_SHADER_MACRO* defines,
+	const std::string& entrypoint,
+	const std::string& target);
 
 DXGI_FORMAT ShaderDateTypeToDXGIFormat(ShaderDataType type);

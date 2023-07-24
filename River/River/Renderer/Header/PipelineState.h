@@ -7,5 +7,4 @@ public:
 	virtual ~PipelineState();
 
 private:
-
 };

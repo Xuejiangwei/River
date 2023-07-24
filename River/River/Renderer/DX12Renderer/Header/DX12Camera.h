@@ -6,7 +6,7 @@
 class DX12Camera : public Camera
 {
 public:
-	DX12Camera();
+	DX12Camera(CameraType type);
 	virtual ~DX12Camera() override;
 
 	virtual void SetPosition(float x, float y, float z) override;

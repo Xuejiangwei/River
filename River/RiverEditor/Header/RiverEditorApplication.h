@@ -9,5 +9,4 @@ public:
 	virtual ~RiverEditorApplication() override;
 
 private:
-
 };

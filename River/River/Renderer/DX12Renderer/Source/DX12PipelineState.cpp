@@ -27,7 +27,6 @@ void DX12PipelineState::InitRootSignature(ID3D12Device* device)
 	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
 
-
 	CD3DX12_ROOT_SIGNATURE_DESC stRootSignatureDesc(2, slotRootParameter, 0, nullptr
 		, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -40,12 +39,11 @@ void DX12PipelineState::InitRootSignature(ID3D12Device* device)
 		, &pISignatureBlob
 		, &pIErrorBlob);
 
-	if (pIErrorBlob!= nullptr)
+	if (pIErrorBlob != nullptr)
 	{
 		::OutputDebugStringA((char*)pIErrorBlob->GetBufferPointer());
 	}
 	ThrowIfFailed(hr);
-
 
 	ThrowIfFailed(device->CreateRootSignature(0, pISignatureBlob->GetBufferPointer(), pISignatureBlob->GetBufferSize()
 		, IID_PPV_ARGS(&m_RootSignature)));

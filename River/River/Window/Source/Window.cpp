@@ -2,7 +2,7 @@
 #include "Window.h"
 
 #ifdef _WIN32
-    #include "../Windows/Header/WindowsWindow.h"
+#include "../Windows/Header/WindowsWindow.h"
 #endif // _WIN32
 
 Window::Window() : m_WindowHandle(nullptr)
@@ -16,6 +16,6 @@ Window::~Window()
 Unique<Window> Window::Create()
 {
 #ifdef _WIN32
-    return MakeUnique<WindowsWindow>();
+	return MakeUnique<WindowsWindow>();
 #endif // _WIN32
 }

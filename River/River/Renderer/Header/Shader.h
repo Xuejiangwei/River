@@ -39,5 +39,4 @@ public:
 	virtual void* GetPixelShader() = 0;
 
 private:
-
 };

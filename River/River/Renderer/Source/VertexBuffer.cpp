@@ -3,9 +3,8 @@
 #include "VertexBuffer.h"
 
 #ifdef _WIN32
-	#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
+#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #endif // _WIN32
-
 
 VertexBuffer::VertexBuffer(const VertexBufferLayout& layout)
 	: m_Layout(std::move(layout))

@@ -11,5 +11,4 @@ public:
 	virtual bool OnEvent(const class Event& e) = 0;
 
 private:
-
 };

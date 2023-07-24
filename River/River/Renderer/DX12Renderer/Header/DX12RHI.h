@@ -20,6 +20,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class DX12Shader;
 class DX12PipelineState;
 
 class DX12RHI : public RHI
@@ -31,10 +32,10 @@ public:
 	virtual void Initialize(const RHIInitializeParam& param) override;
 
 	virtual void Render() override;
-	
+
 	virtual void OnUpdate() override;
 
-	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout) override;
+	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const V_Array<ShaderLayout>& Layout) override;
 
 	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) override;
 
@@ -87,7 +88,7 @@ private:
 
 	void BuildTestVertexBufferAndIndexBuffer();
 
-	void IntiFrameBuffer();
+	void InitFrameBuffer();
 
 	void BuildConstantBufferViews();
 
@@ -99,9 +100,10 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandList;
-	
+
 	static const int s_SwapChainBufferCount = 2;
-	static const int s_MaxRenderItem = 100;
+	static const int s_FrameBufferCount = 3;		//因为GBuffer的原因,可能会更大
+	static const int s_MaxRenderItem = 10;
 	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
 
@@ -128,15 +130,17 @@ private:
 	D3D12_RECT m_ScissorRect;
 
 	DX12Camera m_PrespectiveCamera;
+	DX12Camera m_OrthoGraphicCamera;
 
-	std::vector<Unique<DX12FrameBuffer>> m_FrameBuffer;
+	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	DX12FrameBuffer* m_CurrFrameResource = nullptr;
 	int m_CurrFrameResourceIndex = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 	PassUniform m_MainPassUniformData;
 
-	std::vector<Share<DX12PipelineState>> m_PSOs;
+	Share<DX12Shader> m_Shader;
+	V_Array<Share<DX12PipelineState>> m_PSOs;
 
 	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;

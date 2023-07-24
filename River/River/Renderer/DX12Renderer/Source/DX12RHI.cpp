@@ -7,6 +7,7 @@
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12IndexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
+#include "Renderer/DX12Renderer/Header/DX12GeometryGenerator.h"
 
 #include "DirectXMath.h"
 #include <d3dcompiler.h>
@@ -22,7 +23,8 @@ struct Vertex
 DirectX::XMFLOAT4X4 mWorld = Identity4x4();
 
 DX12RHI::DX12RHI()
-	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0)
+	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0),
+	m_PrespectiveCamera(CameraType::Perspective), m_OrthoGraphicCamera(CameraType::OrthoGraphic)
 {
 }
 
@@ -36,14 +38,10 @@ DX12RHI::~DX12RHI()
 
 Share<VertexBuffer> mVertexBuffer;
 Share<IndexBuffer> mIndexBuffer;
-Share<DX12Shader> mShader;
 
 void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
 	m_InitParam = param;
-
-	m_Viewport = { 0.0f, 0.0f, static_cast<float>(param.WindowWidth), static_cast<float>(param.WindowHeight), D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
-	m_ScissorRect = { 0, 0, static_cast<LONG>(param.WindowWidth), static_cast<LONG>(param.WindowHeight) };
 
 	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
@@ -52,11 +50,11 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 		EnumAdaptersAndCreateDevice();
 
-		CreateFence();
-
 		m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		CreateFence();
 
 		CheckQualityLevel();
 
@@ -70,17 +68,17 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	}
 
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
-	
+
 	{
 		//BuildConstantBuffers();
-		IntiFrameBuffer();
+		InitFrameBuffer();
 		BuildDescriptorHeaps();
 		BuildConstantBufferViews();
 
-		mShader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\color.hlsl");
+		m_Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\color.hlsl");
 		BuildTestVertexBufferAndIndexBuffer();
 
-		m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), mShader, mVertexBuffer));
+		m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), m_Shader, mVertexBuffer));
 	}
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -93,7 +91,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 void DX12RHI::OnUpdate()
 {
 	m_PrespectiveCamera.OnUpdate();
-	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % 3;
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 
 	if (m_CurrFrameResource->m_FenceValue != 0 && m_Fence->GetCompletedValue() < m_CurrFrameResource->m_FenceValue)
@@ -106,14 +104,12 @@ void DX12RHI::OnUpdate()
 		CloseHandle(eventHandle);
 	}
 
-
-
 	ObjectUniform objConstants;
 
 	auto currObjectCB = m_CurrFrameResource->m_ObjectUniform.get();
 	for (int i = 0; i < s_MaxRenderItem; i++)
 	{
-		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 *i, 1);
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 * i, i * 10);
 		//DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
 		DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
 		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
@@ -166,7 +162,7 @@ void DX12RHI::Render()
 
 	m_CommandList->SetGraphicsRootSignature(rootSignature);
 
-	int passCbvIndex = s_MaxRenderItem * 3 + m_CurrFrameResourceIndex;
+	int passCbvIndex = s_MaxRenderItem * s_FrameBufferCount + m_CurrFrameResourceIndex;
 	auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
 	passCbvHandle.Offset(passCbvIndex, m_CbvSrvUavDescriptorSize);
 	m_CommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
@@ -215,7 +211,7 @@ void DX12RHI::Render()
 	FlushCommandQueue();
 }
 
-Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const Vector<ShaderLayout>& Layout)
+Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const V_Array<ShaderLayout>& Layout)
 {
 	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader, nullptr);
 }
@@ -242,7 +238,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	}
 	m_DepthStencilBuffer.Reset();
 
-	ThrowIfFailed(m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight, 
+	ThrowIfFailed(m_SwapChain->ResizeBuffers(s_SwapChainBufferCount, param.WindowWidth, param.WindowHeight,
 		m_BackBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
 	m_CurrBackBuffer = 0;
@@ -272,7 +268,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	optClear.Format = m_DepthStencilFormat;
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
-	
+
 	auto heapDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	m_Device->CreateCommittedResource(&heapDefault, D3D12_HEAP_FLAG_NONE, &depthStencilDesc,
 		D3D12_RESOURCE_STATE_COMMON, &optClear, IID_PPV_ARGS(m_DepthStencilBuffer.GetAddressOf()));
@@ -302,11 +298,6 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	m_Viewport.MaxDepth = 1.0f;
 
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
-
-	//DirectX::XMMATRIX P = DirectX::XMMatrixOrthographicLH(4, 4, 0, 1000);
-	//DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, static_cast<float>(param.WindowWidth) / param.WindowHeight,
-	//	1.0f, 1000.0f);
-	//DirectX::XMStoreFloat4x4(&mProj, P);
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -480,7 +471,15 @@ void DX12RHI::BuildConstantBuffers()
 
 void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 {
-	std::array<Vertex, 8> vertices =
+	auto& meshData = DX12GeometryGenerator::Get()->GetMeshData(GeometryType::Sphere);
+	V_Array<Vertex> vertices(meshData.Vertices.size());
+	for (size_t i = 0; i < vertices.size(); i++)
+	{
+		vertices[i].Pos = meshData.Vertices[i].Position;
+		vertices[i].Color = DirectX::XMFLOAT4(DirectX::Colors::Cyan);
+	}
+
+	/*std::array<Vertex, 8> vertices =
 	{
 		Vertex({ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::White) }),
 		Vertex({ DirectX::XMFLOAT3(-1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
@@ -490,12 +489,12 @@ void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 		Vertex({ DirectX::XMFLOAT3(-1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Yellow) }),
 		Vertex({ DirectX::XMFLOAT3(+1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Cyan) }),
 		Vertex({ DirectX::XMFLOAT3(+1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Magenta) })
-	};
+	};*/
 
 	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float4, "COLOR" } };
 
 	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), (uint32_t)sizeof(Vertex), layout);
-	
+
 	std::array<std::uint32_t, 36> indices =
 	{
 		// front face
@@ -523,13 +522,12 @@ void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 		4, 3, 7
 	};
 
-	mIndexBuffer= RHI::Get()->CreateIndexBuffer((uint32_t*)indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
-
+	mIndexBuffer = RHI::Get()->CreateIndexBuffer((uint32_t*)meshData.Indices32.data(), (uint32_t)meshData.Indices32.size(), ShaderDataType::Int);
 }
 
-void DX12RHI::IntiFrameBuffer()
+void DX12RHI::InitFrameBuffer()
 {
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < s_FrameBufferCount; ++i)
 	{
 		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, s_MaxRenderItem));
 	}
@@ -558,7 +556,7 @@ void DX12RHI::BuildConstantBufferViews()
 			m_Device->CreateConstantBufferView(&cbvDesc, handle);
 		}
 	}
-	
+
 	int passCbvOffset = s_MaxRenderItem * (int)m_FrameBuffer.size();
 	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
 

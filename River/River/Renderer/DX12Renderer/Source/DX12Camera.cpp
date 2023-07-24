@@ -5,7 +5,8 @@
 #include "Window.h"
 #include "MathHelper.h"
 
-DX12Camera::DX12Camera()
+DX12Camera::DX12Camera(CameraType type)
+	: Camera(type)
 {
 	SetLens(0.25f * PI, 1.0f, 1.0f, 1000.0f);
 }
@@ -79,7 +80,16 @@ void DX12Camera::SetLens(float fovY, float aspect, float nearZ, float farZ)
 	m_NearWindowHeight = 2.0f * m_NearZ * tanf(0.5f * m_FovY);
 	m_FarWindowHeight = 2.0f * m_FarZ * tanf(0.5f * m_FovY);
 
-	DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(m_FovY, m_Aspect, m_NearZ, m_FarZ);
+	DirectX::XMMATRIX P;
+	if (m_CameraType == CameraType::Perspective)
+	{
+		P = DirectX::XMMatrixPerspectiveFovLH(m_FovY, m_Aspect, m_NearZ, m_FarZ);
+	}
+	else if (m_CameraType == CameraType::OrthoGraphic)
+	{
+		P = DirectX::XMMatrixOrthographicLH(10, 10, m_NearZ, m_FarZ);
+	}
+	
 	XMStoreFloat4x4(&m_Proj, P);
 }
 

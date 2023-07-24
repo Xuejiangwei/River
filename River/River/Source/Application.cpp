@@ -8,7 +8,7 @@
 
 Application* Application::s_Instance = nullptr;
 
-Application::Application() 
+Application::Application()
 	: m_Running(true)
 {
 	s_Instance = this;
@@ -26,7 +26,6 @@ Application::Application()
 
 Application::~Application()
 {
-
 }
 
 void Application::Run()
@@ -64,7 +63,7 @@ void Application::OnEvent(Event& e)
 
 	EventDispatcher dispatcher(e);
 	dispatcher.DispatchDirect<MouseButtonPressedEvent>(
-		[this](auto e) -> decltype(auto) 
+		[this](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<MouseButtonPressedEvent&>(e);
 			RHI::Get()->GetMainCamera()->OnMousePressed(ce.GetMouseX(), ce.GetMouseY());

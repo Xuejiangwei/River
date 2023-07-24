@@ -84,10 +84,10 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Source\GeometryGenerator.cpp">
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp">
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,9 +164,6 @@
     <ClInclude Include="Renderer\Header\RendererUtil.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\GeometryGenerator.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -195,6 +192,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

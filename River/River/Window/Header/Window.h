@@ -17,7 +17,7 @@ public:
 	static Unique<Window> Create();
 
 	virtual void Init(const WindowParam& Param) = 0;
-	
+
 	virtual void OnUpdate() = 0;
 
 	virtual bool PeekProcessMessage() { return false; }

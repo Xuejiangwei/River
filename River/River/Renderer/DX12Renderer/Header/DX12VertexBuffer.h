@@ -17,6 +17,5 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
 
-	Vector<D3D12_INPUT_ELEMENT_DESC> m_VertexLayout;
+	V_Array<D3D12_INPUT_ELEMENT_DESC> m_VertexLayout;
 };
-
