@@ -8,16 +8,22 @@
 #include "Renderer/DX12Renderer/Header/DX12IndexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 #include "Renderer/DX12Renderer/Header/DX12GeometryGenerator.h"
+#include "Renderer/DX12Renderer/Header/DX12Texture.h"
 
 #include "DirectXMath.h"
 #include <d3dcompiler.h>
 #include <iostream>
 #include <chrono>
 
+#define DEFAULT_SHADER_PATH "F:\\GitHub\\River\\River\\Shaders\\color.hlsl"
+#define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
+#define DEFAULT_TEXTURE_PATH_2 "F:\\GitHub\\River\\River\\Textures\\stone.dds"
+#define DEFAULT_TEXTURE_PATH_3 "F:\\GitHub\\River\\River\\Textures\\tile.dds"
+
 struct Vertex
 {
 	DirectX::XMFLOAT3 Pos;
-	DirectX::XMFLOAT4 Color;
+	DirectX::XMFLOAT3 Normal;
 };
 
 DirectX::XMFLOAT4X4 mWorld = Identity4x4();
@@ -43,7 +49,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
 	m_InitParam = param;
 
-	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
+	m_PrespectiveCamera.SetPosition(0.0f, 0.0f, -5.0f);
 
 	{
 		ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
@@ -75,7 +81,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		BuildDescriptorHeaps();
 		BuildConstantBufferViews();
 
-		m_Shader = MakeShare<DX12Shader>("F:\\GitHub\\River\\River\\Shaders\\color.hlsl");
+		m_Shader = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH);
 		BuildTestVertexBufferAndIndexBuffer();
 
 		m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), m_Shader, mVertexBuffer));
@@ -109,20 +115,15 @@ void DX12RHI::OnUpdate()
 	auto currObjectCB = m_CurrFrameResource->m_ObjectUniform.get();
 	for (int i = 0; i < s_MaxRenderItem; i++)
 	{
-		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 * i, i * 10);
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 * i, i * 10.0f);
 		//DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
 		DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
 		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 
-		// Update the constant buffer with the latest worldViewProj matrix.
-		DirectX::XMStoreFloat4(&objConstants.Color, DirectX::XMVectorSet(1.0f, 1.0f, 0.f, 1.0f));
-
 		currObjectCB->CopyData(i, objConstants);
 	}
-	//mUniformBuffer->CopyData(0, objConstants);
 
-	DirectX::XMStoreFloat3(&m_MainPassUniformData.EyePosW, DirectX::XMVectorSet(1.0f, 0.f, 0.f, 1.0f));
-	m_CurrFrameResource->m_PassUniform->CopyData(0, m_MainPassUniformData);
+	UpdateMainPass();
 }
 
 void DX12RHI::Render()
@@ -167,6 +168,11 @@ void DX12RHI::Render()
 	passCbvHandle.Offset(passCbvIndex, m_CbvSrvUavDescriptorSize);
 	m_CommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
 
+	int MaterialCbvIndex = s_MaxRenderItem * s_FrameBufferCount + s_FrameBufferCount + m_CurrFrameResourceIndex;
+	auto materialCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+	materialCbvHandle.Offset(MaterialCbvIndex, m_CbvSrvUavDescriptorSize);
+	m_CommandList->SetGraphicsRootDescriptorTable(2, materialCbvHandle);
+
 	auto bbv = dynamic_cast<DX12VertexBuffer*>(mVertexBuffer.get())->m_VertexBufferView;
 	auto ibv = dynamic_cast<DX12IndexBuffer*>(mIndexBuffer.get())->m_IndexBufferView;
 
@@ -176,12 +182,15 @@ void DX12RHI::Render()
 		m_CommandList->IASetIndexBuffer(&ibv);
 		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		tex.Offset( i % m_Textures.size(), m_CbvSrvUavDescriptorSize);
+
 		UINT cbvIndex = m_CurrFrameResourceIndex * s_MaxRenderItem + i;
 		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
 		cbvHandle.Offset(cbvIndex, m_CbvSrvUavDescriptorSize);
 
+		m_CommandList->SetGraphicsRootDescriptorTable(3, tex);
 		m_CommandList->SetGraphicsRootDescriptorTable(0, /*m_CbvHeap->GetGPUDescriptorHandleForHeapStart()*/cbvHandle);
-
 		m_CommandList->DrawIndexedInstanced(
 			mIndexBuffer->GetIndexCount(),//m_BoxGeo->DrawArgs["box"].IndexCount,
 			1, 0, 0, 0);
@@ -300,6 +309,33 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 }
 
+void DX12RHI::LoadTextures()
+{
+	m_Textures.push_back(MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "bricksTex", DEFAULT_TEXTURE_PATH_1));
+	m_Textures.push_back(MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "stoneTex", DEFAULT_TEXTURE_PATH_2));
+	m_Textures.push_back(MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "tileTex", DEFAULT_TEXTURE_PATH_3));
+}
+
+void DX12RHI::InitBaseMaterials()
+{
+	m_BaseMaterials.resize(s_BaseMaterialCount);
+
+	m_BaseMaterials[0].m_Name = "bricks0";
+	m_BaseMaterials[0].m_DiffuseAlbedo = { 0.133333340f, 0.545098066f, 0.133333340f, 1.000000000f };
+	m_BaseMaterials[0].m_FresnelR0 = { 0.02f, 0.02f, 0.02f };
+	m_BaseMaterials[0].m_Roughness = 0.1f;
+
+	/*m_BaseMaterials[1].m_Name = "stone0";
+	m_BaseMaterials[1].m_DiffuseAlbedo = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f };
+	m_BaseMaterials[1].m_FresnelR0 = { 0.0f, 1.f, 0.f };
+	m_BaseMaterials[1].m_Roughness = 0.3f;
+
+	m_BaseMaterials[2].m_Name = "tile0";
+	m_BaseMaterials[2].m_DiffuseAlbedo = { 0.827451050f, 0.827451050f, 0.827451050f, 1.000000000f };
+	m_BaseMaterials[2].m_FresnelR0 = { 0.f, 0.f, 1.f };
+	m_BaseMaterials[2].m_Roughness = 0.8f;*/
+}
+
 void DX12RHI::EnumAdaptersAndCreateDevice()
 {
 	D3D_FEATURE_LEVEL emFeatureLevel = D3D_FEATURE_LEVEL_12_1;
@@ -408,30 +444,44 @@ void DX12RHI::CheckQualityLevel()
 
 void DX12RHI::UpdateMainPass()
 {
-	//DirectX::XMMATRIX view = XMLoadFloat4x4(&mView);
-	//DirectX::XMMATRIX proj = XMLoadFloat4x4(&mProj);
+	PassUniform mMainPassCB;
+	DirectX::XMMATRIX view = m_PrespectiveCamera.GetView();
+	DirectX::XMMATRIX proj = m_PrespectiveCamera.GetProj();
 
-	//DirectX::XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	//DirectX::XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
-	//DirectX::XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
-	//DirectX::XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+	DirectX::XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 
-	//XMStoreFloat4x4(&g_MainPassCB.View, XMMatrixTranspose(view));
-	//XMStoreFloat4x4(&g_MainPassCB.InvView, XMMatrixTranspose(invView));
-	//XMStoreFloat4x4(&g_MainPassCB.Proj, XMMatrixTranspose(proj));
-	//XMStoreFloat4x4(&g_MainPassCB.InvProj, XMMatrixTranspose(invProj));
-	//XMStoreFloat4x4(&g_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	//XMStoreFloat4x4(&g_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	//g_MainPassCB.EyePosW = { 0.0f, 0.0f, 0.0f };// mEyePos;
-	//g_MainPassCB.RenderTargetSize = DirectX::XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
-	//g_MainPassCB.InvRenderTargetSize = DirectX::XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
-	//g_MainPassCB.NearZ = 1.0f;
-	//g_MainPassCB.FarZ = 1000.0f;
-	///*g_MainPassCB.TotalTime = gt.TotalTime();
-	//g_MainPassCB.DeltaTime = gt.DeltaTime();*/
+	auto determinant = XMMatrixDeterminant(view);
+	DirectX::XMMATRIX invView = XMMatrixInverse(&determinant, view);
 
-	//auto currPassCB = mCurrFrameResource->PassCB.get();
-	//currPassCB->CopyData(0, g_MainPassCB);
+	determinant = XMMatrixDeterminant(proj);
+	DirectX::XMMATRIX invProj = XMMatrixInverse(&determinant, proj);
+
+	determinant = XMMatrixDeterminant(viewProj);
+	DirectX::XMMATRIX invViewProj = XMMatrixInverse(&determinant, viewProj);
+
+	DirectX::XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
+	DirectX::XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
+	DirectX::XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
+	DirectX::XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
+	DirectX::XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	DirectX::XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	mMainPassCB.EyePosW = m_PrespectiveCamera.GetLook();
+	mMainPassCB.RenderTargetSize = DirectX::XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
+	mMainPassCB.InvRenderTargetSize = DirectX::XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
+	mMainPassCB.NearZ = 1.0f;
+	mMainPassCB.FarZ = 1000.0f;
+	mMainPassCB.TotalTime = 0.f;// gt.TotalTime();
+	mMainPassCB.DeltaTime = 0.f;//gt.DeltaTime();
+	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+	mMainPassCB.Lights[0].Strength = { 10.f, 10.f, 10.f };
+	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
+	mMainPassCB.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
+	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
+	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
+
+	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
+	currPassCB->CopyData(0, mMainPassCB);
 }
 
 void DX12RHI::FlushCommandQueue()
@@ -449,79 +499,71 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 		m_RtvDescriptorSize);
 }
 
-void DX12RHI::BuildConstantBuffers()
+void DX12RHI::BuildDescriptorHeaps()
 {
-	//mUniformBuffer = MakeUnique<DX12UniformBuffer<ObjectConstants>>(m_Device.Get(), 1, true);
+	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+	cbvHeapDesc.NumDescriptors = (s_MaxRenderItem + 1 + 1) * 3; //1;
+	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	cbvHeapDesc.NodeMask = 0;
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&cbvHeapDesc,
+		IID_PPV_ARGS(&m_CbvHeap)));
 
-	//UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
+	//
+	// Create the SRV heap.
+	//
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 3;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));
 
-	//D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mUniformBuffer->Resource()->GetGPUVirtualAddress();//m_ObjectCB->Resource()->GetGPUVirtualAddress();
-	//// Offset to the ith object constant buffer in the buffer.
-	//int boxCBufIndex = 0;
-	//cbAddress += boxCBufIndex * objCBByteSize;
+	//
+	// Fill out the heap with actual descriptors.
+	//
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	//cbvDesc.BufferLocation = cbAddress;
-	//cbvDesc.SizeInBytes = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectConstants));
+	auto bricksTex = m_Textures[0]->GetResource();
+	auto stoneTex = m_Textures[1]->GetResource();
+	auto tileTex = m_Textures[2]->GetResource();
 
-	//m_Device->CreateConstantBufferView(
-	//	&cbvDesc,
-	//	m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = bricksTex->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = bricksTex->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	m_Device->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
+
+	srvDesc.Format = stoneTex->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
+	m_Device->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
+
+	srvDesc.Format = tileTex->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
+	m_Device->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
 }
 
 void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 {
-	auto& meshData = DX12GeometryGenerator::Get()->GetMeshData(GeometryType::Sphere);
+	auto& meshData = DX12GeometryGenerator::Get()->GetMeshData(GeometryType::Box);
 	V_Array<Vertex> vertices(meshData.Vertices.size());
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
 		vertices[i].Pos = meshData.Vertices[i].Position;
-		vertices[i].Color = DirectX::XMFLOAT4(DirectX::Colors::Cyan);
+		vertices[i].Normal = meshData.Vertices[i].Normal;
 	}
 
-	/*std::array<Vertex, 8> vertices =
-	{
-		Vertex({ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::White) }),
-		Vertex({ DirectX::XMFLOAT3(-1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
-		Vertex({ DirectX::XMFLOAT3(+1.0f, +1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Red) }),
-		Vertex({ DirectX::XMFLOAT3(+1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Green) }),
-		Vertex({ DirectX::XMFLOAT3(-1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Blue) }),
-		Vertex({ DirectX::XMFLOAT3(-1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Yellow) }),
-		Vertex({ DirectX::XMFLOAT3(+1.0f, +1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Cyan) }),
-		Vertex({ DirectX::XMFLOAT3(+1.0f, -1.0f, +1.0f), DirectX::XMFLOAT4(DirectX::Colors::Magenta) })
-	};*/
-
-	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float4, "COLOR" } };
+	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float3, "NORMAL" } };
 
 	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), (uint32_t)sizeof(Vertex), layout);
-
-	std::array<std::uint32_t, 36> indices =
-	{
-		// front face
-		0, 1, 2,
-		0, 2, 3,
-
-		// back face
-		4, 6, 5,
-		4, 7, 6,
-
-		// left face
-		4, 5, 1,
-		4, 1, 0,
-
-		// right face
-		3, 2, 6,
-		3, 6, 7,
-
-		// top face
-		1, 5, 6,
-		1, 6, 2,
-
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
-	};
-
 	mIndexBuffer = RHI::Get()->CreateIndexBuffer((uint32_t*)meshData.Indices32.data(), (uint32_t)meshData.Indices32.size(), ShaderDataType::Int);
 }
 
@@ -529,7 +571,24 @@ void DX12RHI::InitFrameBuffer()
 {
 	for (int i = 0; i < s_FrameBufferCount; ++i)
 	{
-		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, s_MaxRenderItem));
+		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 1, s_MaxRenderItem, s_BaseMaterialCount));
+	}
+
+	InitBaseMaterials();
+	
+	MaterialUniform uniform;
+	
+	for (size_t j = 0; j < s_BaseMaterialCount; j++)
+	{
+		memcpy(&uniform.DiffuseAlbedo, &m_BaseMaterials[j].m_DiffuseAlbedo, sizeof(uniform.DiffuseAlbedo));
+		memcpy(&uniform.FresnelR0, &m_BaseMaterials[j].m_FresnelR0, sizeof(uniform.FresnelR0));
+		uniform.Roughness = m_BaseMaterials[j].m_Roughness;
+			
+		for (size_t i = 0; i < s_FrameBufferCount; i++)
+		{
+			m_FrameBuffer[i]->m_MaterialUniform->CopyData(0, uniform);
+		}
+
 	}
 }
 
@@ -574,6 +633,25 @@ void DX12RHI::BuildConstantBufferViews()
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = cbAddress;
 		cbvDesc.SizeInBytes = passCBByteSize;
+
+		m_Device->CreateConstantBufferView(&cbvDesc, handle);
+	}
+
+	int materialCbvOffset = s_MaxRenderItem * (int)m_FrameBuffer.size() + (int)m_FrameBuffer.size();
+	UINT materialCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(MaterialUniform));
+	for (int frameIndex = 0; frameIndex < m_FrameBuffer.size(); ++frameIndex)
+	{
+		auto materialCB = m_FrameBuffer[frameIndex]->m_MaterialUniform->Resource();
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = materialCB->GetGPUVirtualAddress();
+
+		// Offset to the pass cbv in the descriptor heap.
+		int heapIndex = materialCbvOffset + frameIndex;
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+		handle.Offset(heapIndex, m_CbvSrvUavDescriptorSize);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		cbvDesc.BufferLocation = cbAddress;
+		cbvDesc.SizeInBytes = materialCBByteSize;
 
 		m_Device->CreateConstantBufferView(&cbvDesc, handle);
 	}

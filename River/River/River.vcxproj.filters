@@ -90,6 +90,18 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\Material.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Source\Texture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Texture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -176,7 +188,7 @@
     <ClInclude Include="Renderer\Header\ShaderDataType.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\Vector.h">
+    <ClInclude Include="Renderer\Header\MathStruct.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\MathHelper.h">
@@ -188,13 +200,22 @@
     <ClInclude Include="Header\KeyCode.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\Matrix.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\Material.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\Texture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12Texture.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

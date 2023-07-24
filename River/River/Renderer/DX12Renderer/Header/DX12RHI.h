@@ -11,6 +11,7 @@
 #include <DirectXColors.h>
 
 #include "Event.h"
+#include "Material.h"
 #include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
@@ -20,6 +21,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class DX12Texture;
 class DX12Shader;
 class DX12PipelineState;
 
@@ -46,6 +48,10 @@ public:
 	virtual Camera* GetMainCamera() override;
 
 private:
+	void LoadTextures();
+
+	void InitBaseMaterials();
+
 	void EnumAdaptersAndCreateDevice();
 
 	void CreateCommandQueue();
@@ -71,20 +77,7 @@ private:
 		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
-	void BuildDescriptorHeaps()
-	{
-		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-		cbvHeapDesc.NumDescriptors = (s_MaxRenderItem + 1) * 3; //1;
-		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		cbvHeapDesc.NodeMask = 0;
-		ThrowIfFailed(m_Device->CreateDescriptorHeap(&cbvHeapDesc,
-			IID_PPV_ARGS(&m_CbvHeap)));
-	}
-
-	void BuildConstantBuffers();
-
-	void BuildRootSignature();
+	void BuildDescriptorHeaps();
 
 	void BuildTestVertexBufferAndIndexBuffer();
 
@@ -104,6 +97,7 @@ private:
 	static const int s_SwapChainBufferCount = 2;
 	static const int s_FrameBufferCount = 3;		//因为GBuffer的原因,可能会更大
 	static const int s_MaxRenderItem = 10;
+	static const int s_BaseMaterialCount = 1;
 	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
 
@@ -139,6 +133,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 	PassUniform m_MainPassUniformData;
 
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+
 	Share<DX12Shader> m_Shader;
 	V_Array<Share<DX12PipelineState>> m_PSOs;
 
@@ -147,4 +143,6 @@ private:
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	RHIInitializeParam m_InitParam;
+	V_Array<Material> m_BaseMaterials;
+	V_Array<Unique<DX12Texture>> m_Textures;
 };

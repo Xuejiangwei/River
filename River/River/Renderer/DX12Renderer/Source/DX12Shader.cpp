@@ -17,9 +17,9 @@ DX12Shader::DX12Shader(const String& filePath)
 #endif
 
 	auto path = S_2_WS(filePath);
-	ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, nullptr, "VS", "vs_5_0", nCompileFlags, 0,
+	ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS", "vs_5_1", nCompileFlags, 0,
 		&m_VertexShaderByteCode, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, nullptr, "PS", "ps_5_0", nCompileFlags, 0,
+	ThrowIfFailed(D3DCompileFromFile(path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS", "ps_5_1", nCompileFlags, 0,
 		&m_PixelShaderByteCode, nullptr));
 }
 

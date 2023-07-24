@@ -11,9 +11,19 @@
 struct ObjectUniform
 {
 	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
-	DirectX::XMFLOAT4 Color;
 };
 
+struct Light
+{
+	DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
+	float FalloffStart = 1.0f;                          // point/spot light only
+	DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
+	float FalloffEnd = 10.0f;                           // point/spot light only
+	DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
+	float SpotPower = 64.0f;                            // spot light only
+};
+
+#define MaxLights 16
 struct PassUniform
 {
 	DirectX::XMFLOAT4X4 View = Identity4x4();
@@ -30,12 +40,24 @@ struct PassUniform
 	float FarZ = 0.0f;
 	float TotalTime = 0.0f;
 	float DeltaTime = 0.0f;
+
+	DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
+	Light Lights[MaxLights];
+};
+
+struct MaterialUniform
+{
+	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+	float Roughness = 0.25f;
+
+	//DirectX::XMFLOAT4X4 MatTransform = Identity4x4();
 };
 
 class DX12FrameBuffer : public FrameBuffer
 {
 public:
-	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount);
+	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount);
 	virtual ~DX12FrameBuffer() override;
 
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
@@ -45,6 +67,7 @@ public:
 private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
+	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;
