@@ -3,6 +3,7 @@
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
+#include "Renderer/DX12Renderer/Header/DX12RootSignature.h"
 #include "Renderer/DX12Renderer/Header/DX12PipelineState.h"
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12IndexBuffer.h"
@@ -15,8 +16,8 @@
 #include <iostream>
 #include <chrono>
 
-#define DEFAULT_SHADER_PATH "F:\\GitHub\\River\\River\\Shaders\\color.hlsl"
-#define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
+#define DEFAULT_SHADER_PATH "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
+#define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\WoodCrate01.dds"
 #define DEFAULT_TEXTURE_PATH_2 "F:\\GitHub\\River\\River\\Textures\\stone.dds"
 #define DEFAULT_TEXTURE_PATH_3 "F:\\GitHub\\River\\River\\Textures\\tile.dds"
 
@@ -24,9 +25,8 @@ struct Vertex
 {
 	DirectX::XMFLOAT3 Pos;
 	DirectX::XMFLOAT3 Normal;
+	DirectX::XMFLOAT2 TexC;
 };
-
-DirectX::XMFLOAT4X4 mWorld = Identity4x4();
 
 DX12RHI::DX12RHI()
 	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0),
@@ -76,15 +76,17 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
 
 	{
-		//BuildConstantBuffers();
+		LoadTextures();
 		InitFrameBuffer();
+		InitBaseShaders();
+
 		BuildDescriptorHeaps();
 		BuildConstantBufferViews();
-
-		m_Shader = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH);
+		
 		BuildTestVertexBufferAndIndexBuffer();
 
-		m_PSOs.push_back(MakeShare<DX12PipelineState>(m_Device.Get(), m_Shader, mVertexBuffer));
+		InitBaseRootSignatures();
+		InitBasePSOs();
 	}
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -110,55 +112,37 @@ void DX12RHI::OnUpdate()
 		CloseHandle(eventHandle);
 	}
 
-	ObjectUniform objConstants;
-
-	auto currObjectCB = m_CurrFrameResource->m_ObjectUniform.get();
-	for (int i = 0; i < s_MaxRenderItem; i++)
-	{
-		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 2.0f * i, 1.5f * 2 * i, i * 10.0f);
-		//DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&mWorld);
-		DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
-		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-
-		currObjectCB->CopyData(i, objConstants);
-	}
+	UpdateObjectCBs();
 
 	UpdateMainPass();
 }
 
 void DX12RHI::Render()
 {
-	auto pso = m_PSOs[0]->m_PipelineState.Get();
-	auto rootSignature = m_PSOs[0]->m_RootSignature.Get();
+	auto pso = m_PSOs["opaque"]->m_PipelineState.Get();
+	auto rootSignature = m_RootSignatures["default"]->GetRootSignature();
 
 	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
 	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), pso));
 
 	m_CommandList->RSSetViewports(1, &m_Viewport);
 	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	auto rb1 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	m_CommandList->ResourceBarrier(1, &rb1);
 
-	// Clear the back buffer and depth buffer.
 	m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
 	m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	auto bv = CurrentBackBufferView();
 	auto dsv = DepthStencilView();
 	m_CommandList->OMSetRenderTargets(1, &bv, true, &dsv);
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { /*mUniformBuffer->m_UniformBufferHeap.Get()*/ m_CbvHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_CbvHeap.Get() };
 	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	m_CommandList->SetGraphicsRootSignature(rootSignature);
@@ -176,53 +160,67 @@ void DX12RHI::Render()
 	auto bbv = dynamic_cast<DX12VertexBuffer*>(mVertexBuffer.get())->m_VertexBufferView;
 	auto ibv = dynamic_cast<DX12IndexBuffer*>(mIndexBuffer.get())->m_IndexBufferView;
 
-	for (int i = 0; i < s_MaxRenderItem; i++)
+	for (int i = 0; i < s_MaxRenderItem / 2; i++)
 	{
 		m_CommandList->IASetVertexBuffers(0, 1, &bbv);
 		m_CommandList->IASetIndexBuffer(&ibv);
 		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		tex.Offset( i % m_Textures.size(), m_CbvSrvUavDescriptorSize);
+		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+		tex.Offset((s_MaxRenderItem + 1 + 1) * 3  + i % m_Textures.size(), m_CbvSrvUavDescriptorSize);
 
 		UINT cbvIndex = m_CurrFrameResourceIndex * s_MaxRenderItem + i;
 		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
 		cbvHandle.Offset(cbvIndex, m_CbvSrvUavDescriptorSize);
 
 		m_CommandList->SetGraphicsRootDescriptorTable(3, tex);
-		m_CommandList->SetGraphicsRootDescriptorTable(0, /*m_CbvHeap->GetGPUDescriptorHandleForHeapStart()*/cbvHandle);
+		m_CommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
 		m_CommandList->DrawIndexedInstanced(
-			mIndexBuffer->GetIndexCount(),//m_BoxGeo->DrawArgs["box"].IndexCount,
+			mIndexBuffer->GetIndexCount(),
 			1, 0, 0, 0);
 	}
 
-	// Indicate a state transition on the resource usage.
+	m_CommandList->SetPipelineState(m_PSOs["alphaTested"]->m_PipelineState.Get());
+	for (int i = s_MaxRenderItem / 2; i < s_MaxRenderItem; i++)
+	{
+		m_CommandList->IASetVertexBuffers(0, 1, &bbv);
+		m_CommandList->IASetIndexBuffer(&ibv);
+		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+		tex.Offset((s_MaxRenderItem + 1 + 1) * 3 + i % m_Textures.size(), m_CbvSrvUavDescriptorSize);
+
+		UINT cbvIndex = m_CurrFrameResourceIndex * s_MaxRenderItem + i;
+		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_CbvHeap->GetGPUDescriptorHandleForHeapStart());
+		cbvHandle.Offset(cbvIndex, m_CbvSrvUavDescriptorSize);
+
+		m_CommandList->SetGraphicsRootDescriptorTable(3, tex);
+		m_CommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+		m_CommandList->DrawIndexedInstanced(
+			mIndexBuffer->GetIndexCount(),
+			1, 0, 0, 0);
+	}
+
 	auto rb2 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	m_CommandList->ResourceBarrier(1, &rb2);
 
-	// Done recording commands.
 	ThrowIfFailed(m_CommandList->Close());
 
-	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
-	// swap the back and front buffers
 	ThrowIfFailed(m_SwapChain->Present(0, 0));
 	m_CurrBackBuffer = (m_CurrBackBuffer + 1) % s_SwapChainBufferCount;
 
 	m_CurrFrameResource->m_FenceValue = ++m_CurrentFence;
 
-	// Wait until frame commands are complete.  This waiting is inefficient and is
-	// done for simplicity.  Later we will show how to organize our rendering code
-	// so we do not have to wait per frame.
 	FlushCommandQueue();
 }
 
-Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> Shader, const V_Array<ShaderLayout>& Layout)
+Share<PipelineState> DX12RHI::BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout)
 {
-	return MakeShare<DX12PipelineState>(m_Device.Get(), Shader, nullptr);
+	return MakeShare<DX12PipelineState>(m_Device.Get(), m_RootSignatures["dafault"], vsShader, psShader, nullptr);
 }
 
 Share<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
@@ -336,6 +334,59 @@ void DX12RHI::InitBaseMaterials()
 	m_BaseMaterials[2].m_Roughness = 0.8f;*/
 }
 
+void DX12RHI::InitBaseShaders()
+{
+	const D3D_SHADER_MACRO defines[] =
+	{
+		"FOG", "1",
+		NULL, NULL
+	};
+	m_Shaders["defaultVS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, nullptr, "VS", "vs_5_0");
+	m_Shaders["defaultPS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, defines, "PS", "ps_5_0");
+
+	const D3D_SHADER_MACRO alphaTestDefines[] =
+	{
+		"FOG", "1",
+		"ALPHA_TEST", "1",
+		NULL, NULL
+	};
+	m_Shaders["alphaTestedPS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, alphaTestDefines, "PS", "ps_5_0");
+}
+
+void DX12RHI::InitBaseRootSignatures()
+{
+	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	CD3DX12_DESCRIPTOR_RANGE cbvTable;
+	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
+
+	CD3DX12_DESCRIPTOR_RANGE cbvTable1;
+	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
+
+	CD3DX12_DESCRIPTOR_RANGE cbvTable2;
+	cbvTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2);
+	slotRootParameter[2].InitAsDescriptorTable(1, &cbvTable2);
+
+	CD3DX12_DESCRIPTOR_RANGE texTable;
+	texTable.Init(
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+		1,  // number of descriptors
+		0); // register t0
+	slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	auto staticSamplers = DX12RootSignature::GetStaticSamplers();
+	CD3DX12_ROOT_SIGNATURE_DESC stRootSignatureDesc(4, slotRootParameter, (UINT)staticSamplers.size(), staticSamplers.data(),
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_RootSignatures["default"] = MakeShare<DX12RootSignature>(m_Device.Get(), stRootSignatureDesc);
+}
+
+void DX12RHI::InitBasePSOs()
+{
+	m_PSOs["opaque"] = MakeShare<DX12PipelineState>(m_Device.Get(), m_RootSignatures["default"], m_Shaders["defaultVS"], m_Shaders["defaultPS"], mVertexBuffer);
+	m_PSOs["alphaTested"] = MakeShare<DX12PipelineState>(m_Device.Get(), m_RootSignatures["default"], m_Shaders["defaultVS"], m_Shaders["alphaTestedPS"], mVertexBuffer);
+}
+
 void DX12RHI::EnumAdaptersAndCreateDevice()
 {
 	D3D_FEATURE_LEVEL emFeatureLevel = D3D_FEATURE_LEVEL_12_1;
@@ -442,6 +493,23 @@ void DX12RHI::CheckQualityLevel()
 	assert(m_4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 }
 
+void DX12RHI::UpdateObjectCBs()
+{
+	ObjectUniform objConstants;
+	auto currObjectCB = m_CurrFrameResource->m_ObjectUniform.get();
+	for (int i = 0; i < s_MaxRenderItem; i++)
+	{
+		auto m = Identity4x4();
+		auto texTransform = DirectX::XMLoadFloat4x4(&m);
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranslation(1 + 0.5f * i, 0, 0);
+		DirectX::XMMATRIX worldViewProj = world * m_PrespectiveCamera.GetView() * m_PrespectiveCamera.GetProj();
+		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		DirectX::XMStoreFloat4x4(&objConstants.TexTransform, DirectX::XMMatrixTranspose(texTransform));
+
+		currObjectCB->CopyData(i, objConstants);
+	}
+}
+
 void DX12RHI::UpdateMainPass()
 {
 	PassUniform mMainPassCB;
@@ -474,7 +542,7 @@ void DX12RHI::UpdateMainPass()
 	mMainPassCB.DeltaTime = 0.f;//gt.DeltaTime();
 	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
 	mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[0].Strength = { 10.f, 10.f, 10.f };
+	mMainPassCB.Lights[0].Strength = { 0.6f, 0.6f, 0.6f };
 	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
 	mMainPassCB.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
@@ -502,26 +570,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 void DX12RHI::BuildDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-	cbvHeapDesc.NumDescriptors = (s_MaxRenderItem + 1 + 1) * 3; //1;
+	cbvHeapDesc.NumDescriptors = (s_MaxRenderItem + 1 + 1 + (unsigned int)m_Textures.size()) * 3; //1;
 	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&cbvHeapDesc,
-		IID_PPV_ARGS(&m_CbvHeap)));
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_CbvHeap)));
 
-	//
-	// Create the SRV heap.
-	//
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 3;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));
-
-	//
-	// Fill out the heap with actual descriptors.
-	//
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_CbvHeap->GetCPUDescriptorHandleForHeapStart());
+	hDescriptor.Offset((s_MaxRenderItem + 1 + 1) * 3, m_CbvSrvUavDescriptorSize);
 
 	auto bricksTex = m_Textures[0]->GetResource();
 	auto stoneTex = m_Textures[1]->GetResource();
@@ -543,7 +599,7 @@ void DX12RHI::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
 	m_Device->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
+	//// next descriptor
 	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
 
 	srvDesc.Format = tileTex->GetDesc().Format;
@@ -559,9 +615,10 @@ void DX12RHI::BuildTestVertexBufferAndIndexBuffer()
 	{
 		vertices[i].Pos = meshData.Vertices[i].Position;
 		vertices[i].Normal = meshData.Vertices[i].Normal;
+		vertices[i].TexC = meshData.Vertices[i].TexC;
 	}
 
-	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float3, "NORMAL" } };
+	VertexBufferLayout layout = { {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float3, "NORMAL" }, { ShaderDataType::Float2, "TEXCOORD" } };
 
 	mVertexBuffer = RHI::Get()->CreateVertexBuffer((float*)vertices.data(), (unsigned int)(vertices.size() * sizeof(Vertex)), (uint32_t)sizeof(Vertex), layout);
 	mIndexBuffer = RHI::Get()->CreateIndexBuffer((uint32_t*)meshData.Indices32.data(), (uint32_t)meshData.Indices32.size(), ShaderDataType::Int);
@@ -588,7 +645,6 @@ void DX12RHI::InitFrameBuffer()
 		{
 			m_FrameBuffer[i]->m_MaterialUniform->CopyData(0, uniform);
 		}
-
 	}
 }
 

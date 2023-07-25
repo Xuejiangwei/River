@@ -18,4 +18,5 @@ public:
 	float m_Roughness;
 	River::Float4 m_DiffuseAlbedo;
 	River::Float3 m_FresnelR0;
+	River::Matrix4x4 m_MatTransform;
 };

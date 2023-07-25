@@ -11,7 +11,7 @@ Unique<DX12GeometryGenerator> DX12GeometryGenerator::s_Instance = nullptr;
 
 DX12GeometryGenerator::DX12GeometryGenerator()
 {
-	m_Data[GeometryType::Box]= CreateBox(1, 1, 1, 0);
+	m_Data[GeometryType::Box]= CreateBox(1, 1, 1, 2);
 	m_Data[GeometryType::Sphere]= CreateSphere(1, 10, 10);
 	m_Data[GeometryType::Geosphere]= CreateGeosphere(1, 3);
 	m_Data[GeometryType::Cylinder]= CreateCylinder(2, 1, 1.5f,20, 20);

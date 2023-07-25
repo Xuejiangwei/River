@@ -32,11 +32,6 @@ public:
 	Shader();
 	virtual ~Shader();
 
-	static Share<Shader> Create(const String& filePath);
-
-	virtual void* GetVertexShader() = 0;
-
-	virtual void* GetPixelShader() = 0;
-
+	virtual void* GetShader() = 0;
 private:
 };

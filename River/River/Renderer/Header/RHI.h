@@ -35,7 +35,7 @@ public:
 
 	virtual void OnUpdate() = 0;
 
-	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const V_Array<ShaderLayout>& Layout) = 0;
+	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) = 0;
 
 	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
 

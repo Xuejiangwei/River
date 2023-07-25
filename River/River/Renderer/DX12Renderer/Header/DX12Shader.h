@@ -8,16 +8,13 @@
 class DX12Shader : public Shader
 {
 public:
-	DX12Shader(const String& filePath);
+	DX12Shader(const String& filePath, const D3D_SHADER_MACRO* defines, const char* name, const char* target);
 	virtual ~DX12Shader() override;
 
 	friend class DX12PipelineState;
 
-	virtual void* GetVertexShader() override { return m_VertexShaderByteCode.Get(); }
-
-	virtual void* GetPixelShader() override { return m_PixelShaderByteCode.Get(); };
+	virtual void* GetShader() override { return m_ShaderByteCode.Get(); }
 
 private:
-	Microsoft::WRL::ComPtr<ID3D10Blob> m_VertexShaderByteCode;
-	Microsoft::WRL::ComPtr<ID3D10Blob> m_PixelShaderByteCode;
+	Microsoft::WRL::ComPtr<ID3D10Blob> m_ShaderByteCode;
 };

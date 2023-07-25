@@ -12,12 +12,3 @@ Shader::Shader()
 Shader::~Shader()
 {
 }
-
-Share<Shader> Shader::Create(const String& filePath)
-{
-#ifdef _WIN32
-	return MakeShare<DX12Shader>(filePath);
-#endif // _WIN32
-
-	return nullptr;
-}

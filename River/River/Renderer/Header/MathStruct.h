@@ -153,5 +153,15 @@ namespace River
 
 		float operator() (size_t Row, size_t Column) const noexcept { return m[Row][Column]; }
 		float& operator() (size_t Row, size_t Column) noexcept { return m[Row][Column]; }
+
+		static Matrix4x4 UnitMatrix()
+		{
+			return {
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f,
+			};
+		}
 	};
 }

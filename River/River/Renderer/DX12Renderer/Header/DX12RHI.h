@@ -23,6 +23,7 @@
 
 class DX12Texture;
 class DX12Shader;
+class DX12RootSignature;
 class DX12PipelineState;
 
 class DX12RHI : public RHI
@@ -37,7 +38,7 @@ public:
 
 	virtual void OnUpdate() override;
 
-	virtual Share<class PipelineState> BuildPSO(Share<Shader> Shader, const V_Array<ShaderLayout>& Layout) override;
+	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) override;
 
 	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) override;
 
@@ -52,6 +53,12 @@ private:
 
 	void InitBaseMaterials();
 
+	void InitBaseShaders();
+
+	void InitBaseRootSignatures();
+
+	void InitBasePSOs();
+
 	void EnumAdaptersAndCreateDevice();
 
 	void CreateCommandQueue();
@@ -63,6 +70,8 @@ private:
 	void CreateFence();
 
 	void CheckQualityLevel();
+
+	void UpdateObjectCBs();
 
 	void UpdateMainPass();
 
@@ -126,23 +135,24 @@ private:
 	DX12Camera m_PrespectiveCamera;
 	DX12Camera m_OrthoGraphicCamera;
 
-	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	DX12FrameBuffer* m_CurrFrameResource = nullptr;
 	int m_CurrFrameResourceIndex = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 	PassUniform m_MainPassUniformData;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
-
-	Share<DX12Shader> m_Shader;
-	V_Array<Share<DX12PipelineState>> m_PSOs;
+	 
 
 	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	RHIInitializeParam m_InitParam;
+
+	HashMap<String, Share<DX12Shader>> m_Shaders;
+	HashMap<String, Share<DX12RootSignature>> m_RootSignatures;
+	HashMap<String, Share<DX12PipelineState>> m_PSOs;
+	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	V_Array<Material> m_BaseMaterials;
 	V_Array<Unique<DX12Texture>> m_Textures;
 };

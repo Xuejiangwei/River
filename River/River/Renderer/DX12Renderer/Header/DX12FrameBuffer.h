@@ -11,6 +11,7 @@
 struct ObjectUniform
 {
 	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
+	DirectX::XMFLOAT4X4 TexTransform = Identity4x4();
 };
 
 struct Light
@@ -42,6 +43,12 @@ struct PassUniform
 	float DeltaTime = 0.0f;
 
 	DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	DirectX::XMFLOAT4 FogColor = { 0.7f, 0.7f, 0.7f, 1.0f };
+	float gFogStart = 5.0f;
+	float gFogRange = 150.0f;
+	DirectX::XMFLOAT2 cbPerObjectPad2;
+
 	Light Lights[MaxLights];
 };
 
@@ -50,8 +57,7 @@ struct MaterialUniform
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
 	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = 0.25f;
-
-	//DirectX::XMFLOAT4X4 MatTransform = Identity4x4();
+	DirectX::XMFLOAT4X4 MatTransform = Identity4x4();
 };
 
 class DX12FrameBuffer : public FrameBuffer
