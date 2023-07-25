@@ -32,6 +32,7 @@ void Application::Run()
 {
 	while (m_Running)
 	{
+		m_Time.Tick();
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate();

@@ -4,6 +4,7 @@ class Layer;
 class Window;
 
 #include "Event.h"
+#include "RiverTime.h"
 
 class Application
 {
@@ -26,6 +27,7 @@ public:
 private:
 	bool m_Running;
 
+	RiverTime m_Time;
 	V_Array<Share<Layer>> m_Layers;
 	Unique<Window> m_Window;
 
