@@ -163,5 +163,25 @@ namespace River
 				0.0f, 0.0f, 0.0f, 1.0f,
 			};
 		}
+
+		static Matrix4x4 ScaleMatrix(float x, float y, float z)
+		{
+			return {
+				x, 0.0f, 0.0f, 0.0f,
+				0.0f, y, 0.0f, 0.0f,
+				0.0f, 0.0f, z, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f,
+			};
+		}
+
+		static Matrix4x4 TranslationMatrix(float x, float y, float z)
+		{
+			return {
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				x, y, z, 1.0f,
+			};
+		}
 	};
 }

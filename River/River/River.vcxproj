@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp" />
@@ -147,7 +148,9 @@
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
     <ClCompile Include="Renderer\Source\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Material.cpp" />
+    <ClCompile Include="Renderer\Source\Mesh.cpp" />
     <ClCompile Include="Renderer\Source\PipelineState.cpp" />
+    <ClCompile Include="Renderer\Source\RenderItem.cpp" />
     <ClCompile Include="Renderer\Source\RHI.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
     <ClCompile Include="Renderer\Source\Texture.cpp" />
@@ -190,12 +193,15 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12VertexBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\UploadBuffer.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\Waves.h" />
     <ClInclude Include="Renderer\Header\Camera.h" />
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
     <ClInclude Include="Renderer\Header\Material.h" />
+    <ClInclude Include="Renderer\Header\Mesh.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
     <ClInclude Include="Renderer\Header\RendererUtil.h" />
+    <ClInclude Include="Renderer\Header\RenderItem.h" />
     <ClInclude Include="Renderer\Header\RHI.h" />
     <ClInclude Include="Renderer\Header\Shader.h" />
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />

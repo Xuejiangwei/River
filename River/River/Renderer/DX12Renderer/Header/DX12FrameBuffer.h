@@ -8,6 +8,19 @@
 #include <wrl.h>
 #include "DirectXMath.h"
 
+struct Vertex
+{
+	Vertex() = default;
+	Vertex(float x, float y, float z, float nx, float ny, float nz, float u, float v) :
+		Pos(x, y, z),
+		Normal(nx, ny, nz),
+		TexC(u, v) {}
+
+	DirectX::XMFLOAT3 Pos;
+	DirectX::XMFLOAT3 Normal;
+	DirectX::XMFLOAT2 TexC;
+};
+
 struct ObjectUniform
 {
 	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
@@ -63,7 +76,7 @@ struct MaterialUniform
 class DX12FrameBuffer : public FrameBuffer
 {
 public:
-	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount);
+	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount, int waveIndexCount);
 	virtual ~DX12FrameBuffer() override;
 
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
@@ -74,6 +87,7 @@ private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
+	Unique<DX12UniformBuffer<Vertex>> WavesVB;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

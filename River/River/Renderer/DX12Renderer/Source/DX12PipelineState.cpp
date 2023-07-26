@@ -6,48 +6,9 @@
 #include "Renderer/DX12Renderer/Header/DX12Shader.h"
 #include "Renderer/DX12Renderer/Header/DX12RootSignature.h"
 
-DX12PipelineState::DX12PipelineState(ID3D12Device* device, Share<DX12RootSignature> rootSignature, Share<Shader> vsShader, Share<Shader> psShader, Share<VertexBuffer> vertexBuffer)
+DX12PipelineState::DX12PipelineState(ID3D12Device* device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
 {
-	auto dx12VertexBuffer = dynamic_cast<DX12VertexBuffer*>(vertexBuffer.get());
-	DXGI_FORMAT	emRenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC stPSODesc = {};
-	stPSODesc.InputLayout = { dx12VertexBuffer->m_VertexLayout.data(), (uint32_t)dx12VertexBuffer->m_VertexLayout.size() };
-	stPSODesc.pRootSignature = rootSignature->GetRootSignature();
-
-	if (vsShader)
-	{
-		auto vs_Shader = dynamic_cast<DX12Shader*>(vsShader.get());
-		stPSODesc.VS.pShaderBytecode = vs_Shader->m_ShaderByteCode->GetBufferPointer();
-		stPSODesc.VS.BytecodeLength = vs_Shader->m_ShaderByteCode->GetBufferSize();
-	}
-
-	if (psShader)
-	{
-		auto ps_Shader = dynamic_cast<DX12Shader*>(psShader.get());
-		stPSODesc.PS.pShaderBytecode = ps_Shader->m_ShaderByteCode->GetBufferPointer();
-		stPSODesc.PS.BytecodeLength = ps_Shader->m_ShaderByteCode->GetBufferSize();
-	}
-
-	stPSODesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	stPSODesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-
-	stPSODesc.BlendState.AlphaToCoverageEnable = FALSE;
-	stPSODesc.BlendState.IndependentBlendEnable = FALSE;
-	stPSODesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	stPSODesc.DepthStencilState.DepthEnable = FALSE;
-	stPSODesc.DepthStencilState.StencilEnable = FALSE;
-
-	stPSODesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	stPSODesc.NumRenderTargets = 1;
-	stPSODesc.RTVFormats[0] = emRenderTargetFormat;
-
-	stPSODesc.SampleMask = UINT_MAX;
-	stPSODesc.SampleDesc.Count = 1;
-
-	ThrowIfFailed(device->CreateGraphicsPipelineState(&stPSODesc, IID_PPV_ARGS(&m_PipelineState)));
+	ThrowIfFailed(device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_PipelineState)));
 }
 
 DX12PipelineState::~DX12PipelineState()

@@ -11,6 +11,7 @@
 #include <DirectXColors.h>
 
 #include "Event.h"
+#include "RenderItem.h"
 #include "Material.h"
 #include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
@@ -36,7 +37,7 @@ public:
 
 	virtual void Render() override;
 
-	virtual void OnUpdate() override;
+	virtual void OnUpdate(const RiverTime& time) override;
 
 	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) override;
 
@@ -49,6 +50,8 @@ public:
 	virtual Camera* GetMainCamera() override;
 
 private:
+	void InitializeBase(const RHIInitializeParam& param);
+
 	void LoadTextures();
 
 	void InitBaseMaterials();
@@ -56,6 +59,8 @@ private:
 	void InitBaseShaders();
 
 	void InitBaseRootSignatures();
+
+	void InitRenderLayers();
 
 	void InitBasePSOs();
 
@@ -71,9 +76,13 @@ private:
 
 	void CheckQualityLevel();
 
+	void AnimationMaterials(const RiverTime& time);
+
 	void UpdateObjectCBs();
 
-	void UpdateMainPass();
+	void UpdateMaterialCBs();
+
+	void UpdateMainPass(const RiverTime& time);
 
 	void FlushCommandQueue();
 
@@ -86,17 +95,17 @@ private:
 		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
-	void BuildDescriptorHeaps();
+	void InitDescriptorHeaps();
 
-	void BuildTestVertexBufferAndIndexBuffer();
+	void InitBaseVertexBufferAndIndexBuffer();
 
 	void InitFrameBuffer();
 
-	void BuildConstantBufferViews();
+	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<RenderItem*>& items);
 
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
-	Microsoft::WRL::ComPtr<ID3D12Device4> m_Device;
+	Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
@@ -106,12 +115,8 @@ private:
 	static const int s_SwapChainBufferCount = 2;
 	static const int s_FrameBufferCount = 3;		//因为GBuffer的原因,可能会更大
 	static const int s_MaxRenderItem = 10;
-	static const int s_BaseMaterialCount = 1;
 	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
-
-	bool m_4xMsaaState = false;
-	UINT m_4xMsaaQuality;
 
 	UINT m_RtvDescriptorSize;
 	UINT m_DsvDescriptorSize;
@@ -121,6 +126,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DsvHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvHeap;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_SwapChainBuffer[s_SwapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;
@@ -139,20 +145,19 @@ private:
 	int m_CurrFrameResourceIndex = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
-	PassUniform m_MainPassUniformData;
-
-	 
 
 	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	RHIInitializeParam m_InitParam;
-
 	HashMap<String, Share<DX12Shader>> m_Shaders;
 	HashMap<String, Share<DX12RootSignature>> m_RootSignatures;
 	HashMap<String, Share<DX12PipelineState>> m_PSOs;
+	HashMap<String, Unique<DX12Texture>> m_Textures;
+	HashMap<String, std::pair<Share<VertexBuffer>, Share<IndexBuffer>>> m_Vertex_Index_Buffers;
+	HashMap<String, std::unique_ptr<Material>> m_BaseMaterials;
+	HashMap<String, Unique<RenderItem>> m_RenderItems;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
-	V_Array<Material> m_BaseMaterials;
-	V_Array<Unique<DX12Texture>> m_Textures;
+	V_Array<RenderItemInstance*> m_RenderLayers[(int)RenderLayer::LayerCount];
 };

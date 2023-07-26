@@ -11,11 +11,11 @@ Unique<DX12GeometryGenerator> DX12GeometryGenerator::s_Instance = nullptr;
 
 DX12GeometryGenerator::DX12GeometryGenerator()
 {
-	m_Data[GeometryType::Box]= CreateBox(1, 1, 1, 2);
+	m_Data[GeometryType::Box]= CreateBox(2, 2, 2, 3);
 	m_Data[GeometryType::Sphere]= CreateSphere(1, 10, 10);
 	m_Data[GeometryType::Geosphere]= CreateGeosphere(1, 3);
 	m_Data[GeometryType::Cylinder]= CreateCylinder(2, 1, 1.5f,20, 20);
-	m_Data[GeometryType::Grid]= CreateGrid(1, 2, 2, 2);
+	m_Data[GeometryType::Grid]= CreateGrid(160, 160, 50, 50);
 	m_Data[GeometryType::Quad]= CreateQuad(1, 1, 1, 1, 1);
 }
 

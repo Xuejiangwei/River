@@ -13,7 +13,7 @@ class VertexBuffer;
 class DX12PipelineState : public PipelineState
 {
 public:
-	DX12PipelineState(ID3D12Device* device, Share<DX12RootSignature> rootSignature, Share<Shader> vsShader, Share<Shader> psShader, Share<VertexBuffer> vertexBuffer);
+	DX12PipelineState(ID3D12Device* device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc);
 	
 	virtual ~DX12PipelineState() override;
 

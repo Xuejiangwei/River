@@ -31,3 +31,21 @@ template<class _Kty, class _Ty, class _Hasher = std::hash<_Kty>, class _Keyeq = 
 using HashMap = std::unordered_map<_Kty, _Ty, _Hasher, _Keyeq>;
 
 using String = std::string;
+
+namespace River
+{
+	template <class _Ty>
+	struct remove_reference {
+		using type = _Ty;
+		using _Const_thru_ref_type = const _Ty;
+	};
+
+	template <class _Ty>
+	using remove_reference_t = typename remove_reference<_Ty>::type;
+
+	template <class _Ty>
+	constexpr remove_reference_t<_Ty>&& Move(_Ty&& _Arg) noexcept
+	{
+		return static_cast<remove_reference_t<_Ty>&&>(_Arg);
+	}
+}

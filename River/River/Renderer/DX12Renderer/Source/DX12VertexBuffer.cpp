@@ -49,6 +49,16 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32
 	}
 }
 
+DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
+	: VertexBuffer(layout)
+{
+	m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);
+
+	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.StrideInBytes = elementSize;
+	m_VertexBufferView.SizeInBytes = size;
+}
+
 DX12VertexBuffer::~DX12VertexBuffer()
 {
 }

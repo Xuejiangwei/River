@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
+#include "RiverTime.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
@@ -20,6 +21,17 @@ enum class APIMode
 	Vulkan
 };
 
+enum class RenderLayer
+{
+	Opaque,
+	Mirrors,
+	Reflected,
+	Transparent,
+	Shadow,
+
+	LayerCount
+};
+
 class RHI
 {
 public:
@@ -33,7 +45,7 @@ public:
 
 	virtual void Render() = 0;
 
-	virtual void OnUpdate() = 0;
+	virtual void OnUpdate(const RiverTime& time) = 0;
 
 	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) = 0;
 
@@ -48,6 +60,10 @@ public:
 	static Unique<RHI>& Get();
 
 	APIMode GetAPIMode() const { return s_APIMode; }
+
+protected:
+	bool m_4xMsaaState = false;
+	unsigned int m_4xMsaaQuality = 0;
 
 private:
 	static APIMode s_APIMode;

@@ -33,6 +33,7 @@ void Application::Run()
 	while (m_Running)
 	{
 		m_Time.Tick();
+
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate();
@@ -40,7 +41,7 @@ void Application::Run()
 
 		m_Window->OnUpdate();
 
-		RHI::Get()->OnUpdate();
+		RHI::Get()->OnUpdate(m_Time);
 		RHI::Get()->Render();
 	}
 }
@@ -82,5 +83,12 @@ void Application::OnEvent(Event& e)
 		{
 			auto& ce = dynamic_cast<MouseMovedEvent&>(e);
 			RHI::Get()->GetMainCamera()->OnMouseMoved((int)ce.GetX(), (int)ce.GetY());
+		});
+
+	dispatcher.DispatchDirect<KeyPressedEvent>(
+		[this](auto e) -> decltype(auto)
+		{
+			auto& ce = dynamic_cast<KeyPressedEvent&>(e);
+			RHI::Get()->GetMainCamera()->OnKeyPressed(ce.GetKeyCode(), m_Time);
 		});
 }

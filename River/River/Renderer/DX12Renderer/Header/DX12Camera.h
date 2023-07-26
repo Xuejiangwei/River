@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MathHelper.h"
 #include "Camera.h"
 #include "DX12Util.h"
 
@@ -25,6 +26,10 @@ public:
 
 	virtual void OnUpdate() override;
 
+	virtual void OnKeyPressed(KeyCode code, const RiverTime& time) override;
+
+	void OnKeyReleased(KeyCode code, const RiverTime& time);
+
 	void LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp);
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
@@ -44,6 +49,10 @@ private:
 	DirectX::XMFLOAT3 m_Right = { 1.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_Up = { 0.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_Look = { 0.0f, 0.0f, 1.0f };
+
+	float m_Theta = 1.5f * PI;
+	float m_Phi = PI_DIV_2 - 0.1f;
+	float m_Radius = 50.0f;
 
 	float m_NearZ = 0.0f;
 	float m_FarZ = 0.0f;

@@ -38,6 +38,18 @@ DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, uint32_t* indices, uint32
 	m_IndexBufferView.SizeInBytes = count * indiceDataSize;
 }
 
+DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, uint32_t* indices, uint32_t count, ShaderDataType indiceDataType)
+	: IndexBuffer(count, indiceDataType)
+{
+	auto indiceDataSize = ShaderDataTypeSize(indiceDataType);
+
+	m_IndexBuffer = CreateDefaultBuffer(device, commandList, indices, count * indiceDataSize, m_UploaderBuffer);
+
+	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
+	m_IndexBufferView.Format = ShaderDateTypeToDXGIFormat(indiceDataType);
+	m_IndexBufferView.SizeInBytes = count * indiceDataSize;
+}
+
 DX12IndexBuffer::~DX12IndexBuffer()
 {
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "RiverTime.h"
+#include "KeyCode.h"
+
 enum class CameraType
 {
 	OrthoGraphic,
@@ -26,6 +29,8 @@ public:
 	virtual void OnMouseReleased(int x, int y) = 0;
 
 	virtual void OnMouseMoved(int x, int y) = 0;
+
+	virtual void OnKeyPressed(KeyCode code, const RiverTime& time) = 0;
 
 	virtual void SetLens(float fovY, float aspect, float nearZ, float farZ) = 0;
 

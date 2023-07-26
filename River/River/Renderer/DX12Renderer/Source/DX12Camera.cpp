@@ -142,6 +142,55 @@ void DX12Camera::OnUpdate()
 	}
 }
 
+void DX12Camera::OnKeyPressed(KeyCode code, const RiverTime& time)
+{
+	auto Walk = [this](float d)
+	{
+		// mPosition += d*mLook
+		DirectX::XMVECTOR s = DirectX::XMVectorReplicate(d);
+		DirectX::XMVECTOR l = DirectX::XMLoadFloat3(&this->m_Look);
+		DirectX::XMVECTOR p = DirectX::XMLoadFloat3(&this->m_Position);
+		DirectX::XMStoreFloat3(&this->m_Position, DirectX::XMVectorMultiplyAdd(s, l, p));
+
+		this->m_ViewDirty = true;
+	};
+
+	auto Strafe = [this](float d)
+	{
+		// mPosition += d*mRight
+		DirectX::XMVECTOR s = DirectX::XMVectorReplicate(d);
+		DirectX::XMVECTOR r = DirectX::XMLoadFloat3(&m_Right);
+		DirectX::XMVECTOR p = DirectX::XMLoadFloat3(&m_Position);
+		DirectX::XMStoreFloat3(&m_Position, DirectX::XMVectorMultiplyAdd(s, r, p));
+
+		m_ViewDirty = true;
+	};
+
+	if (code == KeyCode::W)
+	{
+		Walk(10.0f * time.DeltaTime());
+	}
+
+	if (code == KeyCode::S)
+	{
+		Walk(-10.0f * time.DeltaTime());
+	}
+
+	if (code == KeyCode::A)
+	{
+		Strafe(10.0f * time.DeltaTime());
+	}
+
+	if (code == KeyCode::D)
+	{
+		Strafe(10.0f * time.DeltaTime());
+	}
+}
+
+void DX12Camera::OnKeyReleased(KeyCode code, const RiverTime& time)
+{
+}
+
 void DX12Camera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp)
 {
 	DirectX::XMVECTOR L = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(target, pos));

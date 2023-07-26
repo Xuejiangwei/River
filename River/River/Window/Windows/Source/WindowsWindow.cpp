@@ -3,6 +3,7 @@
 #include <windowsx.h>
 
 #include "Application.h"
+#include "KeyCode.h"
 
 LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -139,15 +140,27 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 	case WM_KEYUP:
-		/*if (wParam == VK_ESCAPE)
+		if (wParam == VK_ESCAPE)
 		{
 			PostQuitMessage(0);
 		}
-		else if ((int)wParam == VK_F2)
-			Set4xMsaaState(!m4xMsaaState);*/
+		//else if ((int)wParam == VK_F2)
+			//Set4xMsaaState(!m4xMsaaState);
+		else
+		{
+			int vk = MapVirtualKey((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+			KeyReleasedEvent e((KeyCode)vk);
+			Application::Get().OnEvent(e);
+		}
 		return 0;
 	case WM_KEYDOWN:
 		//OnKeyDown(wParam);
+		{
+			int vk = MapVirtualKey((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
+			KeyPressedEvent e((KeyCode)vk);
+			Application::Get().OnEvent(e);
+
+		}
 		return 0;
 	}
 
