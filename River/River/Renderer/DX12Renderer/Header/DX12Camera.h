@@ -30,6 +30,8 @@ public:
 
 	void OnKeyReleased(KeyCode code, const RiverTime& time);
 
+	void UpdateViewMatrix();
+
 	void LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp);
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }

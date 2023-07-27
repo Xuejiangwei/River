@@ -35,6 +35,27 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32
 	m_VertexBufferView.StrideInBytes = elementSize;
 	m_VertexBufferView.SizeInBytes = size;
 
+	InitLayout();
+}
+
+DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
+	: VertexBuffer(layout)
+{
+	m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);
+
+	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.StrideInBytes = elementSize;
+	m_VertexBufferView.SizeInBytes = size;
+
+	InitLayout();
+}
+
+DX12VertexBuffer::~DX12VertexBuffer()
+{
+}
+
+void DX12VertexBuffer::InitLayout()
+{
 	m_VertexLayout.resize(m_Layout.GetElementCount());
 	auto& layoutElements = m_Layout.GetElements();
 	for (size_t i = 0; i < m_VertexLayout.size(); i++)
@@ -47,18 +68,4 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32
 		m_VertexLayout[i].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
 		m_VertexLayout[i].InstanceDataStepRate = 0;
 	}
-}
-
-DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout)
-	: VertexBuffer(layout)
-{
-	m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);
-
-	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-	m_VertexBufferView.StrideInBytes = elementSize;
-	m_VertexBufferView.SizeInBytes = size;
-}
-
-DX12VertexBuffer::~DX12VertexBuffer()
-{
 }

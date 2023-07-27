@@ -14,6 +14,8 @@ public:
 
 	~Material();
 
+	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int srvIndex);
+
 	String m_Name;
 	float m_Roughness;
 	River::Float4 m_DiffuseAlbedo;

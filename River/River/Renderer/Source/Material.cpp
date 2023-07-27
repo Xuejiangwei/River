@@ -21,3 +21,12 @@ Material::Material(const char* name)
 Material::~Material()
 {
 }
+
+void Material::InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int srvIndex)
+{
+	m_DiffuseAlbedo = diffuseAlbedo;
+	m_FresnelR0 = fresnelR0;
+	m_Roughness = roughness;
+	MatCBIndex = cbIndx;
+	DiffuseSrvHeapIndex = srvIndex;
+}

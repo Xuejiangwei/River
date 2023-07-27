@@ -14,6 +14,8 @@ public:
 
 	~DX12VertexBuffer();
 
+	void InitLayout();
+
 	friend class DX12PipelineState;
 	friend class DX12RHI;
 private:

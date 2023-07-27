@@ -14,8 +14,10 @@ class DX12PipelineState : public PipelineState
 {
 public:
 	DX12PipelineState(ID3D12Device* device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc);
-	
+
 	virtual ~DX12PipelineState() override;
+
+	ID3D12PipelineState* GetPSO() { return m_PipelineState.Get(); }
 
 	friend class DX12RHI;
 

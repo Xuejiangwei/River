@@ -57,11 +57,6 @@ struct PassUniform
 
 	DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	DirectX::XMFLOAT4 FogColor = { 0.7f, 0.7f, 0.7f, 1.0f };
-	float gFogStart = 5.0f;
-	float gFogRange = 150.0f;
-	DirectX::XMFLOAT2 cbPerObjectPad2;
-
 	Light Lights[MaxLights];
 };
 
@@ -71,12 +66,27 @@ struct MaterialUniform
 	DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
 	float Roughness = 0.25f;
 	DirectX::XMFLOAT4X4 MatTransform = Identity4x4();
+
+	UINT DiffuseMapIndex = 0;
+	UINT MaterialPad0;
+	UINT MaterialPad1;
+	UINT MaterialPad2;
+};
+
+struct InstanceUniform
+{
+	DirectX::XMFLOAT4X4 World = Identity4x4();
+	DirectX::XMFLOAT4X4 TexTransform = Identity4x4();
+	UINT MaterialIndex;
+	UINT InstancePad0;
+	UINT InstancePad1;
+	UINT InstancePad2;
 };
 
 class DX12FrameBuffer : public FrameBuffer
 {
 public:
-	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount, int waveIndexCount);
+	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount);
 	virtual ~DX12FrameBuffer() override;
 
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
@@ -87,7 +97,7 @@ private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
-	Unique<DX12UniformBuffer<Vertex>> WavesVB;
+	Unique<DX12UniformBuffer<InstanceUniform>> m_InstanceUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

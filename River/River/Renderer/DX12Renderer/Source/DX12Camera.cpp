@@ -164,31 +164,48 @@ void DX12Camera::OnKeyPressed(KeyCode code, const RiverTime& time)
 		DirectX::XMStoreFloat3(&m_Position, DirectX::XMVectorMultiplyAdd(s, r, p));
 
 		m_ViewDirty = true;
-	};
-
+	};	
+	float speed = 200.f;
 	if (code == KeyCode::W)
 	{
-		Walk(10.0f * time.DeltaTime());
+		Walk(speed * time.DeltaTime());
 	}
 
 	if (code == KeyCode::S)
 	{
-		Walk(-10.0f * time.DeltaTime());
+		Walk(-speed * time.DeltaTime());
 	}
 
 	if (code == KeyCode::A)
 	{
-		Strafe(10.0f * time.DeltaTime());
+		Strafe(-speed * time.DeltaTime());
 	}
 
 	if (code == KeyCode::D)
 	{
-		Strafe(10.0f * time.DeltaTime());
+		Strafe(speed * time.DeltaTime());
+	}
+
+	if (code == KeyCode::Q)
+	{
+		m_Position.y -= 1.f;
+		this->m_ViewDirty = true;
+	}
+
+	if (code == KeyCode::E)
+	{
+		m_Position.y += 1.f;
+		this->m_ViewDirty = true;
 	}
 }
 
 void DX12Camera::OnKeyReleased(KeyCode code, const RiverTime& time)
 {
+}
+
+void DX12Camera::UpdateViewMatrix()
+{
+
 }
 
 void DX12Camera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp)

@@ -16,16 +16,30 @@
 
 #include "RiverHead.h"
 #include <cstdint>
+#include <wrl.h>
+#include <d3d12.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 
-enum class GeometryType : uint8_t
+struct SubmeshGeometry
 {
-	Box,
-	Sphere,
-	Geosphere,
-	Cylinder,
-	Grid,
-	Quad
+	uint32_t IndexCount = 0;
+	uint32_t StartIndexLocation = 0;
+	int BaseVertexLocation = 0;
+
+	DirectX::BoundingBox Bounds;
+};
+
+struct MeshGeometry
+{
+	std::string Name;
+
+	Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
+	Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
+	Unique<class VertexBuffer> VertexBuffer;
+	Unique<class IndexBuffer> IndexBufer;
+
+	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 };
 
 class DX12GeometryGenerator
@@ -64,6 +78,7 @@ public:
 	{
 		std::vector<Vertex> Vertices;
 		std::vector<uint32_t> Indices32;
+		DirectX::BoundingBox BB;
 	};
 
 public:
@@ -71,46 +86,60 @@ public:
 
 	~DX12GeometryGenerator();
 
-	const MeshData& GetMeshData(GeometryType type);
+	void Initialize();
+
+	Unique<MeshGeometry>& LoadMeshByFile(const char* filePath, const char* name);
+
+	Unique<MeshGeometry>& GetMesh(const char* name);
 
 	static Unique<DX12GeometryGenerator>& Get();
+
+	static const char* BoxName;
+	static const char* SphereName;
+	static const char* GeosphereName;
+	static const char* CylinderName;
+	static const char* GridName;
+	static const char* QuadName;
 
 private:
 	///<summary>
 	/// Creates a box centered at the origin with the given dimensions, where each
 	/// face has m rows and n columns of vertices.
 	///</summary>
-	MeshData CreateBox(float width, float height, float depth, uint32_t numSubdivisions);
+	Unique<MeshGeometry> CreateBox(float width, float height, float depth, uint32_t numSubdivisions);
 
 	///<summary>
 	/// Creates a sphere centered at the origin with the given radius.  The
 	/// slices and stacks parameters control the degree of tessellation.
 	///</summary>
-	MeshData CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount);
+	Unique<MeshGeometry> CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount);
 
 	///<summary>
 	/// Creates a geosphere centered at the origin with the given radius.  The
 	/// depth controls the level of tessellation.
 	///</summary>
-	MeshData CreateGeosphere(float radius, uint32_t numSubdivisions);
+	Unique<MeshGeometry> CreateGeosphere(float radius, uint32_t numSubdivisions);
 
 	///<summary>
 	/// Creates a cylinder parallel to the y-axis, and centered about the origin.  
 	/// The bottom and top radius can vary to form various cone shapes rather than true
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
 	///</summary>
-	MeshData CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount);
+	Unique<MeshGeometry> CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount);
 
 	///<summary>
 	/// Creates an mxn grid in the xz-plane with m rows and n columns, centered
 	/// at the origin with the specified width and depth.
 	///</summary>
-	MeshData CreateGrid(float width, float depth, uint32_t m, uint32_t n);
+	Unique<MeshGeometry> CreateGrid(float width, float depth, uint32_t m, uint32_t n);
 
 	///<summary>
 	/// Creates a quad aligned with the screen.  This is useful for postprocessing and screen effects.
 	///</summary>
-	MeshData CreateQuad(float x, float y, float w, float h, float depth);
+	Unique<MeshGeometry> CreateQuad(float x, float y, float w, float h, float depth);
+
+	Unique<MeshGeometry> CreateMeshGeometry(const char* name, void* vertices, void* indices, unsigned int vertexCount, unsigned int indiceCount,
+		unsigned int verticesByteSize, unsigned int indicesByteSize);
 
 private:
 	void Subdivide(MeshData& meshData);
@@ -119,7 +148,7 @@ private:
 	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshData& meshData);
 
 private:
-	HashMap<GeometryType, MeshData> m_Data;
+	HashMap<String, Unique<MeshGeometry>> m_Geometries;
 
 	static Unique<DX12GeometryGenerator> s_Instance;
 };

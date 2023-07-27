@@ -47,11 +47,11 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) = 0;
 
-	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) = 0;
+	virtual Unique<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) = 0;
 
-	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
+	virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
 
-	virtual Share<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) = 0;
+	virtual Unique<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) = 0;
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 

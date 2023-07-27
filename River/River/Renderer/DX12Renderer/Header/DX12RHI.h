@@ -11,8 +11,8 @@
 #include <DirectXColors.h>
 
 #include "Event.h"
-#include "RenderItem.h"
 #include "Material.h"
+#include "Renderer/DX12Renderer/Header/DX12RenderItem.h"
 #include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
@@ -39,11 +39,11 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) override;
 
-	virtual Share<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) override;
+	virtual Unique<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) override;
 
-	virtual Share<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) override;
+	virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) override;
 
-	virtual Share<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) override;
+	virtual Unique<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) override;
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
@@ -97,11 +97,13 @@ private:
 
 	void InitDescriptorHeaps();
 
-	void InitBaseVertexBufferAndIndexBuffer();
+	void InitBaseRenderItems();
 
 	void InitFrameBuffer();
 
-	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<RenderItem*>& items);
+	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& items);
+
+	//void DrawRenderItemInstances(ID3D12GraphicsCommandList* cmdList, const V_Array<RenderItemInstance*>& instances);
 
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
@@ -114,7 +116,7 @@ private:
 
 	static const int s_SwapChainBufferCount = 2;
 	static const int s_FrameBufferCount = 3;		//因为GBuffer的原因,可能会更大
-	static const int s_MaxRenderItem = 10;
+	static const int s_MaxRenderItem = 100;
 	int mCurrFrameResourceIndex = 0;
 	int m_CurrBackBuffer;
 
@@ -155,9 +157,8 @@ private:
 	HashMap<String, Share<DX12RootSignature>> m_RootSignatures;
 	HashMap<String, Share<DX12PipelineState>> m_PSOs;
 	HashMap<String, Unique<DX12Texture>> m_Textures;
-	HashMap<String, std::pair<Share<VertexBuffer>, Share<IndexBuffer>>> m_Vertex_Index_Buffers;
 	HashMap<String, std::unique_ptr<Material>> m_BaseMaterials;
-	HashMap<String, Unique<RenderItem>> m_RenderItems;
+	HashMap<String, Unique<DX12RenderItem>> m_RenderItems;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
-	V_Array<RenderItemInstance*> m_RenderLayers[(int)RenderLayer::LayerCount];
+	V_Array<RenderItem*> m_RenderLayers[(int)RenderLayer::LayerCount];
 };
