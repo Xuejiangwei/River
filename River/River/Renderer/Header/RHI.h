@@ -29,6 +29,7 @@ enum class RenderLayer
 	Transparent,
 	Shadow,
 
+	Highlight,
 	LayerCount
 };
 
@@ -56,6 +57,8 @@ public:
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;
+
+	virtual void Pick(int x, int y) = 0;
 
 	static Unique<RHI>& Get();
 

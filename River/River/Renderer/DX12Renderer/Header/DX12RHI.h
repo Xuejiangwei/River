@@ -49,6 +49,8 @@ public:
 
 	virtual Camera* GetMainCamera() override;
 
+	virtual void Pick(int x, int y) override;
+
 private:
 	void InitializeBase(const RHIInitializeParam& param);
 
@@ -160,5 +162,5 @@ private:
 	HashMap<String, std::unique_ptr<Material>> m_BaseMaterials;
 	HashMap<String, Unique<DX12RenderItem>> m_RenderItems;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
-	V_Array<RenderItem*> m_RenderLayers[(int)RenderLayer::LayerCount];
+	V_Array<DX12RenderItem*> m_RenderLayers[(int)RenderLayer::LayerCount];
 };

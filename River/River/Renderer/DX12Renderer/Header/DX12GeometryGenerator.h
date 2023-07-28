@@ -46,10 +46,10 @@ class DX12GeometryGenerator
 {
 public:
 
-	struct Vertex
+	struct MeshVertex
 	{
-		Vertex() {}
-		Vertex(
+		MeshVertex() {}
+		MeshVertex(
 			const DirectX::XMFLOAT3& p,
 			const DirectX::XMFLOAT3& n,
 			const DirectX::XMFLOAT3& t,
@@ -58,7 +58,7 @@ public:
 			Normal(n),
 			TangentU(t),
 			TexC(uv) {}
-		Vertex(
+		MeshVertex(
 			float px, float py, float pz,
 			float nx, float ny, float nz,
 			float tx, float ty, float tz,
@@ -76,7 +76,7 @@ public:
 
 	struct MeshData
 	{
-		std::vector<Vertex> Vertices;
+		std::vector<MeshVertex> Vertices;
 		std::vector<uint32_t> Indices32;
 		DirectX::BoundingBox BB;
 	};
@@ -143,7 +143,7 @@ private:
 
 private:
 	void Subdivide(MeshData& meshData);
-	Vertex MidPoint(const Vertex& v0, const Vertex& v1);
+	MeshVertex MidPoint(const MeshVertex& v0, const MeshVertex& v1);
 	void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshData& meshData);
 	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshData& meshData);
 

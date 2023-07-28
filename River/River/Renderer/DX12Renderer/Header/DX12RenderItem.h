@@ -24,7 +24,7 @@ struct DX12RenderItem : public RenderItem
 	DirectX::XMFLOAT4X4 World = Identity4x4();
 	DirectX::XMFLOAT4X4 TexTransform = Identity4x4();
 
-	int NumFramesDirty = 0;
+	int NumFramesDirty = 3;
 	UINT ObjCBIndex = -1;
 	int InstanceCount = 1;
 	int IndexCount = 0;
@@ -36,6 +36,7 @@ struct DX12RenderItem : public RenderItem
 
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
+	bool Visible = true;
 	DirectX::BoundingBox Bounds;
 	V_Array<DX12InstanceUniformData> Instances;
 

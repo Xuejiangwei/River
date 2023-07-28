@@ -222,6 +222,17 @@ void DX12Camera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, Direc
 	m_ViewDirty = true;
 }
 
+void DX12Camera::LookAt(const DirectX::XMFLOAT3& pos, const DirectX::XMFLOAT3& target, const DirectX::XMFLOAT3& up)
+{
+	DirectX::XMVECTOR P = XMLoadFloat3(&pos);
+	DirectX::XMVECTOR T = XMLoadFloat3(&target);
+	DirectX::XMVECTOR U = XMLoadFloat3(&up);
+
+	LookAt(P, T, U);
+
+	m_ViewDirty = true;
+}
+
 DirectX::XMMATRIX DX12Camera::GetView() const
 {
 	return DirectX::XMLoadFloat4x4(&m_View);

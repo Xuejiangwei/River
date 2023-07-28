@@ -68,7 +68,15 @@ void Application::OnEvent(Event& e)
 		[this](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<MouseButtonPressedEvent&>(e);
-			RHI::Get()->GetMainCamera()->OnMousePressed(ce.GetMouseX(), ce.GetMouseY());
+
+			if (ce.GetMouseButton() == MouseCode::ButtonRight)
+			{
+				RHI::Get()->Pick(ce.GetMouseX(), ce.GetMouseY());
+			}
+			else
+			{
+				RHI::Get()->GetMainCamera()->OnMousePressed(ce.GetMouseX(), ce.GetMouseY());
+			}
 		});
 
 	dispatcher.DispatchDirect<MouseButtonReleasedEvent>(

@@ -25,6 +25,10 @@ struct ObjectUniform
 {
 	DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4();
 	DirectX::XMFLOAT4X4 TexTransform = Identity4x4();
+	UINT     MaterialIndex;
+	UINT     ObjPad0;
+	UINT     ObjPad1;
+	UINT     ObjPad2;
 };
 
 struct Light
@@ -97,7 +101,6 @@ private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
-	Unique<DX12UniformBuffer<InstanceUniform>> m_InstanceUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

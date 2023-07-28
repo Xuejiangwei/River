@@ -8,7 +8,10 @@ class DX12Camera : public Camera
 {
 public:
 	DX12Camera(CameraType type);
+
 	virtual ~DX12Camera() override;
+
+	friend class DX12RHI;
 
 	virtual void SetPosition(float x, float y, float z) override;
 
@@ -33,6 +36,8 @@ public:
 	void UpdateViewMatrix();
 
 	void LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR worldUp);
+
+	void LookAt(const DirectX::XMFLOAT3& pos, const DirectX::XMFLOAT3& target, const DirectX::XMFLOAT3& up);
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
 

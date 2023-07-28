@@ -17,6 +17,7 @@
 #include <d3dcompiler.h>
 #include <iostream>
 #include <chrono>
+#include <fstream>
 
 #define DEFAULT_SHADER_PATH "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
 #define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
@@ -31,12 +32,13 @@
 #define DEFAULT_TEXTURE_PATH_10 "F:\\GitHub\\River\\River\\Textures\\white1x1.dds"
 #define DEFAULT_TEXTURE_PATH_11 "F:\\GitHub\\River\\River\\Textures\\WoodCrate01.dds"
 #define DEFAULT_MODEL_PATH_1 "F:\\GitHub\\River\\River\\Models\\skull.txt"
+#define DEFAULT_MODEL_PATH_2 "F:\\GitHub\\River\\River\\Models\\car.txt"
 
 
 PassUniform mMainPassCB;
 DirectX::BoundingFrustum mCamFrustum;
-
-UINT mInstanceCount = 0;
+std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+DX12RenderItem* mPickedRitem = nullptr;
 
 DX12RHI::DX12RHI()
 	: m_CurrentFence(1), m_CurrBackBuffer(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0),
@@ -56,7 +58,10 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
 	m_InitParam = param;
 
-	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
+	//m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
+	m_PrespectiveCamera.LookAt(DirectX::XMFLOAT3(5.0f, 4.0f, -15.0f),
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f),
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 	InitializeBase(param);
 
@@ -64,7 +69,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 	{
 		DX12GeometryGenerator::Get()->Initialize();
-		DX12GeometryGenerator::Get()->LoadMeshByFile(DEFAULT_MODEL_PATH_1, "Skull");
 
 		LoadTextures();
 
@@ -73,6 +77,93 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitDescriptorHeaps();
 		
 		InitBaseShaders();
+
+		{
+			std::ifstream fin(DEFAULT_MODEL_PATH_2);
+
+			if (!fin)
+			{
+				MessageBox(0, L"Models/car.txt not found.", 0, 0);
+				return;
+			}
+
+			UINT vcount = 0;
+			UINT tcount = 0;
+			std::string ignore;
+
+			fin >> ignore >> vcount;
+			fin >> ignore >> tcount;
+			fin >> ignore >> ignore >> ignore >> ignore;
+
+			DirectX::XMFLOAT3 vMinf3(+FLT_MAX, +FLT_MAX, +FLT_MAX);
+			DirectX::XMFLOAT3 vMaxf3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+			DirectX::XMVECTOR vMin = XMLoadFloat3(&vMinf3);
+			DirectX::XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
+
+			std::vector<Vertex> vertices(vcount);
+			for (UINT i = 0; i < vcount; ++i)
+			{
+				fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
+				fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
+
+				DirectX::XMVECTOR P = XMLoadFloat3(&vertices[i].Pos);
+
+				vertices[i].TexC = { 0.0f, 0.0f };
+
+				vMin = DirectX::XMVectorMin(vMin, P);
+				vMax = DirectX::XMVectorMax(vMax, P);
+			}
+
+			DirectX::BoundingBox bounds;
+			using namespace DirectX;
+			DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+			DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
+
+			fin >> ignore;
+			fin >> ignore;
+			fin >> ignore;
+
+			std::vector<std::int32_t> indices(3 * tcount);
+			for (UINT i = 0; i < tcount; ++i)
+			{
+				fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
+			}
+
+			fin.close();
+
+			//
+			// Pack the indices of all the meshes into one index buffer.
+			//
+
+			const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+
+			const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
+
+			auto geo = std::make_unique<MeshGeometry>();
+			geo->Name = "carGeo";
+
+			ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+			CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+			ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+			CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+			geo->VertexBuffer = CreateVertexBuffer((float*)vertices.data(), vbByteSize, sizeof(Vertex), 
+				{ {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float3, "NORMAL" }, { ShaderDataType::Float2, "TEXCOORD" } });
+
+			geo->IndexBufer = CreateIndexBuffer((uint32_t*)indices.data(), indices.size(), ShaderDataType::Int);
+
+			SubmeshGeometry submesh;
+			submesh.IndexCount = (UINT)indices.size();
+			submesh.StartIndexLocation = 0;
+			submesh.BaseVertexLocation = 0;
+			submesh.Bounds = bounds;
+
+			geo->DrawArgs["Car"] = submesh;
+
+			mGeometries[geo->Name] = std::move(geo);
+		}
 		
 		InitBaseMaterials();
 		
@@ -109,49 +200,8 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 	}
 
 	AnimationMaterials(time);
-	{
-		DirectX::XMMATRIX view = m_PrespectiveCamera.GetView();
-		auto determinantView = XMMatrixDeterminant(view);
-		DirectX::XMMATRIX invView = XMMatrixInverse(&determinantView, view);
-
-		auto currInstanceBuffer = m_CurrFrameResource->m_InstanceUniform.get();
-		for (auto& e : m_RenderItems)
-		{
-			int visibleInstanceCount = 0;
-			for (auto& it : e.second->Instances)
-			{
-				DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&it.World);
-				DirectX::XMMATRIX texTransform = DirectX::XMLoadFloat4x4(&it.TexTransform);
-
-				auto determinantWorld = DirectX::XMMatrixDeterminant(world);
-				DirectX::XMMATRIX invWorld = DirectX::XMMatrixInverse(&determinantWorld, world);
-
-				// View space to the object's local space.
-				DirectX::XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
-
-				// Transform the camera frustum from view space to the object's local space.
-				DirectX::BoundingFrustum localSpaceFrustum;
-				mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
-
-
-				if ((localSpaceFrustum.Contains(e.second->Bounds) != DirectX::DISJOINT) || true)
-				{
-					InstanceUniform data;
-					XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-					XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
-					data.MaterialIndex = it.MaterialIndex;
-
-					// Write the instance data to structured buffer for the visible objects.
-					currInstanceBuffer->CopyData(visibleInstanceCount++, data);
-				}
-			}
-
-			e.second->InstanceCount = visibleInstanceCount;
-		}
-	}
-	//UpdateObjectCBs();
+	UpdateObjectCBs();
 	UpdateMaterialCBs();
-
 	UpdateMainPass(time);
 }
 
@@ -183,32 +233,17 @@ void DX12RHI::Render()
 	m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
-	m_CommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+	m_CommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
 	auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
-	m_CommandList->SetGraphicsRootShaderResourceView(1, matBuffer->GetGPUVirtualAddress());
+	m_CommandList->SetGraphicsRootShaderResourceView(2, matBuffer->GetGPUVirtualAddress());
 
 	m_CommandList->SetGraphicsRootDescriptorTable(3, m_SrvHeap->GetGPUDescriptorHandleForHeapStart());
 
-	DrawRenderItems(m_CommandList.Get(), { m_RenderItems["skull"].get()});
+	DrawRenderItems(m_CommandList.Get(), { m_RenderLayers[(int)RenderLayer::Opaque]});
 
-	/*m_CommandList->OMSetStencilRef(1);
-	m_CommandList->SetPipelineState(m_PSOs["markStencilMirrors"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RenderLayers[(int)RenderLayer::Mirrors]);
-
-	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
-	m_CommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
-	m_CommandList->SetPipelineState(m_PSOs["drawStencilReflections"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RenderLayers[(int)RenderLayer::Reflected]);
-
-	m_CommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
-	m_CommandList->OMSetStencilRef(0);*/
-
-	/*m_CommandList->SetPipelineState(m_PSOs["transparent"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RenderLayers[(int)RenderLayer::Transparent]);*/
-
-	/*m_CommandList->SetPipelineState(m_PSOs["shadow"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RenderLayers[(int)RenderLayer::Shadow]);*/
+	m_CommandList->SetPipelineState(m_PSOs["highlight"]->GetPSO());
+	DrawRenderItems(m_CommandList.Get(), m_RenderLayers[(int)RenderLayer::Highlight]);
 
 	auto rb2 = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -341,37 +376,22 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 
 void DX12RHI::LoadTextures()
 {
-	m_Textures["bricksTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "bricksTex", DEFAULT_TEXTURE_PATH_1);
+	/*m_Textures["bricksTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "bricksTex", DEFAULT_TEXTURE_PATH_1);
 	m_Textures["stoneTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "checkboardTex", DEFAULT_TEXTURE_PATH_2);
 	m_Textures["tileTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "iceTex", DEFAULT_TEXTURE_PATH_3);
 	m_Textures["crateTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "white1x1Tex", DEFAULT_TEXTURE_PATH_11);
 	m_Textures["iceTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "bricksTex", DEFAULT_TEXTURE_PATH_9);
-	m_Textures["grassTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "checkboardTex", DEFAULT_TEXTURE_PATH_4);
+	m_Textures["grassTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "checkboardTex", DEFAULT_TEXTURE_PATH_4);*/
 	m_Textures["defaultTex"] = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), "defaultTex", DEFAULT_TEXTURE_PATH_10);
 }
 
 void DX12RHI::InitBaseMaterials()
 {
-	m_BaseMaterials["bricks0"] = MakeUnique<Material>("bricks0");
-	m_BaseMaterials["bricks0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.1f, 0, 0);
+	m_BaseMaterials["gray0"] = MakeUnique<Material>("gray0");
+	m_BaseMaterials["gray0"]->InitBaseParam({ 0.7f, 0.7f, 0.7f, 1.0f }, { 0.04f, 0.04f, 0.04f }, 0.0f, 0, 0);
 
-	m_BaseMaterials["stone0"] = MakeUnique<Material>("stone0");
-	m_BaseMaterials["stone0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 0.5f }, { 0.05f, 0.05f, 0.05f }, 0.3f, 1, 1);
-	
-	m_BaseMaterials["tile0"] = MakeUnique<Material>("tile0");
-	m_BaseMaterials["tile0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.02f, 0.02f, 0.02f }, 0.3f, 2, 2);
-	
-	m_BaseMaterials["crate0"] = MakeUnique<Material>("crate0");
-	m_BaseMaterials["crate0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f, 3, 3);
-
-	m_BaseMaterials["ice0"] = MakeUnique<Material>("ice0");
-	m_BaseMaterials["ice0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.0f, 4, 4);
-
-	m_BaseMaterials["grass0"] = MakeUnique<Material>("grass0");
-	m_BaseMaterials["grass0"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.2f, 5, 5);
-
-	m_BaseMaterials["skullMat"] = MakeUnique<Material>("skullMat");
-	m_BaseMaterials["skullMat"]->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.05f, 0.05f, 0.05f }, 0.5f, 6, 6);
+	m_BaseMaterials["highlight0"] = MakeUnique<Material>("highlight0");
+	m_BaseMaterials["highlight0"]->InitBaseParam({ 1.0f, 1.0f, 0.0f, 0.6f }, { 0.06f, 0.06f, 0.06f }, 0.0f, 1, 0);
 }
 
 void DX12RHI::InitBaseShaders()
@@ -382,7 +402,7 @@ void DX12RHI::InitBaseShaders()
 		NULL, NULL
 	};
 	m_Shaders["standardVS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, nullptr, "VS", "vs_5_1");
-	m_Shaders["opaquePS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, defines, "PS", "ps_5_1");
+	m_Shaders["opaquePS"] = MakeShare<DX12Shader>(DEFAULT_SHADER_PATH, nullptr, "PS", "ps_5_1");
 
 	/*const D3D_SHADER_MACRO alphaTestDefines[] =
 	{
@@ -396,13 +416,13 @@ void DX12RHI::InitBaseShaders()
 void DX12RHI::InitBaseRootSignatures()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, (UINT)m_Textures.size(), 0, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 0);
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-	slotRootParameter[0].InitAsShaderResourceView(0, 1);
-	slotRootParameter[1].InitAsShaderResourceView(1, 1);
-	slotRootParameter[2].InitAsConstantBufferView(0);
+	slotRootParameter[0].InitAsConstantBufferView(0);
+	slotRootParameter[1].InitAsConstantBufferView(1);
+	slotRootParameter[2].InitAsShaderResourceView(0, 1);
 	slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	auto staticSamplers = DX12RootSignature::GetStaticSamplers();
@@ -463,111 +483,26 @@ void DX12RHI::InitBasePSOs()
 		m_PSOs["opaque"] = MakeShare<DX12PipelineState>(m_Device.Get(), opaquePsoDesc);
 	}
 	
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC transparentPsoDesc = opaquePsoDesc;
-	//{
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC highlightPsoDesc = opaquePsoDesc;
+		highlightPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-	//	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-	//	transparencyBlendDesc.BlendEnable = true;
-	//	transparencyBlendDesc.LogicOpEnable = false;
-	//	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	//	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	//	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-	//	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-	//	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-	//	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	//	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-	//	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	//	transparentPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
-	//	
-	//	m_PSOs["transparent"] = MakeShare<DX12PipelineState>(m_Device.Get(), transparentPsoDesc);
-	//}
+		D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
+		transparencyBlendDesc.BlendEnable = true;
+		transparencyBlendDesc.LogicOpEnable = false;
+		transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+		transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
-	//{
-	//	D3D12_GRAPHICS_PIPELINE_STATE_DESC markMirrorsPsoDesc = opaquePsoDesc;
-	//	
-	//	CD3DX12_BLEND_DESC mirrorBlendState(D3D12_DEFAULT);
-	//	mirrorBlendState.RenderTarget[0].RenderTargetWriteMask = 0;
+		highlightPsoDesc.BlendState.RenderTarget[0] = transparencyBlendDesc;
 
-	//	D3D12_DEPTH_STENCIL_DESC mirrorDSS;
-	//	mirrorDSS.DepthEnable = true;
-	//	mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	//	mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	//	mirrorDSS.StencilEnable = true;
-	//	mirrorDSS.StencilReadMask = 0xff;
-	//	mirrorDSS.StencilWriteMask = 0xff;
-
-	//	mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
-	//	mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-
-	//	// We are not rendering backfacing polygons, so these settings do not matter.
-	//	mirrorDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	mirrorDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	mirrorDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
-	//	mirrorDSS.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-
-	//	markMirrorsPsoDesc.BlendState = mirrorBlendState;
-	//	markMirrorsPsoDesc.DepthStencilState = mirrorDSS;
-
-	//	m_PSOs["markStencilMirrors"] = MakeShare<DX12PipelineState>(m_Device.Get(), markMirrorsPsoDesc);
-	//}
-	//
-	//{
-	//	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawReflectionsPsoDesc = opaquePsoDesc;
-
-	//	D3D12_DEPTH_STENCIL_DESC reflectionsDSS;
-	//	reflectionsDSS.DepthEnable = true;
-	//	reflectionsDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	//	reflectionsDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	//	reflectionsDSS.StencilEnable = true;
-	//	reflectionsDSS.StencilReadMask = 0xff;
-	//	reflectionsDSS.StencilWriteMask = 0xff;
-
-	//	reflectionsDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
-
-	//	// We are not rendering backfacing polygons, so these settings do not matter.
-	//	reflectionsDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-	//	reflectionsDSS.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
-
-	//	drawReflectionsPsoDesc.DepthStencilState = reflectionsDSS;
-	//	drawReflectionsPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	//	drawReflectionsPsoDesc.RasterizerState.FrontCounterClockwise = true;
-
-	//	m_PSOs["drawStencilReflections"] = MakeShare<DX12PipelineState>(m_Device.Get(), drawReflectionsPsoDesc);
-	//}
-
-	//{
-	//	D3D12_GRAPHICS_PIPELINE_STATE_DESC shadowPsoDesc = transparentPsoDesc;
-
-	//	D3D12_DEPTH_STENCIL_DESC shadowDSS;
-	//	shadowDSS.DepthEnable = true;
-	//	shadowDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	//	shadowDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	//	shadowDSS.StencilEnable = true;
-	//	shadowDSS.StencilReadMask = 0xff;
-	//	shadowDSS.StencilWriteMask = 0xff;
-
-	//	shadowDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	shadowDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
-	//	shadowDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
-
-	//	// We are not rendering backfacing polygons, so these settings do not matter.
-	//	shadowDSS.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-	//	shadowDSS.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-	//	shadowDSS.BackFace.StencilPassOp = D3D12_STENCIL_OP_INCR;
-	//	shadowDSS.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
-
-	//	shadowPsoDesc.DepthStencilState = shadowDSS;
-
-	//	m_PSOs["shadow"] = MakeShare<DX12PipelineState>(m_Device.Get(), shadowPsoDesc);
-	//}
+		m_PSOs["highlight"] = MakeShare<DX12PipelineState>(m_Device.Get(), highlightPsoDesc);
+	}
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -638,6 +573,103 @@ Camera* DX12RHI::GetMainCamera()
 	return &m_PrespectiveCamera;
 }
 
+void DX12RHI::Pick(int x, int y)
+{
+	DirectX::XMFLOAT4X4 P = m_PrespectiveCamera.m_Proj;
+
+	// Compute picking ray in view space.
+	float vx = (+2.0f * x / m_InitParam.WindowWidth - 1.0f) / P(0, 0);
+	float vy = (-2.0f * y / m_InitParam.WindowHeight + 1.0f) / P(1, 1);
+
+	// Ray definition in view space.
+	DirectX::XMVECTOR rayOrigin = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	DirectX::XMVECTOR rayDir = DirectX::XMVectorSet(vx, vy, 1.0f, 0.0f);
+
+	DirectX::XMMATRIX V = m_PrespectiveCamera.GetView();
+	auto dv = XMMatrixDeterminant(V);
+	DirectX::XMMATRIX invView = XMMatrixInverse(&dv, V);
+
+	// Assume nothing is picked to start, so the picked render-item is invisible.
+	mPickedRitem->Visible = false;
+
+	// Check if we picked an opaque render item.  A real app might keep a separate "picking list"
+	// of objects that can be selected.   
+	for (auto ri : m_RenderLayers[(int)RenderLayer::Opaque])
+	{
+		auto geo = ri->Geo;
+
+		// Skip invisible render-items.
+		if (ri->Visible == false)
+			continue;
+
+		DirectX::XMMATRIX W = XMLoadFloat4x4(&ri->World);
+		auto dw = XMMatrixDeterminant(W);
+		DirectX::XMMATRIX invWorld = XMMatrixInverse(&dw, W);
+
+		// Tranform ray to vi space of Mesh.
+		DirectX::XMMATRIX toLocal = XMMatrixMultiply(invView, invWorld);
+
+		rayOrigin = XMVector3TransformCoord(rayOrigin, toLocal);
+		rayDir = XMVector3TransformNormal(rayDir, toLocal);
+
+		// Make the ray direction unit length for the intersection tests.
+		rayDir = DirectX::XMVector3Normalize(rayDir);
+
+		// If we hit the bounding box of the Mesh, then we might have picked a Mesh triangle,
+		// so do the ray/triangle tests.
+		//
+		// If we did not hit the bounding box, then it is impossible that we hit 
+		// the Mesh, so do not waste effort doing ray/triangle tests.
+		float tmin = 0.0f;
+		if (ri->Bounds.Intersects(rayOrigin, rayDir, tmin))
+		{
+			// NOTE: For the demo, we know what to cast the vertex/index data to.  If we were mixing
+			// formats, some metadata would be needed to figure out what to cast it to.
+			auto vertices = (Vertex*)geo->VertexBufferCPU->GetBufferPointer();
+			auto indices = (std::uint32_t*)geo->IndexBufferCPU->GetBufferPointer();
+			UINT triCount = ri->IndexCount / 3;
+
+			// Find the nearest ray/triangle intersection.
+			tmin = FLT_MAX;
+			for (UINT i = 0; i < triCount; ++i)
+			{
+				// Indices for this triangle.
+				UINT i0 = indices[i * 3 + 0];
+				UINT i1 = indices[i * 3 + 1];
+				UINT i2 = indices[i * 3 + 2];
+
+				// Vertices for this triangle.
+				DirectX::XMVECTOR v0 = XMLoadFloat3(&vertices[i0].Pos);
+				DirectX::XMVECTOR v1 = XMLoadFloat3(&vertices[i1].Pos);
+				DirectX::XMVECTOR v2 = XMLoadFloat3(&vertices[i2].Pos);
+
+				// We have to iterate over all the triangles in order to find the nearest intersection.
+				float t = 0.0f;
+				if (DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, t))
+				{
+					if (t < tmin)
+					{
+						// This is the new nearest picked triangle.
+						tmin = t;
+						UINT pickedTriangle = i;
+
+						mPickedRitem->Visible = true;
+						mPickedRitem->IndexCount = 3;
+						mPickedRitem->BaseVertexLocation = 0;
+
+						// Picked render item needs same world matrix as object picked.
+						mPickedRitem->World = ri->World;
+						mPickedRitem->NumFramesDirty = 3;
+
+						// Offset to the picked triangle in the mesh index buffer.
+						mPickedRitem->StartIndexLocation = 3 * pickedTriangle;
+					}
+				}
+			}
+		}
+	}
+}
+
 void DX12RHI::CreateRtvAndDsvHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC stRTVHeapDesc = {};
@@ -678,53 +710,31 @@ void DX12RHI::CheckQualityLevel()
 
 void DX12RHI::AnimationMaterials(const RiverTime& time)
 {
-	/*auto waterMat = m_BaseMaterials["water"].get();
-
-	float& tu = waterMat->m_MatTransform(3, 0);
-	float& tv = waterMat->m_MatTransform(3, 1);
-
-	tu += 0.1f * time.DeltaTime();
-	tv += 0.02f * time.DeltaTime();
-
-	if (tu >= 1.0f)
-		tu -= 1.0f;
-
-	if (tv >= 1.0f)
-		tv -= 1.0f;
-
-	waterMat->m_MatTransform(3, 0) = tu;
-	waterMat->m_MatTransform(3, 1) = tv;
-
-	waterMat->NumFramesDirty = 3;*/
 }
 
 void DX12RHI::UpdateObjectCBs()
 {
-	/*auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-	DirectX::XMFLOAT4X4 worldMatrix;
-	DirectX::XMFLOAT4X4 texMatrix;
+	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 
-	for (auto& it : m_RenderLayers)
+	for (auto& it : m_RenderItems)
 	{
-		for (size_t i = 0; i < it.size(); i++)
+		auto& e = it.second;
+		if (e->NumFramesDirty > 0)
 		{
-			if (it[i]->NumFramesDirty > 0)
-			{
-				memcpy(&worldMatrix, &it[i]->m_WorldTransform, sizeof(worldMatrix));
-				memcpy(&texMatrix, &it[i]->m_TexTransform, sizeof(texMatrix));
-				DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4(&worldMatrix);
-				DirectX::XMMATRIX texTransform = DirectX::XMLoadFloat4x4(&texMatrix);
+			DirectX::XMMATRIX world = XMLoadFloat4x4(&e->World);
+			DirectX::XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
 
-				ObjectUniform  objConstants;
-				XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-				XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+			ObjectUniform objConstants;
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+			objConstants.MaterialIndex = e->Mat->MatCBIndex;
 
-				currObjectCB->CopyData(it[i]->m_ObjectIndex, objConstants);
+			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
-				it[i]->NumFramesDirty--;
-			}
+			// Next FrameResource need to be updated too.
+			e->NumFramesDirty--;
 		}
-	}*/
+	}
 }
 
 void DX12RHI::UpdateMaterialCBs()
@@ -833,113 +843,53 @@ void DX12RHI::InitDescriptorHeaps()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvHeap->GetCPUDescriptorHandleForHeapStart());
 
-	auto bricksTex = m_Textures["bricksTex"]->GetResource();
-	auto stoneTex = m_Textures["stoneTex"]->GetResource();
-	auto tileTex = m_Textures["tileTex"]->GetResource();
-	auto crateTex = m_Textures["crateTex"]->GetResource();
-	auto iceTex = m_Textures["iceTex"]->GetResource();
-	auto grassTex = m_Textures["grassTex"]->GetResource();
 	auto defaultTex = m_Textures["defaultTex"]->GetResource();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = bricksTex->GetDesc().Format;
+	srvDesc.Format = defaultTex->GetDesc().Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = bricksTex->GetDesc().MipLevels;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	m_Device->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = stoneTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = tileTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = crateTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = crateTex->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(crateTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = iceTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = iceTex->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(iceTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = grassTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = grassTex->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
-
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
-
-	srvDesc.Format = defaultTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = defaultTex->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	m_Device->CreateShaderResourceView(defaultTex.Get(), &srvDesc, hDescriptor);
 }
 
 void DX12RHI::InitBaseRenderItems()
 {
 	{
-		auto& geo = DX12GeometryGenerator::Get()->GetMesh("Skull");
-		auto skullRenderItem = MakeUnique<DX12RenderItem>();
-		skullRenderItem->World = Identity4x4();
-		skullRenderItem->TexTransform = Identity4x4();
-		skullRenderItem->ObjCBIndex = 0;
-		skullRenderItem->Mat = m_BaseMaterials["tile0"].get();
-		skullRenderItem->Geo = geo.get();
-		skullRenderItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		skullRenderItem->InstanceCount = 0;
-		skullRenderItem->IndexCount = geo->DrawArgs["skull"].IndexCount;
-		skullRenderItem->StartIndexLocation = geo->DrawArgs["skull"].StartIndexLocation;
-		skullRenderItem->BaseVertexLocation = geo->DrawArgs["skull"].BaseVertexLocation;
-		skullRenderItem->Bounds = geo->DrawArgs["skull"].Bounds;
+		auto& geo = mGeometries["carGeo"];
+		//auto& geo = DX12GeometryGenerator::Get()->LoadMeshByFile(DEFAULT_MODEL_PATH_2, "Car");
+		auto carRitem = MakeUnique<DX12RenderItem>();
+		XMStoreFloat4x4(&carRitem->World, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 1.0f, 0.0f));
+		XMStoreFloat4x4(&carRitem->TexTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f));
+		carRitem->ObjCBIndex = 0;
+		carRitem->Mat = m_BaseMaterials["gray0"].get();
+		carRitem->Geo = geo.get();
+		carRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		carRitem->InstanceCount = 1;
+		carRitem->IndexCount = carRitem->Geo->DrawArgs["Car"].IndexCount;
+		carRitem->StartIndexLocation = carRitem->Geo->DrawArgs["Car"].StartIndexLocation;
+		carRitem->BaseVertexLocation = carRitem->Geo->DrawArgs["Car"].BaseVertexLocation;
+		carRitem->Bounds = carRitem->Geo->DrawArgs["Car"].Bounds;
+		m_RenderLayers[(int)RenderLayer::Opaque].push_back(carRitem.get());
 
-		const int n = 2;
-		mInstanceCount = n * n * n;
-		skullRenderItem->Instances.resize(mInstanceCount);
+		auto pickedRitem = std::make_unique<DX12RenderItem>();
+		pickedRitem->World = Identity4x4();
+		pickedRitem->TexTransform = Identity4x4();
+		pickedRitem->ObjCBIndex = 1;
+		pickedRitem->Mat = m_BaseMaterials["highlight0"].get();
+		pickedRitem->Geo = mGeometries["carGeo"].get();
+		pickedRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		pickedRitem->Visible = false;
+		pickedRitem->IndexCount = 0;
+		pickedRitem->StartIndexLocation = 0;
+		pickedRitem->BaseVertexLocation = 0;
+		mPickedRitem = pickedRitem.get();
+		m_RenderLayers[(int)RenderLayer::Highlight].push_back(pickedRitem.get());
 
-		float width = 200.0f;
-		float height = 200.0f;
-		float depth = 200.0f;
-
-		float x = -0.5f * width;
-		float y = -0.5f * height;
-		float z = -0.5f * depth;
-		float dx = width / (n - 1);
-		float dy = height / (n - 1);
-		float dz = depth / (n - 1);
-		for (int k = 0; k < n; ++k)
-		{
-			for (int i = 0; i < n; ++i)
-			{
-				for (int j = 0; j < n; ++j)
-				{
-					int index = k * n * n + i * n + j;
-
-					skullRenderItem->Instances[index].World = DirectX::XMFLOAT4X4(
-						1.0f, 0.0f, 0.0f, 0.0f,
-						0.0f, 1.0f, 0.0f, 0.0f,
-						0.0f, 0.0f, 1.0f, 0.0f,
-						x + j * dx, y + i * dy, z + k * dz, 1.0f);
-
-					DirectX::XMStoreFloat4x4(&skullRenderItem->Instances[index].TexTransform, DirectX::XMMatrixScaling(2.0f, 2.0f, 1.0f));
-					skullRenderItem->Instances[index].MaterialIndex = index % m_BaseMaterials.size();
-				}
-			}
-		}
-
-		m_RenderItems["skull"] = std::move(skullRenderItem);
-		m_RenderLayers[(int)RenderLayer::Opaque].push_back(m_RenderItems["skull"].get());
+		m_RenderItems["car"] = std::move(carRitem);
+		m_RenderItems["pick"] = std::move(pickedRitem);
 	}
 }
 
@@ -975,12 +925,10 @@ void DX12RHI::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<
 		cmdList->IASetIndexBuffer(&indexBuffer->m_IndexBufferView);
 		cmdList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		// Set the instance buffer to use for this render-item.  For structured buffers, we can bypass 
-		// the heap and set as a root descriptor.
-		auto instanceBuffer = m_CurrFrameResource->m_InstanceUniform->Resource();
-		cmdList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
+		cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 
-		cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount, 0, 0, 0);
+		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
 }
 

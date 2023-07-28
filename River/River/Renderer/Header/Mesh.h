@@ -3,10 +3,10 @@
 #include "RiverHead.h"
 #include "MathStruct.h"
 
-struct MeshVertex
+struct Vertex
 {
-	MeshVertex() = default;
-	MeshVertex(float x, float y, float z, float nx, float ny, float nz, float u, float v) :
+	Vertex() = default;
+	Vertex(float x, float y, float z, float nx, float ny, float nz, float u, float v) :
 		Pos(x, y, z),
 		Normal(nx, ny, nz),
 		TexC(u, v) {}
@@ -19,11 +19,11 @@ struct MeshVertex
 class Mesh
 {
 public:
-	Mesh(V_Array<MeshVertex>& vertices, V_Array<unsigned int>& indices);
+	Mesh(V_Array<Vertex>& vertices, V_Array<unsigned int>& indices);
 
 	~Mesh();
 
 private:
-	V_Array<MeshVertex> m_Vertices;
+	V_Array<Vertex> m_Vertices;
 	V_Array<unsigned int> m_Indices;
 };
