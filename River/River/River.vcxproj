@@ -136,6 +136,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12RenderItem.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RootSignature.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Texture.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Util.cpp" />

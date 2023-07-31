@@ -69,6 +69,17 @@ DirectX::XMFLOAT4X4 Identity4x4()
 	return I;
 }
 
+DirectX::XMMATRIX IdentityMatrix()
+{
+	static DirectX::XMFLOAT4X4 I(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
+	return DirectX::XMLoadFloat4x4(&I);
+}
+
 Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename, const D3D_SHADER_MACRO* defines, const std::string& entrypoint, const std::string& target)
 {
 	{

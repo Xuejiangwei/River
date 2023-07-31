@@ -41,3 +41,7 @@ struct DX12RenderItem : public RenderItem
 	V_Array<DX12InstanceUniformData> Instances;
 
 };
+
+Unique<DX12RenderItem> CreateDX12RenderItem(DirectX::XMMATRIX world, DirectX::XMMATRIX tex, uint32_t index, class Material* mat, 
+	D3D12_PRIMITIVE_TOPOLOGY primitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+void SetRenderItemGeo(DX12RenderItem* renderItem, struct MeshGeometry* geo, const char* geoDrawArg = nullptr);

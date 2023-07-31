@@ -21,6 +21,8 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
+#include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
+
 struct SubmeshGeometry
 {
 	uint32_t IndexCount = 0;
@@ -46,10 +48,10 @@ class DX12GeometryGenerator
 {
 public:
 
-	struct MeshVertex
+	struct MeshGenVertex
 	{
-		MeshVertex() {}
-		MeshVertex(
+		MeshGenVertex() {}
+		MeshGenVertex(
 			const DirectX::XMFLOAT3& p,
 			const DirectX::XMFLOAT3& n,
 			const DirectX::XMFLOAT3& t,
@@ -58,7 +60,7 @@ public:
 			Normal(n),
 			TangentU(t),
 			TexC(uv) {}
-		MeshVertex(
+		MeshGenVertex(
 			float px, float py, float pz,
 			float nx, float ny, float nz,
 			float tx, float ty, float tz,
@@ -76,7 +78,7 @@ public:
 
 	struct MeshData
 	{
-		std::vector<MeshVertex> Vertices;
+		std::vector<MeshGenVertex> Vertices;
 		std::vector<uint32_t> Indices32;
 		DirectX::BoundingBox BB;
 	};
@@ -101,12 +103,15 @@ public:
 	static const char* GridName;
 	static const char* QuadName;
 
+	friend class DX12RHI;
 private:
 	///<summary>
 	/// Creates a box centered at the origin with the given dimensions, where each
 	/// face has m rows and n columns of vertices.
 	///</summary>
 	Unique<MeshGeometry> CreateBox(float width, float height, float depth, uint32_t numSubdivisions);
+
+	MeshData CreateBox1(float width, float height, float depth, uint32_t numSubdivisions);
 
 	///<summary>
 	/// Creates a sphere centered at the origin with the given radius.  The
@@ -138,12 +143,13 @@ private:
 	///</summary>
 	Unique<MeshGeometry> CreateQuad(float x, float y, float w, float h, float depth);
 
-	Unique<MeshGeometry> CreateMeshGeometry(const char* name, void* vertices, void* indices, unsigned int vertexCount, unsigned int indiceCount,
-		unsigned int verticesByteSize, unsigned int indicesByteSize);
+	Unique<MeshGeometry> CreateMeshGeometry(const char* name, MeshData& meshData);
+
+	Unique<MeshGeometry> CreateMeshGeometry(const char* name, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 
 private:
 	void Subdivide(MeshData& meshData);
-	MeshVertex MidPoint(const MeshVertex& v0, const MeshVertex& v1);
+	MeshGenVertex MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1);
 	void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshData& meshData);
 	void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount, MeshData& meshData);
 

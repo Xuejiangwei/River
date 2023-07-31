@@ -105,7 +105,7 @@ private:
 
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& items);
 
-	//void DrawRenderItemInstances(ID3D12GraphicsCommandList* cmdList, const V_Array<RenderItemInstance*>& instances);
+	void CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* textureRes, D3D12_SHADER_RESOURCE_VIEW_DESC& desc, uint32_t handleOffset = 0);
 
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;

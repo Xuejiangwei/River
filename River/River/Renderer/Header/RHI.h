@@ -30,6 +30,7 @@ enum class RenderLayer
 	Shadow,
 
 	Highlight,
+	Sky,
 	LayerCount
 };
 

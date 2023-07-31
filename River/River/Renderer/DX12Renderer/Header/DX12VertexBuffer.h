@@ -8,7 +8,7 @@
 class DX12VertexBuffer : public VertexBuffer
 {
 public:
-	DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout);
+	DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32_t byteSize, uint32_t elementSize, const VertexBufferLayout& layout);
 
 	DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout);
 

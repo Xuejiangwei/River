@@ -44,6 +44,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
 
 DirectX::XMFLOAT4X4 Identity4x4();
 
+DirectX::XMMATRIX IdentityMatrix();
+
 Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
 	const std::wstring& filename,
 	const D3D_SHADER_MACRO* defines,

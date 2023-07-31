@@ -33,11 +33,11 @@ DX12GeometryGenerator::~DX12GeometryGenerator()
 
 void DX12GeometryGenerator::Initialize()
 {
-	m_Geometries[BoxName] = CreateBox(2, 2, 2, 1);
-	m_Geometries[SphereName] = CreateSphere(1, 10, 10);
+	m_Geometries[BoxName] = CreateBox(1, 1, 1, 3);
+	m_Geometries[SphereName] = CreateSphere(0.5f, 20, 20);
 	m_Geometries[GeosphereName] = CreateGeosphere(1, 3);
-	m_Geometries[CylinderName] = CreateCylinder(2, 1, 1.5f, 20, 20);
-	m_Geometries[GridName] = CreateGrid(160, 160, 50, 50);
+	m_Geometries[CylinderName] = CreateCylinder(0.5f, 0.3f, 3.3f, 20, 20);
+	m_Geometries[GridName] = CreateGrid(20, 30, 60, 40);
 	m_Geometries[QuadName] = CreateQuad(1, 1, 1, 1, 1);
 }
 
@@ -65,8 +65,7 @@ Unique<MeshGeometry>& DX12GeometryGenerator::LoadMeshByFile(const char* filePath
 	XMVECTOR vMin = XMLoadFloat3(&vMinf3);
 	XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
 
-	std::vector<Vertex> vertices;
-	vertices.resize(vcount);
+	std::vector<Vertex> vertices(vcount);
 	for (UINT i = 0; i < vcount; ++i)
 	{
 		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
@@ -88,8 +87,7 @@ Unique<MeshGeometry>& DX12GeometryGenerator::LoadMeshByFile(const char* filePath
 	fin >> ignore;
 	fin >> ignore;
 
-	std::vector<uint32_t> indices;
-	indices.resize(3 * tcount);
+	std::vector<uint32_t> indices(3 * tcount);
 	for (UINT i = 0; i < tcount; ++i)
 	{
 		fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
@@ -97,9 +95,7 @@ Unique<MeshGeometry>& DX12GeometryGenerator::LoadMeshByFile(const char* filePath
 
 	fin.close();
 
-	auto geo = CreateMeshGeometry(name, vertices.data(), indices.data(), (uint32_t)vertices.size(),
-		(uint32_t)indices.size(), (UINT)vertices.size() * sizeof(Vertex),
-		(UINT)indices.size() * sizeof(std::int32_t));
+	auto geo = CreateMeshGeometry(name, vertices, indices);
 
 	geo->DrawArgs[name].Bounds = bounds;
 
@@ -130,47 +126,47 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateBox(float width, float height,
 	// Create the vertices.
 	//
 
-	MeshVertex v[24];
+	MeshGenVertex v[24];
 
 	float w2 = 0.5f * width;
 	float h2 = 0.5f * height;
 	float d2 = 0.5f * depth;
 
 	// Fill in the front face vertex data.
-	v[0] = MeshVertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[1] = MeshVertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[2] = MeshVertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[3] = MeshVertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[0] = MeshGenVertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = MeshGenVertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[2] = MeshGenVertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[3] = MeshGenVertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the back face vertex data.
-	v[4] = MeshVertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[5] = MeshVertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[6] = MeshVertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[7] = MeshVertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[4] = MeshGenVertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[5] = MeshGenVertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[6] = MeshGenVertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[7] = MeshGenVertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the top face vertex data.
-	v[8] = MeshVertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[9] = MeshVertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[10] = MeshVertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[11] = MeshVertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[8] = MeshGenVertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[9] = MeshGenVertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[10] = MeshGenVertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[11] = MeshGenVertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the bottom face vertex data.
-	v[12] = MeshVertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[13] = MeshVertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[14] = MeshVertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[15] = MeshVertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[12] = MeshGenVertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[13] = MeshGenVertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[14] = MeshGenVertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[15] = MeshGenVertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[16] = MeshVertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
-	v[17] = MeshVertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-	v[18] = MeshVertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
-	v[19] = MeshVertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+	v[16] = MeshGenVertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+	v[17] = MeshGenVertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	v[18] = MeshGenVertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
+	v[19] = MeshGenVertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
-	v[20] = MeshVertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-	v[21] = MeshVertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
-	v[22] = MeshVertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
-	v[23] = MeshVertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+	v[20] = MeshGenVertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+	v[21] = MeshGenVertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+	v[22] = MeshGenVertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	v[23] = MeshGenVertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 
 	meshData.Vertices.assign(&v[0], &v[24]);
 
@@ -212,9 +208,100 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateBox(float width, float height,
 	for (uint32_t i = 0; i < numSubdivisions; ++i)
 		Subdivide(meshData);
 
-	return CreateMeshGeometry("Box", meshData.Vertices.data(), meshData.Indices32.data(),(uint32_t)meshData.Vertices.size(), 
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(Vertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("Box", meshData);
+}
+
+DX12GeometryGenerator::MeshData DX12GeometryGenerator::CreateBox1(float width, float height, float depth, uint32_t numSubdivisions)
+{
+	MeshData meshData;
+
+	//
+	// Create the vertices.
+	//
+
+	MeshGenVertex v[24];
+
+	float w2 = 0.5f * width;
+	float h2 = 0.5f * height;
+	float d2 = 0.5f * depth;
+
+	// Fill in the front face vertex data.
+	v[0] = MeshGenVertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = MeshGenVertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[2] = MeshGenVertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[3] = MeshGenVertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+	// Fill in the back face vertex data.
+	v[4] = MeshGenVertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[5] = MeshGenVertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[6] = MeshGenVertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[7] = MeshGenVertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+	// Fill in the top face vertex data.
+	v[8] = MeshGenVertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[9] = MeshGenVertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[10] = MeshGenVertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[11] = MeshGenVertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+	// Fill in the bottom face vertex data.
+	v[12] = MeshGenVertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[13] = MeshGenVertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[14] = MeshGenVertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[15] = MeshGenVertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+	// Fill in the left face vertex data.
+	v[16] = MeshGenVertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+	v[17] = MeshGenVertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	v[18] = MeshGenVertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
+	v[19] = MeshGenVertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+
+	// Fill in the right face vertex data.
+	v[20] = MeshGenVertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+	v[21] = MeshGenVertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+	v[22] = MeshGenVertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	v[23] = MeshGenVertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+
+	meshData.Vertices.assign(&v[0], &v[24]);
+
+	//
+	// Create the indices.
+	//
+
+	uint32_t i[36];
+
+	// Fill in the front face index data
+	i[0] = 0; i[1] = 1; i[2] = 2;
+	i[3] = 0; i[4] = 2; i[5] = 3;
+
+	// Fill in the back face index data
+	i[6] = 4; i[7] = 5; i[8] = 6;
+	i[9] = 4; i[10] = 6; i[11] = 7;
+
+	// Fill in the top face index data
+	i[12] = 8; i[13] = 9; i[14] = 10;
+	i[15] = 8; i[16] = 10; i[17] = 11;
+
+	// Fill in the bottom face index data
+	i[18] = 12; i[19] = 13; i[20] = 14;
+	i[21] = 12; i[22] = 14; i[23] = 15;
+
+	// Fill in the left face index data
+	i[24] = 16; i[25] = 17; i[26] = 18;
+	i[27] = 16; i[28] = 18; i[29] = 19;
+
+	// Fill in the right face index data
+	i[30] = 20; i[31] = 21; i[32] = 22;
+	i[33] = 20; i[34] = 22; i[35] = 23;
+
+	meshData.Indices32.assign(&i[0], &i[36]);
+
+	// Put a cap on the number of subdivisions.
+	numSubdivisions = std::min<uint32_t>(numSubdivisions, 6u);
+
+	for (uint32_t i = 0; i < numSubdivisions; ++i)
+		Subdivide(meshData);
+
+	return meshData;
 }
 
 Unique<MeshGeometry> DX12GeometryGenerator::CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount)
@@ -228,8 +315,8 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateSphere(float radius, uint32_t 
 	// Poles: note that there will be texture coordinate distortion as there is
 	// not a unique point on the texture map to assign to the pole when mapping
 	// a rectangular texture onto a sphere.
-	MeshVertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	MeshVertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	MeshGenVertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	MeshGenVertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 	meshData.Vertices.push_back(topVertex);
 
@@ -246,7 +333,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateSphere(float radius, uint32_t 
 		{
 			float theta = j * thetaStep;
 
-			MeshVertex v;
+			MeshGenVertex v;
 
 			// spherical to cartesian
 			v.Position.x = radius * sinf(phi) * cosf(theta);
@@ -325,9 +412,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateSphere(float radius, uint32_t 
 		meshData.Indices32.push_back(baseIndex + i + 1);
 	}
 
-	return CreateMeshGeometry("Sphere", meshData.Vertices.data(), meshData.Indices32.data(), (uint32_t)meshData.Vertices.size(),
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(Vertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("Sphere", meshData);
 }
 
 void DX12GeometryGenerator::Subdivide(MeshData& meshData)
@@ -352,17 +437,17 @@ void DX12GeometryGenerator::Subdivide(MeshData& meshData)
 	uint32_t numTris = (uint32_t)inputCopy.Indices32.size() / 3;
 	for (uint32_t i = 0; i < numTris; ++i)
 	{
-		MeshVertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];
-		MeshVertex v1 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]];
-		MeshVertex v2 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]];
+		MeshGenVertex v0 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 0]];
+		MeshGenVertex v1 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 1]];
+		MeshGenVertex v2 = inputCopy.Vertices[inputCopy.Indices32[i * 3 + 2]];
 
 		//
 		// Generate the midpoints.
 		//
 
-		MeshVertex m0 = MidPoint(v0, v1);
-		MeshVertex m1 = MidPoint(v1, v2);
-		MeshVertex m2 = MidPoint(v0, v2);
+		MeshGenVertex m0 = MidPoint(v0, v1);
+		MeshGenVertex m1 = MidPoint(v1, v2);
+		MeshGenVertex m2 = MidPoint(v0, v2);
 
 		//
 		// Add new geometry.
@@ -393,7 +478,7 @@ void DX12GeometryGenerator::Subdivide(MeshData& meshData)
 	}
 }
 
-DX12GeometryGenerator::MeshVertex DX12GeometryGenerator::MidPoint(const MeshVertex& v0, const MeshVertex& v1)
+DX12GeometryGenerator::MeshGenVertex DX12GeometryGenerator::MidPoint(const MeshGenVertex& v0, const MeshGenVertex& v1)
 {
 	XMVECTOR p0 = XMLoadFloat3(&v0.Position);
 	XMVECTOR p1 = XMLoadFloat3(&v1.Position);
@@ -414,7 +499,7 @@ DX12GeometryGenerator::MeshVertex DX12GeometryGenerator::MidPoint(const MeshVert
 	XMVECTOR tangent = XMVector3Normalize(0.5f * (tan0 + tan1));
 	XMVECTOR tex = 0.5f * (tex0 + tex1);
 
-	MeshVertex v;
+	MeshGenVertex v;
 	XMStoreFloat3(&v.Position, pos);
 	XMStoreFloat3(&v.Normal, normal);
 	XMStoreFloat3(&v.TangentU, tangent);
@@ -495,9 +580,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateGeosphere(float radius, uint32
 		XMStoreFloat3(&meshData.Vertices[i].TangentU, XMVector3Normalize(T));
 	}
 
-	return CreateMeshGeometry("GeoSphere", meshData.Vertices.data(), meshData.Indices32.data(), (uint32_t)meshData.Vertices.size(),
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(Vertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("GeoSphere", meshData);
 }
 
 Unique<MeshGeometry> DX12GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount)
@@ -525,7 +608,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateCylinder(float bottomRadius, f
 		float dTheta = 2.0f * XM_PI / sliceCount;
 		for (uint32_t j = 0; j <= sliceCount; ++j)
 		{
-			MeshVertex vertex;
+			MeshGenVertex vertex;
 
 			float c = cosf(j * dTheta);
 			float s = sinf(j * dTheta);
@@ -591,9 +674,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateCylinder(float bottomRadius, f
 	BuildCylinderTopCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
 	BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
 
-	return CreateMeshGeometry("Cylinder", meshData.Vertices.data(), meshData.Indices32.data(), (uint32_t)meshData.Vertices.size(),
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(Vertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("Cylinder", meshData);
 }
 
 void DX12GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
@@ -615,11 +696,11 @@ void DX12GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRad
 		float u = x / height + 0.5f;
 		float v = z / height + 0.5f;
 
-		meshData.Vertices.push_back(MeshVertex(x, y, z, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v));
+		meshData.Vertices.push_back(MeshGenVertex(x, y, z, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v));
 	}
 
 	// Cap center vertex.
-	meshData.Vertices.push_back(MeshVertex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f));
+	meshData.Vertices.push_back(MeshGenVertex(0.0f, y, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f));
 
 	// Index of center vertex.
 	uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
@@ -654,11 +735,11 @@ void DX12GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float top
 		float u = x / height + 0.5f;
 		float v = z / height + 0.5f;
 
-		meshData.Vertices.push_back(MeshVertex(x, y, z, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v));
+		meshData.Vertices.push_back(MeshGenVertex(x, y, z, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, u, v));
 	}
 
 	// Cap center vertex.
-	meshData.Vertices.push_back(MeshVertex(0.0f, y, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f));
+	meshData.Vertices.push_back(MeshGenVertex(0.0f, y, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.5f));
 
 	// Cache the index of center vertex.
 	uint32_t centerIndex = (uint32_t)meshData.Vertices.size() - 1;
@@ -671,24 +752,67 @@ void DX12GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float top
 	}
 }
 
-Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, void* vertices, void* indices, unsigned int vertexCount, unsigned int indiceCount, 
-	unsigned int verticesByteSize, unsigned int indicesByteSize)
+Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, MeshData& meshData)
 {
 	auto geo = MakeUnique<MeshGeometry>();
 	geo->Name = name;
 
+	std::vector<Vertex> vertices(meshData.Vertices.size());
+	for (size_t i = 0; i < vertices.size(); i++)
+	{
+		vertices[i].Pos = meshData.Vertices[i].Position;
+		vertices[i].Normal = meshData.Vertices[i].Normal;
+		vertices[i].TexC = meshData.Vertices[i].TexC;
+	}
+
+	std::vector<uint32_t>& indices = meshData.Indices32;
+
+	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(Vertex);
+	UINT indicesByteSize = (UINT)meshData.Indices32.size() * (UINT)sizeof(std::int32_t);
+
+
 	ThrowIfFailed(D3DCreateBlob(verticesByteSize, &geo->VertexBufferCPU));
-	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices, verticesByteSize);
+	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), verticesByteSize);
 
 	ThrowIfFailed(D3DCreateBlob(indicesByteSize, &geo->IndexBufferCPU));
-	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices, indicesByteSize);
+	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), indicesByteSize);
 
-	geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices, vertexCount,
+	geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
 		(int)sizeof(Vertex), g_GeometryLayout);
-	geo->IndexBufer = DX12RHI::Get()->CreateIndexBuffer((unsigned int*)indices, indiceCount, ShaderDataType::Int);
+	geo->IndexBufer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
 
 	SubmeshGeometry submesh;
-	submesh.IndexCount = indiceCount;
+	submesh.IndexCount = (uint32_t)indices.size();
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+	//submesh.Bounds = bounds;
+
+	geo->DrawArgs[name] = submesh;
+
+	return geo;
+
+}
+
+Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, std::vector<Vertex>&vertices, std::vector<uint32_t>& indices)
+{
+	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(Vertex);
+	UINT indicesByteSize = (UINT)indices.size() * (UINT)sizeof(std::int32_t);
+	
+	auto geo = MakeUnique<MeshGeometry>();
+	geo->Name = name;
+
+	ThrowIfFailed(D3DCreateBlob(verticesByteSize, &geo->VertexBufferCPU));
+	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), verticesByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(indicesByteSize, &geo->IndexBufferCPU));
+	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), indicesByteSize);
+
+	geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
+		(int)sizeof(Vertex), g_GeometryLayout);
+	geo->IndexBufer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (uint32_t)indices.size();
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 	//submesh.Bounds = bounds;
@@ -760,9 +884,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateGrid(float width, float depth,
 		}
 	}
 
-	return CreateMeshGeometry("Grid", meshData.Vertices.data(), meshData.Indices32.data(), (uint32_t)meshData.Vertices.size(),
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(MeshVertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("Grid", meshData);
 }
 
 Unique<MeshGeometry> DX12GeometryGenerator::CreateQuad(float x, float y, float w, float h, float depth)
@@ -773,25 +895,25 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateQuad(float x, float y, float w
 	meshData.Indices32.resize(6);
 
 	// Position coordinates specified in NDC space.
-	meshData.Vertices[0] = MeshVertex(
+	meshData.Vertices[0] = MeshGenVertex(
 		x, y - h, depth,
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f);
 
-	meshData.Vertices[1] = MeshVertex(
+	meshData.Vertices[1] = MeshGenVertex(
 		x, y, depth,
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f);
 
-	meshData.Vertices[2] = MeshVertex(
+	meshData.Vertices[2] = MeshGenVertex(
 		x + w, y, depth,
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
 		1.0f, 0.0f);
 
-	meshData.Vertices[3] = MeshVertex(
+	meshData.Vertices[3] = MeshGenVertex(
 		x + w, y - h, depth,
 		0.0f, 0.0f, -1.0f,
 		1.0f, 0.0f, 0.0f,
@@ -805,7 +927,5 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateQuad(float x, float y, float w
 	meshData.Indices32[4] = 2;
 	meshData.Indices32[5] = 3;
 
-	return CreateMeshGeometry("Quad", meshData.Vertices.data(), meshData.Indices32.data(), (uint32_t)meshData.Vertices.size(),
-		(uint32_t)meshData.Indices32.size(), (UINT)meshData.Vertices.size() * sizeof(MeshVertex),
-		(UINT)meshData.Indices32.size() * sizeof(std::int32_t));
+	return CreateMeshGeometry("Quad", meshData);
 }

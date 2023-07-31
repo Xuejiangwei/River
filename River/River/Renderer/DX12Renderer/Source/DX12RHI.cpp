@@ -31,13 +31,13 @@
 #define DEFAULT_TEXTURE_PATH_9 "F:\\GitHub\\River\\River\\Textures\\ice.dds"
 #define DEFAULT_TEXTURE_PATH_10 "F:\\GitHub\\River\\River\\Textures\\white1x1.dds"
 #define DEFAULT_TEXTURE_PATH_11 "F:\\GitHub\\River\\River\\Textures\\WoodCrate01.dds"
+#define DEFAULT_TEXTURE_PATH_12 "F:\\GitHub\\River\\River\\Textures\\grasscube1024.dds"
 #define DEFAULT_MODEL_PATH_1 "F:\\GitHub\\River\\River\\Models\\skull.txt"
 #define DEFAULT_MODEL_PATH_2 "F:\\GitHub\\River\\River\\Models\\car.txt"
 
 
 PassUniform mMainPassCB;
 DirectX::BoundingFrustum mCamFrustum;
-std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 DX12RenderItem* mPickedRitem = nullptr;
 
 DX12RHI::DX12RHI()
@@ -77,93 +77,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitDescriptorHeaps();
 		
 		InitBaseShaders();
-
-		{
-			std::ifstream fin(DEFAULT_MODEL_PATH_2);
-
-			if (!fin)
-			{
-				MessageBox(0, L"Models/car.txt not found.", 0, 0);
-				return;
-			}
-
-			UINT vcount = 0;
-			UINT tcount = 0;
-			std::string ignore;
-
-			fin >> ignore >> vcount;
-			fin >> ignore >> tcount;
-			fin >> ignore >> ignore >> ignore >> ignore;
-
-			DirectX::XMFLOAT3 vMinf3(+FLT_MAX, +FLT_MAX, +FLT_MAX);
-			DirectX::XMFLOAT3 vMaxf3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-
-			DirectX::XMVECTOR vMin = XMLoadFloat3(&vMinf3);
-			DirectX::XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
-
-			std::vector<Vertex> vertices(vcount);
-			for (UINT i = 0; i < vcount; ++i)
-			{
-				fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
-				fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
-
-				DirectX::XMVECTOR P = XMLoadFloat3(&vertices[i].Pos);
-
-				vertices[i].TexC = { 0.0f, 0.0f };
-
-				vMin = DirectX::XMVectorMin(vMin, P);
-				vMax = DirectX::XMVectorMax(vMax, P);
-			}
-
-			DirectX::BoundingBox bounds;
-			using namespace DirectX;
-			DirectX::XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
-			DirectX::XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
-
-			fin >> ignore;
-			fin >> ignore;
-			fin >> ignore;
-
-			std::vector<std::int32_t> indices(3 * tcount);
-			for (UINT i = 0; i < tcount; ++i)
-			{
-				fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
-			}
-
-			fin.close();
-
-			//
-			// Pack the indices of all the meshes into one index buffer.
-			//
-
-			const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-
-			const UINT ibByteSize = (UINT)indices.size() * sizeof(std::int32_t);
-
-			auto geo = std::make_unique<MeshGeometry>();
-			geo->Name = "carGeo";
-
-			ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-			CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-			ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-			CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-			geo->VertexBuffer = CreateVertexBuffer((float*)vertices.data(), vbByteSize, sizeof(Vertex), 
-				{ {ShaderDataType::Float3, "POSITION"}, { ShaderDataType::Float3, "NORMAL" }, { ShaderDataType::Float2, "TEXCOORD" } });
-
-			geo->IndexBufer = CreateIndexBuffer((uint32_t*)indices.data(), indices.size(), ShaderDataType::Int);
-
-			SubmeshGeometry submesh;
-			submesh.IndexCount = (UINT)indices.size();
-			submesh.StartIndexLocation = 0;
-			submesh.BaseVertexLocation = 0;
-			submesh.Bounds = bounds;
-
-			geo->DrawArgs["Car"] = submesh;
-
-			mGeometries[geo->Name] = std::move(geo);
-		}
 		
 		InitBaseMaterials();
 		
@@ -843,8 +756,8 @@ void DX12RHI::InitDescriptorHeaps()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvHeap->GetCPUDescriptorHandleForHeapStart());
 
-	auto defaultTex = m_Textures["defaultTex"]->GetResource();
 
+	auto defaultTex = m_Textures["defaultTex"]->GetResource();
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = defaultTex->GetDesc().Format;
@@ -852,44 +765,33 @@ void DX12RHI::InitDescriptorHeaps()
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = defaultTex->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	m_Device->CreateShaderResourceView(defaultTex.Get(), &srvDesc, hDescriptor);
+	CreateSRV(hDescriptor, defaultTex.Get(), srvDesc);
+
 }
 
 void DX12RHI::InitBaseRenderItems()
 {
 	{
-		auto& geo = mGeometries["carGeo"];
-		//auto& geo = DX12GeometryGenerator::Get()->LoadMeshByFile(DEFAULT_MODEL_PATH_2, "Car");
-		auto carRitem = MakeUnique<DX12RenderItem>();
-		XMStoreFloat4x4(&carRitem->World, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 1.0f, 0.0f));
-		XMStoreFloat4x4(&carRitem->TexTransform, DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f));
-		carRitem->ObjCBIndex = 0;
-		carRitem->Mat = m_BaseMaterials["gray0"].get();
-		carRitem->Geo = geo.get();
-		carRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		carRitem->InstanceCount = 1;
-		carRitem->IndexCount = carRitem->Geo->DrawArgs["Car"].IndexCount;
-		carRitem->StartIndexLocation = carRitem->Geo->DrawArgs["Car"].StartIndexLocation;
-		carRitem->BaseVertexLocation = carRitem->Geo->DrawArgs["Car"].BaseVertexLocation;
-		carRitem->Bounds = carRitem->Geo->DrawArgs["Car"].Bounds;
+		auto& geo = DX12GeometryGenerator::Get()->LoadMeshByFile(DEFAULT_MODEL_PATH_2, "Car");
+		auto carRitem = CreateDX12RenderItem(DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 1.0f, 0.0f),
+			DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f), 0, m_BaseMaterials["gray0"].get());
+		SetRenderItemGeo(carRitem.get(), geo.get(), "Car");
 		m_RenderLayers[(int)RenderLayer::Opaque].push_back(carRitem.get());
 
-		auto pickedRitem = std::make_unique<DX12RenderItem>();
-		pickedRitem->World = Identity4x4();
-		pickedRitem->TexTransform = Identity4x4();
-		pickedRitem->ObjCBIndex = 1;
-		pickedRitem->Mat = m_BaseMaterials["highlight0"].get();
-		pickedRitem->Geo = mGeometries["carGeo"].get();
-		pickedRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		auto pickedRitem = CreateDX12RenderItem(IdentityMatrix(), IdentityMatrix(), 1, m_BaseMaterials["highlight0"].get());
+		SetRenderItemGeo(pickedRitem.get(), geo.get());
 		pickedRitem->Visible = false;
-		pickedRitem->IndexCount = 0;
-		pickedRitem->StartIndexLocation = 0;
-		pickedRitem->BaseVertexLocation = 0;
 		mPickedRitem = pickedRitem.get();
 		m_RenderLayers[(int)RenderLayer::Highlight].push_back(pickedRitem.get());
 
+		auto boxRitem = CreateDX12RenderItem(DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(1.0f, 5.0f, 0.0f),
+			DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f), 2, m_BaseMaterials["gray0"].get());
+		SetRenderItemGeo(boxRitem.get(), DX12GeometryGenerator::Get()->GetMesh("Box").get(), "Box");
+		m_RenderLayers[(int)RenderLayer::Opaque].push_back(boxRitem.get());
+
 		m_RenderItems["car"] = std::move(carRitem);
 		m_RenderItems["pick"] = std::move(pickedRitem);
+		m_RenderItems["box"] = std::move(boxRitem);
 	}
 }
 
@@ -930,6 +832,16 @@ void DX12RHI::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
+}
+
+void DX12RHI::CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* textureRes, D3D12_SHADER_RESOURCE_VIEW_DESC& desc, uint32_t handleOffset)
+{
+	if (handleOffset > 0)
+	{
+		handle.Offset(handleOffset, m_CbvSrvUavDescriptorSize);
+	}
+
+	return m_Device->CreateShaderResourceView(textureRes, &desc, handle);
 }
 
 //void DX12RHI::DrawRenderItemInstances(ID3D12GraphicsCommandList* cmdList, const V_Array<RenderItemInstance*>& instances)

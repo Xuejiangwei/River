@@ -117,6 +117,9 @@
     <ClCompile Include="Renderer\Source\Mesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12RenderItem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
