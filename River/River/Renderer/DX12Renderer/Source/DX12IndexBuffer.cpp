@@ -3,7 +3,7 @@
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 
-DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, uint32_t* indices, uint32_t count, ShaderDataType indiceDataType)
+DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, void* indices, uint32_t count, ShaderDataType indiceDataType)
 	: IndexBuffer(count, indiceDataType)
 {
 	auto indiceDataSize = ShaderDataTypeSize(indiceDataType);
@@ -38,7 +38,7 @@ DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, uint32_t* indices, uint32
 	m_IndexBufferView.SizeInBytes = count * indiceDataSize;
 }
 
-DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, uint32_t* indices, uint32_t count, ShaderDataType indiceDataType)
+DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* indices, uint32_t count, ShaderDataType indiceDataType)
 	: IndexBuffer(count, indiceDataType)
 {
 	auto indiceDataSize = ShaderDataTypeSize(indiceDataType);

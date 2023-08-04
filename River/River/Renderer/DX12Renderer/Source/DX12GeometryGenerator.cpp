@@ -71,9 +71,27 @@ Unique<MeshGeometry>& DX12GeometryGenerator::LoadMeshByFile(const char* filePath
 		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
 		fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
 
+		vertices[i].TexC = { 0.f, 0.f };
+
 		XMVECTOR P = XMLoadFloat3(&vertices[i].Pos);
 
-		vertices[i].TexC = { 0.f, 0.f };
+		XMVECTOR N = XMLoadFloat3(&vertices[i].Normal);
+
+		// Generate a tangent vector so normal mapping works.  We aren't applying
+		// a texture map to the skull, so we just need any tangent vector so that
+		// the math works out to give us the original interpolated vertex normal.
+		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		if (fabsf(XMVectorGetX(XMVector3Dot(N, up))) < 1.0f - 0.001f)
+		{
+			XMVECTOR T = XMVector3Normalize(XMVector3Cross(up, N));
+			XMStoreFloat3(&vertices[i].TangentU, T);
+		}
+		else
+		{
+			up = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+			XMVECTOR T = XMVector3Normalize(XMVector3Cross(N, up));
+			XMStoreFloat3(&vertices[i].TangentU, T);
+		}
 
 		vMin = XMVectorMin(vMin, P);
 		vMax = XMVectorMax(vMax, P);
@@ -415,6 +433,117 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateSphere(float radius, uint32_t 
 	return CreateMeshGeometry("Sphere", meshData);
 }
 
+DX12GeometryGenerator::MeshData DX12GeometryGenerator::CreateSphere1(float radius, uint32_t sliceCount, uint32_t stackCount)
+{
+	MeshData meshData;
+
+	//
+	// Compute the vertices stating at the top pole and moving down the stacks.
+	//
+
+	// Poles: note that there will be texture coordinate distortion as there is
+	// not a unique point on the texture map to assign to the pole when mapping
+	// a rectangular texture onto a sphere.
+	MeshGenVertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	MeshGenVertex bottomVertex(0.0f, -radius, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+
+	meshData.Vertices.push_back(topVertex);
+
+	float phiStep = XM_PI / stackCount;
+	float thetaStep = 2.0f * XM_PI / sliceCount;
+
+	// Compute vertices for each stack ring (do not count the poles as rings).
+	for (uint32_t i = 1; i <= stackCount - 1; ++i)
+	{
+		float phi = i * phiStep;
+
+		// Vertices of ring.
+		for (uint32_t j = 0; j <= sliceCount; ++j)
+		{
+			float theta = j * thetaStep;
+
+			MeshGenVertex v;
+
+			// spherical to cartesian
+			v.Position.x = radius * sinf(phi) * cosf(theta);
+			v.Position.y = radius * cosf(phi);
+			v.Position.z = radius * sinf(phi) * sinf(theta);
+
+			// Partial derivative of P with respect to theta
+			v.TangentU.x = -radius * sinf(phi) * sinf(theta);
+			v.TangentU.y = 0.0f;
+			v.TangentU.z = +radius * sinf(phi) * cosf(theta);
+
+			XMVECTOR T = XMLoadFloat3(&v.TangentU);
+			XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+
+			XMVECTOR p = XMLoadFloat3(&v.Position);
+			XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+
+			v.TexC.x = theta / XM_2PI;
+			v.TexC.y = phi / XM_PI;
+
+			meshData.Vertices.push_back(v);
+		}
+	}
+
+	meshData.Vertices.push_back(bottomVertex);
+
+	//
+	// Compute indices for top stack.  The top stack was written first to the vertex buffer
+	// and connects the top pole to the first ring.
+	//
+
+	for (uint32_t i = 1; i <= sliceCount; ++i)
+	{
+		meshData.Indices32.push_back(0);
+		meshData.Indices32.push_back(i + 1);
+		meshData.Indices32.push_back(i);
+	}
+
+	//
+	// Compute indices for inner stacks (not connected to poles).
+	//
+
+	// Offset the indices to the index of the first vertex in the first ring.
+	// This is just skipping the top pole vertex.
+	uint32_t baseIndex = 1;
+	uint32_t ringVertexCount = sliceCount + 1;
+	for (uint32_t i = 0; i < stackCount - 2; ++i)
+	{
+		for (uint32_t j = 0; j < sliceCount; ++j)
+		{
+			meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j);
+			meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j);
+
+			meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j);
+			meshData.Indices32.push_back(baseIndex + i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back(baseIndex + (i + 1) * ringVertexCount + j + 1);
+		}
+	}
+
+	//
+	// Compute indices for bottom stack.  The bottom stack was written last to the vertex buffer
+	// and connects the bottom pole to the bottom ring.
+	//
+
+	// South pole vertex was added last.
+	uint32_t southPoleIndex = (uint32_t)meshData.Vertices.size() - 1;
+
+	// Offset the indices to the index of the first vertex in the last ring.
+	baseIndex = southPoleIndex - ringVertexCount;
+
+	for (uint32_t i = 0; i < sliceCount; ++i)
+	{
+		meshData.Indices32.push_back(southPoleIndex);
+		meshData.Indices32.push_back(baseIndex + i);
+		meshData.Indices32.push_back(baseIndex + i + 1);
+	}
+
+	return meshData;
+}
+
 void DX12GeometryGenerator::Subdivide(MeshData& meshData)
 {
 	// Save a copy of the input geometry.
@@ -677,6 +806,100 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateCylinder(float bottomRadius, f
 	return CreateMeshGeometry("Cylinder", meshData);
 }
 
+DX12GeometryGenerator::MeshData DX12GeometryGenerator::CreateCylinder1(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount)
+{
+	MeshData meshData;
+
+	//
+	// Build Stacks.
+	// 
+
+	float stackHeight = height / stackCount;
+
+	// Amount to increment radius as we move up each stack level from bottom to top.
+	float radiusStep = (topRadius - bottomRadius) / stackCount;
+
+	uint32_t ringCount = stackCount + 1;
+
+	// Compute vertices for each stack ring starting at the bottom and moving up.
+	for (uint32_t i = 0; i < ringCount; ++i)
+	{
+		float y = -0.5f * height + i * stackHeight;
+		float r = bottomRadius + i * radiusStep;
+
+		// vertices of ring
+		float dTheta = 2.0f * XM_PI / sliceCount;
+		for (uint32_t j = 0; j <= sliceCount; ++j)
+		{
+			MeshGenVertex vertex;
+
+			float c = cosf(j * dTheta);
+			float s = sinf(j * dTheta);
+
+			vertex.Position = XMFLOAT3(r * c, y, r * s);
+
+			vertex.TexC.x = (float)j / sliceCount;
+			vertex.TexC.y = 1.0f - (float)i / stackCount;
+
+			// Cylinder can be parameterized as follows, where we introduce v
+			// parameter that goes in the same direction as the v tex-coord
+			// so that the bitangent goes in the same direction as the v tex-coord.
+			//   Let r0 be the bottom radius and let r1 be the top radius.
+			//   y(v) = h - hv for v in [0,1].
+			//   r(v) = r1 + (r0-r1)v
+			//
+			//   x(t, v) = r(v)*cos(t)
+			//   y(t, v) = h - hv
+			//   z(t, v) = r(v)*sin(t)
+			// 
+			//  dx/dt = -r(v)*sin(t)
+			//  dy/dt = 0
+			//  dz/dt = +r(v)*cos(t)
+			//
+			//  dx/dv = (r0-r1)*cos(t)
+			//  dy/dv = -h
+			//  dz/dv = (r0-r1)*sin(t)
+
+			// This is unit length.
+			vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
+
+			float dr = bottomRadius - topRadius;
+			XMFLOAT3 bitangent(dr * c, -height, dr * s);
+
+			XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
+			XMVECTOR B = XMLoadFloat3(&bitangent);
+			XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
+			XMStoreFloat3(&vertex.Normal, N);
+
+			meshData.Vertices.push_back(vertex);
+		}
+	}
+
+	// Add one because we duplicate the first and last vertex per ring
+	// since the texture coordinates are different.
+	uint32_t ringVertexCount = sliceCount + 1;
+
+	// Compute indices for each stack.
+	for (uint32_t i = 0; i < stackCount; ++i)
+	{
+		for (uint32_t j = 0; j < sliceCount; ++j)
+		{
+			meshData.Indices32.push_back(i * ringVertexCount + j);
+			meshData.Indices32.push_back((i + 1) * ringVertexCount + j);
+			meshData.Indices32.push_back((i + 1) * ringVertexCount + j + 1);
+
+			meshData.Indices32.push_back(i * ringVertexCount + j);
+			meshData.Indices32.push_back((i + 1) * ringVertexCount + j + 1);
+			meshData.Indices32.push_back(i * ringVertexCount + j + 1);
+		}
+	}
+
+	BuildCylinderTopCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+	BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+
+	return meshData;
+}
+
 void DX12GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
 	uint32_t sliceCount, uint32_t stackCount, MeshData& meshData)
 {
@@ -777,9 +1000,9 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 	ThrowIfFailed(D3DCreateBlob(indicesByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), indicesByteSize);
 
-	geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
+	/*geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
 		(int)sizeof(Vertex), g_GeometryLayout);
-	geo->IndexBufer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
+	geo->IndexBuffer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);*/
 
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (uint32_t)indices.size();
@@ -807,9 +1030,9 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 	ThrowIfFailed(D3DCreateBlob(indicesByteSize, &geo->IndexBufferCPU));
 	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), indicesByteSize);
 
-	geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
+	/*geo->VertexBuffer = DX12RHI::Get()->CreateVertexBuffer((float*)vertices.data(), verticesByteSize,
 		(int)sizeof(Vertex), g_GeometryLayout);
-	geo->IndexBufer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);
+	geo->IndexBuffer = DX12RHI::Get()->CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Int);*/
 
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (uint32_t)indices.size();
@@ -887,6 +1110,71 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateGrid(float width, float depth,
 	return CreateMeshGeometry("Grid", meshData);
 }
 
+DX12GeometryGenerator::MeshData DX12GeometryGenerator::CreateGrid1(float width, float depth, uint32_t m, uint32_t n)
+{
+	MeshData meshData;
+
+	uint32_t vertexCount = m * n;
+	uint32_t faceCount = (m - 1) * (n - 1) * 2;
+
+	//
+	// Create the vertices.
+	//
+
+	float halfWidth = 0.5f * width;
+	float halfDepth = 0.5f * depth;
+
+	float dx = width / (n - 1);
+	float dz = depth / (m - 1);
+
+	float du = 1.0f / (n - 1);
+	float dv = 1.0f / (m - 1);
+
+	meshData.Vertices.resize(vertexCount);
+	for (uint32_t i = 0; i < m; ++i)
+	{
+		float z = halfDepth - i * dz;
+		for (uint32_t j = 0; j < n; ++j)
+		{
+			float x = -halfWidth + j * dx;
+
+			meshData.Vertices[i * n + j].Position = XMFLOAT3(x, 0.0f, z);
+			meshData.Vertices[i * n + j].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+			meshData.Vertices[i * n + j].TangentU = XMFLOAT3(1.0f, 0.0f, 0.0f);
+
+			// Stretch texture over grid.
+			meshData.Vertices[i * n + j].TexC.x = j * du;
+			meshData.Vertices[i * n + j].TexC.y = i * dv;
+		}
+	}
+
+	//
+	// Create the indices.
+	//
+
+	meshData.Indices32.resize(faceCount * 3); // 3 indices per face
+
+	// Iterate over each quad and compute indices.
+	uint32_t k = 0;
+	for (uint32_t i = 0; i < m - 1; ++i)
+	{
+		for (uint32_t j = 0; j < n - 1; ++j)
+		{
+			meshData.Indices32[k] = i * n + j;
+			meshData.Indices32[k + 1] = i * n + j + 1;
+			meshData.Indices32[k + 2] = (i + 1) * n + j;
+
+			meshData.Indices32[k + 3] = (i + 1) * n + j;
+			meshData.Indices32[k + 4] = i * n + j + 1;
+			meshData.Indices32[k + 5] = (i + 1) * n + j + 1;
+
+			k += 6; // next quad
+		}
+	}
+
+	return meshData;
+}
+
 Unique<MeshGeometry> DX12GeometryGenerator::CreateQuad(float x, float y, float w, float h, float depth)
 {
 	MeshData meshData;
@@ -928,4 +1216,47 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateQuad(float x, float y, float w
 	meshData.Indices32[5] = 3;
 
 	return CreateMeshGeometry("Quad", meshData);
+}
+
+DX12GeometryGenerator::MeshData DX12GeometryGenerator::CreateQuad1(float x, float y, float w, float h, float depth)
+{
+	MeshData meshData;
+
+	meshData.Vertices.resize(4);
+	meshData.Indices32.resize(6);
+
+	// Position coordinates specified in NDC space.
+	meshData.Vertices[0] = MeshGenVertex(
+		x, y - h, depth,
+		0.0f, 0.0f, -1.0f,
+		1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f);
+
+	meshData.Vertices[1] = MeshGenVertex(
+		x, y, depth,
+		0.0f, 0.0f, -1.0f,
+		1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f);
+
+	meshData.Vertices[2] = MeshGenVertex(
+		x + w, y, depth,
+		0.0f, 0.0f, -1.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f);
+
+	meshData.Vertices[3] = MeshGenVertex(
+		x + w, y - h, depth,
+		0.0f, 0.0f, -1.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 1.0f);
+
+	meshData.Indices32[0] = 0;
+	meshData.Indices32[1] = 1;
+	meshData.Indices32[2] = 2;
+
+	meshData.Indices32[3] = 0;
+	meshData.Indices32[4] = 2;
+	meshData.Indices32[5] = 3;
+
+	return meshData;
 }

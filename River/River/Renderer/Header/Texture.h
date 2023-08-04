@@ -2,13 +2,12 @@
 
 #include "RiverHead.h"
 
-class Texture
+class Texture1
 {
 public:
-	Texture(const String& name, const String& path);
-	virtual ~Texture();
+	Texture1(const String& name, const String& path);
+	virtual ~Texture1();
 
-protected:
-	String m_Name;
+	String Name;
 	String m_Path;
 };

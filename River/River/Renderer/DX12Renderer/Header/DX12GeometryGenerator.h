@@ -38,10 +38,49 @@ struct MeshGeometry
 
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
-	Unique<class VertexBuffer> VertexBuffer;
-	Unique<class IndexBuffer> IndexBufer;
+	
+	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
+
+	UINT VertexByteStride = 0;
+	UINT VertexBufferByteSize = 0;
+	DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
+	UINT IndexBufferByteSize = 0;
+
+	/*Unique<class VertexBuffer> VertexBuffer;
+	Unique<class IndexBuffer> IndexBuffer;*/
 
 	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
+
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
+	{
+		D3D12_VERTEX_BUFFER_VIEW vbv;
+		vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
+		vbv.StrideInBytes = VertexByteStride;
+		vbv.SizeInBytes = VertexBufferByteSize;
+
+		return vbv;
+	}
+
+	D3D12_INDEX_BUFFER_VIEW IndexBufferView()const
+	{
+		D3D12_INDEX_BUFFER_VIEW ibv;
+		ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
+		ibv.Format = IndexFormat;
+		ibv.SizeInBytes = IndexBufferByteSize;
+
+		return ibv;
+	}
+
+	void DisposeUploaders()
+	{
+		VertexBufferUploader = nullptr;
+		IndexBufferUploader = nullptr;
+	}
+
 };
 
 class DX12GeometryGenerator
@@ -81,6 +120,20 @@ public:
 		std::vector<MeshGenVertex> Vertices;
 		std::vector<uint32_t> Indices32;
 		DirectX::BoundingBox BB;
+
+		std::vector<uint16_t>& GetIndices16()
+		{
+			if (mIndices16.empty())
+			{
+				mIndices16.resize(Indices32.size());
+				for (size_t i = 0; i < Indices32.size(); ++i)
+					mIndices16[i] = static_cast<uint16_t>(Indices32[i]);
+			}
+
+			return mIndices16;
+		}
+	private:
+		std::vector<uint16_t> mIndices16;
 	};
 
 public:
@@ -119,6 +172,8 @@ private:
 	///</summary>
 	Unique<MeshGeometry> CreateSphere(float radius, uint32_t sliceCount, uint32_t stackCount);
 
+	MeshData CreateSphere1(float radius, uint32_t sliceCount, uint32_t stackCount);
+
 	///<summary>
 	/// Creates a geosphere centered at the origin with the given radius.  The
 	/// depth controls the level of tessellation.
@@ -132,16 +187,22 @@ private:
 	///</summary>
 	Unique<MeshGeometry> CreateCylinder(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount);
 
+	MeshData CreateCylinder1(float bottomRadius, float topRadius, float height, uint32_t sliceCount, uint32_t stackCount);
+
 	///<summary>
 	/// Creates an mxn grid in the xz-plane with m rows and n columns, centered
 	/// at the origin with the specified width and depth.
 	///</summary>
 	Unique<MeshGeometry> CreateGrid(float width, float depth, uint32_t m, uint32_t n);
 
+	MeshData CreateGrid1(float width, float depth, uint32_t m, uint32_t n);
+
 	///<summary>
 	/// Creates a quad aligned with the screen.  This is useful for postprocessing and screen effects.
 	///</summary>
 	Unique<MeshGeometry> CreateQuad(float x, float y, float w, float h, float depth);
+
+	MeshData CreateQuad1(float x, float y, float w, float h, float depth);
 
 	Unique<MeshGeometry> CreateMeshGeometry(const char* name, MeshData& meshData);
 

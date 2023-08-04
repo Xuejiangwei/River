@@ -103,7 +103,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)Renderer\Header;$(ProjectDir)Window\Header;$(ProjectDir);$(ProjectDir)Header;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>RiverPch.h</PrecompiledHeaderFile>
@@ -136,8 +136,12 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12LoadM3d.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RenderItem.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RootSignature.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12ShadowMap.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12SkinnedData.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Ssao.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Texture.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Util.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12FrameBuffer.cpp" />
@@ -185,11 +189,15 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12FrameBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12IndexBuffer.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12LoadM3d.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12PipelineState.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RenderItem.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RHI.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RootSignature.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Shader.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12ShadowMap.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12SkinnedData.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12Ssao.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Texture.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12UniformBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Util.h" />

@@ -14,16 +14,16 @@ public:
 
 	~Material();
 
-	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int srvIndex);
+	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int diffuseSrvIndex, int normalSrvIndex);
 
-	String m_Name;
-	float m_Roughness;
-	River::Float4 m_DiffuseAlbedo;
-	River::Float3 m_FresnelR0;
-	River::Matrix4x4 m_MatTransform;
-
+	String Name;
+	int NumFramesDirty = 3; //frame buffer num
 	int MatCBIndex = -1;
 	int DiffuseSrvHeapIndex = -1;
 	int NormalSrvHeapIndex = -1;
-	int NumFramesDirty = 3; //frame buffer num
+	float Roughness;
+
+	River::Float4 DiffuseAlbedo;
+	River::Float3 FresnelR0;
+	River::Matrix4x4 MatTransform;
 };

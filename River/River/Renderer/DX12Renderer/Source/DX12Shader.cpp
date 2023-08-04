@@ -17,14 +17,39 @@ DX12Shader::DX12Shader(const String& filePath, const D3D_SHADER_MACRO* defines, 
 #endif
 
 	auto path = S_2_WS(filePath);
-
 	if (name)
 	{
+		Microsoft::WRL::ComPtr<ID3DBlob> errors;
 		ThrowIfFailed(D3DCompileFromFile(path.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, name, target, nCompileFlags, 0,
-			&m_ShaderByteCode, nullptr));
+			&m_ShaderByteCode, &errors));
+
+		if (errors != nullptr)
+		{
+			OutputDebugStringA((char*)errors->GetBufferPointer());
+		}
 	}
 }
 
 DX12Shader::~DX12Shader()
 {
+}
+
+BYTE* GetShaderBufferPointer(const DX12Shader* shader)
+{
+	if (shader)
+	{
+		return reinterpret_cast<BYTE*>(((ID3D10Blob*)shader->GetShader())->GetBufferPointer());
+	}
+
+	return nullptr;
+}
+
+SIZE_T GetShaderBufferSize(const DX12Shader* shader)
+{
+	if (shader)
+	{
+		return ((ID3D10Blob*)shader->GetShader())->GetBufferSize();
+	}
+
+	return 0;
 }

@@ -5,7 +5,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 
-class DX12Texture : public Texture
+class DX12Texture : public Texture1
 {
 public:
 	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path);
@@ -14,7 +14,6 @@ public:
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> GetResource() { return m_Resource; }
 
-private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_Resource;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadHeap;
 };

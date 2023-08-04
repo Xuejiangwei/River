@@ -5,6 +5,10 @@
 #include "DirectXMath.h"
 #include "ShaderDataType.h"
 
+DirectX::XMFLOAT4X4 Identity4x4();
+
+DirectX::XMMATRIX IdentityMatrix();
+
 inline std::wstring AnsiToWString(const std::string& str)
 {
 	WCHAR buffer[512];
@@ -42,9 +46,6 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
 	UINT64 byteSize,
 	Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
 
-DirectX::XMFLOAT4X4 Identity4x4();
-
-DirectX::XMMATRIX IdentityMatrix();
 
 Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
 	const std::wstring& filename,

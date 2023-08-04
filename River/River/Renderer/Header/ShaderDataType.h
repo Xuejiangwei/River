@@ -4,7 +4,7 @@
 
 enum class ShaderDataType
 {
-	None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
+	None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool, Short, Byte4
 };
 
 static uint32_t ShaderDataTypeSize(ShaderDataType type)
@@ -22,6 +22,8 @@ static uint32_t ShaderDataTypeSize(ShaderDataType type)
 	case ShaderDataType::Int3:     return 4 * 3;
 	case ShaderDataType::Int4:     return 4 * 4;
 	case ShaderDataType::Bool:     return 1;
+	case ShaderDataType::Short:     return 2;
+	case ShaderDataType::Byte4:     return 4;
 	}
 
 	return 0;

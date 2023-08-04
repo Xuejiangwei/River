@@ -30,6 +30,8 @@ Application::~Application()
 
 void Application::Run()
 {
+	m_Time.Reset();
+
 	while (m_Running)
 	{
 		m_Time.Tick();

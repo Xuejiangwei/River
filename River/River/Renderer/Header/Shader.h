@@ -32,6 +32,6 @@ public:
 	Shader();
 	virtual ~Shader();
 
-	virtual void* GetShader() = 0;
+	virtual void* GetShader() const = 0;
 private:
 };

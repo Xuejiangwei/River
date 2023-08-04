@@ -10,15 +10,20 @@
 
 struct Vertex
 {
-	Vertex() = default;
-	Vertex(float x, float y, float z, float nx, float ny, float nz, float u, float v) :
-		Pos(x, y, z),
-		Normal(nx, ny, nz),
-		TexC(u, v) {}
-
 	DirectX::XMFLOAT3 Pos;
 	DirectX::XMFLOAT3 Normal;
 	DirectX::XMFLOAT2 TexC;
+	DirectX::XMFLOAT3 TangentU;
+};
+
+struct SkinnedVertex
+{
+	DirectX::XMFLOAT3 Pos;
+	DirectX::XMFLOAT3 Normal;
+	DirectX::XMFLOAT2 TexC;
+	DirectX::XMFLOAT3 TangentU;
+	DirectX::XMFLOAT3 BoneWeights;
+	BYTE BoneIndices[4];
 };
 
 struct ObjectUniform
@@ -29,6 +34,11 @@ struct ObjectUniform
 	UINT     ObjPad0;
 	UINT     ObjPad1;
 	UINT     ObjPad2;
+};
+
+struct SkinnedUniform
+{
+	DirectX::XMFLOAT4X4 BoneTransforms[96];
 };
 
 struct Light
@@ -50,6 +60,8 @@ struct PassUniform
 	DirectX::XMFLOAT4X4 InvProj = Identity4x4();
 	DirectX::XMFLOAT4X4 ViewProj = Identity4x4();
 	DirectX::XMFLOAT4X4 InvViewProj = Identity4x4();
+	DirectX::XMFLOAT4X4 ViewProjTex = Identity4x4();
+	DirectX::XMFLOAT4X4 ShadowTransform = Identity4x4();
 	DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
 	float cbPerObjectPad1 = 0.0f;
 	DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
@@ -64,6 +76,25 @@ struct PassUniform
 	Light Lights[MaxLights];
 };
 
+struct SsaoUniform
+{
+	DirectX::XMFLOAT4X4 Proj;
+	DirectX::XMFLOAT4X4 InvProj;
+	DirectX::XMFLOAT4X4 ProjTex;
+	DirectX::XMFLOAT4   OffsetVectors[14];
+
+	// For SsaoBlur.hlsl
+	DirectX::XMFLOAT4 BlurWeights[3];
+
+	DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
+
+	// Coordinates given in view space.
+	float OcclusionRadius = 0.5f;
+	float OcclusionFadeStart = 0.2f;
+	float OcclusionFadeEnd = 2.0f;
+	float SurfaceEpsilon = 0.05f;
+};
+
 struct MaterialUniform
 {
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -72,7 +103,7 @@ struct MaterialUniform
 	DirectX::XMFLOAT4X4 MatTransform = Identity4x4();
 
 	UINT DiffuseMapIndex = 0;
-	UINT MaterialPad0;
+	UINT NormalMapIndex = 0;
 	UINT MaterialPad1;
 	UINT MaterialPad2;
 };
@@ -90,17 +121,20 @@ struct InstanceUniform
 class DX12FrameBuffer : public FrameBuffer
 {
 public:
-	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount);
+	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT skinnedObjectCount, UINT materialCount);
 	virtual ~DX12FrameBuffer() override;
 
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
 	DX12FrameBuffer& operator=(const DX12FrameBuffer& rhs) = delete;
 
 	friend class DX12RHI;
+	friend class Ssao;
 private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
+	Unique<DX12UniformBuffer<SkinnedUniform>> m_SkinnedUniform;
+	Unique<DX12UniformBuffer<SsaoUniform>> m_SsaoUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

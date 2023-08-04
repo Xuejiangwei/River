@@ -5,6 +5,28 @@
 #include <d3dcompiler.h>
 #include <comdef.h>
 
+DirectX::XMFLOAT4X4 Identity4x4()
+{
+	static DirectX::XMFLOAT4X4 I(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
+	return I;
+}
+
+DirectX::XMMATRIX IdentityMatrix()
+{
+	static DirectX::XMFLOAT4X4 I(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
+	return DirectX::XMLoadFloat4x4(&I);
+}
+
 DxException::DxException(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
 	ErrorCode(hr),
 	FunctionName(functionName),
@@ -58,28 +80,6 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(ID3D12Device* device,
 	return defaultBuffer;
 }
 
-DirectX::XMFLOAT4X4 Identity4x4()
-{
-	static DirectX::XMFLOAT4X4 I(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
-
-	return I;
-}
-
-DirectX::XMMATRIX IdentityMatrix()
-{
-	static DirectX::XMFLOAT4X4 I(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
-
-	return DirectX::XMLoadFloat4x4(&I);
-}
-
 Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(const std::wstring& filename, const D3D_SHADER_MACRO* defines, const std::string& entrypoint, const std::string& target)
 {
 	{
@@ -129,6 +129,10 @@ DXGI_FORMAT ShaderDateTypeToDXGIFormat(ShaderDataType type)
 		return DXGI_FORMAT_R32G32B32A32_UINT;
 	case ShaderDataType::Bool:
 		return DXGI_FORMAT_R8_UINT;
+	case ShaderDataType::Short:
+		return DXGI_FORMAT_R16_UINT;
+	case ShaderDataType::Byte4:
+		return DXGI_FORMAT_R8G8B8A8_UINT;
 	default:
 		break;
 	}

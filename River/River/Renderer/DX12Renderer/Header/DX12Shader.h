@@ -13,8 +13,12 @@ public:
 
 	friend class DX12PipelineState;
 
-	virtual void* GetShader() override { return m_ShaderByteCode.Get(); }
+	virtual void* GetShader() const override { return m_ShaderByteCode.Get(); }
 
 private:
 	Microsoft::WRL::ComPtr<ID3D10Blob> m_ShaderByteCode;
 };
+
+BYTE* GetShaderBufferPointer(const DX12Shader* shader);
+
+SIZE_T GetShaderBufferSize(const DX12Shader* shader);

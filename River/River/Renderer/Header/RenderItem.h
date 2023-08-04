@@ -5,6 +5,6 @@ enum class PrimitiveType
 	TriangleList
 };
 
-struct RenderItem
+struct RenderItem111
 {
 };

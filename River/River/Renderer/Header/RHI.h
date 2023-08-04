@@ -31,6 +31,8 @@ enum class RenderLayer
 
 	Highlight,
 	Sky,
+	Debug,
+	SkinnedOpaque,
 	LayerCount
 };
 
@@ -53,7 +55,7 @@ public:
 
 	virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
 
-	virtual Unique<IndexBuffer> CreateIndexBuffer(uint32_t* indices, uint32_t count, ShaderDataType indiceDataType) = 0;
+	virtual Unique<IndexBuffer> CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType) = 0;
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
@@ -66,8 +68,8 @@ public:
 	APIMode GetAPIMode() const { return s_APIMode; }
 
 protected:
-	bool m_4xMsaaState = false;
-	unsigned int m_4xMsaaQuality = 0;
+	bool m4xMsaaState = false;
+	unsigned int m4xMsaaQuality = 0;
 
 private:
 	static APIMode s_APIMode;

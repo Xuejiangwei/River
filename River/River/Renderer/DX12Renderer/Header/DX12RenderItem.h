@@ -15,7 +15,7 @@ struct DX12InstanceUniformData
 	UINT InstancePad2;
 };
 
-struct DX12RenderItem : public RenderItem
+struct DX12RenderItem : public RenderItem111
 {
 	DX12RenderItem() = default;
 
@@ -30,6 +30,8 @@ struct DX12RenderItem : public RenderItem
 	int IndexCount = 0;
 	int StartIndexLocation = 0;
 	int BaseVertexLocation = 0;
+	UINT SkinnedCBIndex = -1;
+	struct SkinnedModelInstance* SkinnedModelInst = nullptr;
 
 	class Material* Mat = nullptr;
 	struct MeshGeometry* Geo = nullptr;
