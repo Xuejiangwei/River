@@ -24,7 +24,6 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
-
 #define DEFAULT_SHADER_PATH_1 "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
 #define DEFAULT_SHADER_PATH_2 "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl"
 #define DEFAULT_SHADER_PATH_3 "F:\\GitHub\\River\\River\\Shaders\\Shadows.hlsl"
@@ -33,6 +32,7 @@ using namespace DirectX;
 #define DEFAULT_SHADER_PATH_6 "F:\\GitHub\\River\\River\\Shaders\\DrawNormals.hlsl"
 #define DEFAULT_SHADER_PATH_7 "F:\\GitHub\\River\\River\\Shaders\\SsaoBlur.hlsl"
 
+#define DEFAULT_TEXTURE_PATH   "F:\\GitHub\\River\\River\\Textures\\"
 #define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
 #define DEFAULT_TEXTURE_PATH_2 "F:\\GitHub\\River\\River\\Textures\\stone.dds"
 #define DEFAULT_TEXTURE_PATH_3 "F:\\GitHub\\River\\River\\Textures\\tile.dds"
@@ -56,8 +56,6 @@ using namespace DirectX;
 #define DEFAULT_MODEL_PATH_2 "F:\\GitHub\\River\\River\\Models\\car.txt"
 #define DEFAULT_MODEL_PATH_3 "F:\\GitHub\\River\\River\\Models\\soldier.m3d"
 
-std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-std::vector<D3D12_INPUT_ELEMENT_DESC> mSkinnedInputLayout;
 DirectX::BoundingSphere mSceneBounds;
 PassUniform mMainPassCB;
 PassUniform mShadowPassCB;
@@ -80,7 +78,6 @@ UINT mNullTexSrvIndex2 = 0;
 CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv;
 std::unique_ptr<ShadowMap> mShadowMap;
 std::unique_ptr<Ssao> mSsao;
-std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 
 float mLightRotationAngle = 0.0f;
 DirectX::XMFLOAT3 mBaseLightDirections[3] = {
@@ -167,7 +164,8 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitFrameBuffer();
 		InitBasePSOs();
 
-		mSsao->SetPSOs(mPSOs["ssao"].Get(), mPSOs["ssaoBlur"].Get());
+		//mSsao->SetPSOs(mPSOs["ssao"].Get(), mPSOs["ssaoBlur"].Get());
+		mSsao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
 	}
 
 	ThrowIfFailed(mCommandList->Close());
@@ -213,6 +211,19 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 	UpdateSsaoCBs(time);
 }
 
+DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
+{
+	decltype(DX12RHI::CreateTexture(name, filePath)) ret = nullptr;
+	if (name && filePath && mTextures.find(name) == std::end(mTextures))
+	{
+		auto texture =  MakeUnique<DX12Texture>(md3dDevice.Get(), mCommandList.Get(), name, filePath);
+		ret = texture.get();
+		mTextures[name] = std::move(texture);
+	}
+
+	return ret;
+}
+
 void DX12RHI::Render()
 {
 	auto cmdListAlloc = mCurrFrameResource->m_CommandAlloc;
@@ -223,7 +234,8 @@ void DX12RHI::Render()
 
 	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
 	// Reusing the command list reuses memory.
-	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	//ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), m_PSOs["opaque"]->GetPSO()));
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -307,16 +319,20 @@ void DX12RHI::Render()
 	skyTexDescriptor.Offset(mSkyTexHeapIndex, mCbvSrvUavDescriptorSize);
 	mCommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
 
-	mCommandList->SetPipelineState(mPSOs["opaque"].Get());
+	//mCommandList->SetPipelineState(mPSOs["opaque"].Get());
+	mCommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	mCommandList->SetPipelineState(mPSOs["skinnedOpaque"].Get());
+	//mCommandList->SetPipelineState(mPSOs["skinnedOpaque"].Get());
+	mCommandList->SetPipelineState(m_PSOs["skinnedOpaque"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
-	mCommandList->SetPipelineState(mPSOs["debug"].Get());
+	//mCommandList->SetPipelineState(mPSOs["debug"].Get());
+	mCommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Debug]);
 
-	mCommandList->SetPipelineState(mPSOs["sky"].Get());
+	//mCommandList->SetPipelineState(mPSOs["sky"].Get());
+	mCommandList->SetPipelineState(m_PSOs["sky"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
 
 	// Indicate a state transition on the resource usage.
@@ -343,17 +359,34 @@ void DX12RHI::Render()
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 }
 
-Unique<PipelineState> DX12RHI::BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout)
+Unique<DX12PipelineState> DX12RHI::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader)
 {
-	return nullptr;
+	if (layout)
+	{
+		desc.InputLayout = { layout->data(), (UINT)layout->size() };
+	}
+
+	if (vsShader)
+	{
+		auto dx12VsShader = dynamic_cast<DX12Shader*>(vsShader);
+		desc.VS = { GetShaderBufferPointer(dx12VsShader), GetShaderBufferSize(dx12VsShader) };
+	}
+
+	if (psShader)
+	{
+		auto dx12PsShader = dynamic_cast<DX12Shader*>(psShader);
+		desc.PS = { GetShaderBufferPointer(dx12PsShader), GetShaderBufferSize(dx12PsShader) };
+	}
+
+	return MakeUnique<DX12PipelineState>(md3dDevice.Get(), desc);
 }
 
-Unique<VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const VertexBufferLayout& layout)
+Unique<DX12VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
 {
 	return MakeUnique<DX12VertexBuffer>(md3dDevice.Get(), mCommandList.Get(), vertices, byteSize, elementSize, layout);
 }
 
-Unique<IndexBuffer> DX12RHI::CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType)
+Unique<DX12IndexBuffer> DX12RHI::CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType)
 {
 	return MakeUnique<DX12IndexBuffer>(md3dDevice.Get(), mCommandList.Get(), indices, count, indiceDataType);
 }
@@ -436,7 +469,6 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	{
 		mSsao->OnResize(param.WindowWidth, param.WindowHeight);
 
-		// Resources changed, so need to rebuild descriptors.
 		mSsao->RebuildDescriptors(mDepthStencilBuffer.Get());
 	}
 }
@@ -484,23 +516,9 @@ void DX12RHI::LoadSkinnedModel()
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = mSkinnedModelFilename;
-
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	geo->VertexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
-
-	geo->IndexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-	geo->VertexByteStride = sizeof(SkinnedVertex);
-	geo->VertexBufferByteSize = vbByteSize;
-	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	geo->IndexBufferByteSize = ibByteSize;
+	geo->CopyCPUData(vertices, indices);
+	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(SkinnedVertex), &m_InputLayers["skinnedDefault"]),
+		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 	for (UINT i = 0; i < (UINT)mSkinnedSubsets.size(); ++i)
 	{
@@ -526,19 +544,12 @@ void DX12RHI::BuildShapeGeometry()
 	DX12GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder1(0.5f, 0.3f, 3.0f, 20, 20);
 	DX12GeometryGenerator::MeshData quad = geoGen.CreateQuad1(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
 
-	//
-	// We are concatenating all the geometry into one big vertex/index buffer.  So
-	// define the regions in the buffer each submesh covers.
-	//
-
-	// Cache the vertex offsets to each object in the concatenated vertex buffer.
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 	UINT quadVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
 
-	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
 	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
@@ -569,11 +580,6 @@ void DX12RHI::BuildShapeGeometry()
 	quadSubmesh.IndexCount = (UINT)quad.Indices32.size();
 	quadSubmesh.StartIndexLocation = quadIndexOffset;
 	quadSubmesh.BaseVertexLocation = quadVertexOffset;
-
-	//
-	// Extract the vertex elements we are interested in and pack the
-	// vertices of all the meshes into one vertex buffer.
-	//
 
 	auto totalVertexCount =
 		box.Vertices.size() +
@@ -637,23 +643,9 @@ void DX12RHI::BuildShapeGeometry()
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "shapeGeo";
-
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	geo->VertexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
-
-	geo->IndexBufferGPU = CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-	geo->VertexByteStride = sizeof(Vertex);
-	geo->VertexBufferByteSize = vbByteSize;
-	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	geo->IndexBufferByteSize = ibByteSize;
+	geo->CopyCPUData(vertices, indices);
+	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(Vertex), &m_InputLayers["skinnedDefault"]),
+		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 	geo->DrawArgs["box"] = boxSubmesh;
 	geo->DrawArgs["grid"] = gridSubmesh;
@@ -666,56 +658,30 @@ void DX12RHI::BuildShapeGeometry()
 
 void DX12RHI::LoadTextures()
 {
-	std::vector<std::string> texNames =
-	{
-		"bricksDiffuseMap",
-		"bricksNormalMap",
-		"tileDiffuseMap",
-		"tileNormalMap",
-		"defaultDiffuseMap",
-		"defaultNormalMap",
-		"skyCubeMap"
-	};
-
-	std::vector<std::string> texFilenames =
-	{
-		DEFAULT_TEXTURE_PATH_13,
-		DEFAULT_TEXTURE_PATH_14,
-		DEFAULT_TEXTURE_PATH_3,
-		DEFAULT_TEXTURE_PATH_15,
-		DEFAULT_TEXTURE_PATH_10,
-		DEFAULT_TEXTURE_PATH_16,
-		DEFAULT_TEXTURE_PATH_18
-	};
+	CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
+	CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
+	CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
+	CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
+	CreateTexture("defaultDiffuseMap", DEFAULT_TEXTURE_PATH_10);
+	CreateTexture("defaultNormalMap", DEFAULT_TEXTURE_PATH_16);
+	CreateTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 
 	for (UINT i = 0; i < mSkinnedMats.size(); ++i)
 	{
 		std::string diffuseName = mSkinnedMats[i].DiffuseMapName;
 		std::string normalName = mSkinnedMats[i].NormalMapName;
 
-		std::string diffuseFilename = "F:\\GitHub\\River\\River\\Textures\\" + diffuseName;
-		std::string normalFilename = "F:\\GitHub\\River\\River\\Textures\\" + normalName;
+		std::string diffuseFilename = DEFAULT_TEXTURE_PATH + diffuseName;
+		std::string normalFilename = DEFAULT_TEXTURE_PATH + normalName;
 
 		diffuseName = diffuseName.substr(0, diffuseName.find_last_of("."));
 		normalName = normalName.substr(0, normalName.find_last_of("."));
 
+		CreateTexture(diffuseName.c_str(), diffuseFilename.c_str());
+		CreateTexture(normalName.c_str(), normalFilename.c_str());
+
 		mSkinnedTextureNames.push_back(diffuseName);
-		texNames.push_back(diffuseName);
-		texFilenames.push_back(diffuseFilename);
-
 		mSkinnedTextureNames.push_back(normalName);
-		texNames.push_back(normalName);
-		texFilenames.push_back(normalFilename);
-	}
-
-	for (int i = 0; i < (int)texNames.size(); ++i)
-	{
-		if (mTextures.find(texNames[i]) == std::end(mTextures))
-		{
-			auto texMap = MakeUnique<DX12Texture>(md3dDevice.Get(), mCommandList.Get(), texNames[i], texFilenames[i]);
-
-			mTextures[texMap->Name] = std::move(texMap);
-		}
 	}
 }
 
@@ -787,7 +753,7 @@ void DX12RHI::InitBaseShaders()
 	mShaders["skyVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "VS", "vs_5_1"); 
 	mShaders["skyPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "PS", "ps_5_1"); 
 
-	mInputLayout =
+	m_InputLayers["default"] = 
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -795,7 +761,10 @@ void DX12RHI::InitBaseShaders()
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	mSkinnedInputLayout =
+	//mInputLayout = m_InputLayers["default"];
+	
+
+	m_InputLayers["skinnedDefault"] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -804,6 +773,7 @@ void DX12RHI::InitBaseShaders()
 		{ "WEIGHTS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONEINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 56, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
+	//mSkinnedInputLayout = m_InputLayers["skinnedDefault"];
 }
 
 void DX12RHI::InitBaseRootSignatures()
@@ -902,18 +872,7 @@ void DX12RHI::InitBasePSOs()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
 	ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	opaquePsoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
 	opaquePsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	opaquePsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["standardVS"].get()),
-		GetShaderBufferSize(mShaders["standardVS"].get())
-	};
-	opaquePsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["opaquePS"].get()),
-		GetShaderBufferSize(mShaders["opaquePS"].get())
-	};
 	opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	opaquePsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -924,124 +883,42 @@ void DX12RHI::InitBasePSOs()
 	opaquePsoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
 	opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	opaquePsoDesc.DSVFormat = mDepthStencilFormat;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
+	m_PSOs["opaque"] = CreatePSO(opaquePsoDesc, &m_InputLayers["default"], mShaders["standardVS"].get(), mShaders["opaquePS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedOpaquePsoDesc = opaquePsoDesc;
-	skinnedOpaquePsoDesc.InputLayout = { mSkinnedInputLayout.data(), (UINT)mSkinnedInputLayout.size() };
-	skinnedOpaquePsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["skinnedVS"].get()),
-		GetShaderBufferSize(mShaders["skinnedVS"].get())
-	};
-	skinnedOpaquePsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["opaquePS"].get()),
-		GetShaderBufferSize(mShaders["opaquePS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&skinnedOpaquePsoDesc, IID_PPV_ARGS(&mPSOs["skinnedOpaque"])));
+	m_PSOs["skinnedOpaque"] = CreatePSO(skinnedOpaquePsoDesc, &m_InputLayers["skinnedDefault"], mShaders["skinnedVS"].get(), mShaders["opaquePS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = opaquePsoDesc;
 	smapPsoDesc.RasterizerState.DepthBias = 100000;
 	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
 	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
 	smapPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	smapPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["shadowVS"].get()),
-		GetShaderBufferSize(mShaders["shadowVS"].get())
-	};
-	smapPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["shadowOpaquePS"].get()),
-		GetShaderBufferSize(mShaders["shadowOpaquePS"].get())
-	};
 
 	// Shadow map pass does not have a render target.
 	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
 	smapPsoDesc.NumRenderTargets = 0;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&smapPsoDesc, IID_PPV_ARGS(&mPSOs["shadow_opaque"])));
+	m_PSOs["shadow_opaque"] = CreatePSO(smapPsoDesc, nullptr, mShaders["shadowVS"].get(), mShaders["shadowOpaquePS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedSmapPsoDesc = smapPsoDesc;
-	skinnedSmapPsoDesc.InputLayout = { mSkinnedInputLayout.data(), (UINT)mSkinnedInputLayout.size() };
-	skinnedSmapPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["skinnedShadowVS"].get()),
-		GetShaderBufferSize(mShaders["skinnedShadowVS"].get())
-	};
-	skinnedSmapPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["shadowOpaquePS"].get()),
-		GetShaderBufferSize(mShaders["shadowOpaquePS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&skinnedSmapPsoDesc, IID_PPV_ARGS(&mPSOs["skinnedShadow_opaque"])));
+	m_PSOs["skinnedShadow_opaque"] = CreatePSO(skinnedSmapPsoDesc, &m_InputLayers["skinnedDefault"], mShaders["skinnedShadowVS"].get(), mShaders["shadowOpaquePS"].get());
 
-	//
-	// PSO for debug layer.
-	//
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
 	debugPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	debugPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["debugVS"].get()),
-		GetShaderBufferSize(mShaders["debugVS"].get())
-	};
-	debugPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["debugPS"].get()),
-		GetShaderBufferSize(mShaders["debugPS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&debugPsoDesc, IID_PPV_ARGS(&mPSOs["debug"])));
+	m_PSOs["debug"] = CreatePSO(debugPsoDesc, nullptr, mShaders["debugVS"].get(), mShaders["debugPS"].get());
 
-	//
-	// PSO for drawing normals.
-	//
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawNormalsPsoDesc = opaquePsoDesc;
-	drawNormalsPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["drawNormalsVS"].get()),
-		GetShaderBufferSize(mShaders["drawNormalsVS"].get())
-	};
-	drawNormalsPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["drawNormalsPS"].get()),
-		GetShaderBufferSize(mShaders["drawNormalsPS"].get())
-	};
 	drawNormalsPsoDesc.RTVFormats[0] = Ssao::NormalMapFormat;
 	drawNormalsPsoDesc.SampleDesc.Count = 1;
 	drawNormalsPsoDesc.SampleDesc.Quality = 0;
 	drawNormalsPsoDesc.DSVFormat = mDepthStencilFormat;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&drawNormalsPsoDesc, IID_PPV_ARGS(&mPSOs["drawNormals"])));
+	m_PSOs["drawNormals"] = CreatePSO(drawNormalsPsoDesc, nullptr, mShaders["drawNormalsVS"].get(), mShaders["drawNormalsPS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedDrawNormalsPsoDesc = drawNormalsPsoDesc;
-	skinnedDrawNormalsPsoDesc.InputLayout = { mSkinnedInputLayout.data(), (UINT)mSkinnedInputLayout.size() };
-	skinnedDrawNormalsPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["skinnedDrawNormalsVS"].get()),
-		GetShaderBufferSize(mShaders["skinnedDrawNormalsVS"].get())
-	};
-	skinnedDrawNormalsPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["drawNormalsPS"].get()),
-		GetShaderBufferSize(mShaders["drawNormalsPS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&skinnedDrawNormalsPsoDesc, IID_PPV_ARGS(&mPSOs["skinnedDrawNormals"])));
+	m_PSOs["skinnedDrawNormals"] = CreatePSO(skinnedDrawNormalsPsoDesc, &m_InputLayers["skinnedDefault"], mShaders["skinnedDrawNormalsVS"].get(), mShaders["drawNormalsPS"].get());
 
-	//
-	// PSO for SSAO.
-	//
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoPsoDesc = opaquePsoDesc;
 	ssaoPsoDesc.InputLayout = { nullptr, 0 };
 	ssaoPsoDesc.pRootSignature = m_RootSignatures["ssao"]->GetRootSignature();
-	ssaoPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["ssaoVS"].get()),
-		GetShaderBufferSize(mShaders["ssaoVS"].get())
-	};
-	ssaoPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["ssaoPS"].get()),
-		GetShaderBufferSize(mShaders["ssaoPS"].get())
-	};
 
 	// SSAO effect does not need the depth buffer.
 	ssaoPsoDesc.DepthStencilState.DepthEnable = false;
@@ -1050,27 +927,11 @@ void DX12RHI::InitBasePSOs()
 	ssaoPsoDesc.SampleDesc.Count = 1;
 	ssaoPsoDesc.SampleDesc.Quality = 0;
 	ssaoPsoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&ssaoPsoDesc, IID_PPV_ARGS(&mPSOs["ssao"])));
+	m_PSOs["ssao"] = CreatePSO(ssaoPsoDesc, nullptr, mShaders["ssaoVS"].get(), mShaders["ssaoPS"].get());
 
-	//
-	// PSO for SSAO blur.
-	//
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoBlurPsoDesc = ssaoPsoDesc;
-	ssaoBlurPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["ssaoBlurVS"].get()),
-		GetShaderBufferSize(mShaders["ssaoBlurVS"].get())
-	};
-	ssaoBlurPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["ssaoBlurPS"].get()),
-		GetShaderBufferSize(mShaders["ssaoBlurPS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&ssaoBlurPsoDesc, IID_PPV_ARGS(&mPSOs["ssaoBlur"])));
+	m_PSOs["ssaoBlur"] = CreatePSO(ssaoBlurPsoDesc, nullptr, mShaders["ssaoBlurVS"].get(), mShaders["ssaoBlurPS"].get());
 
-	//
-	// PSO for sky.
-	//
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skyPsoDesc = opaquePsoDesc;
 
 	// The camera is inside the sky sphere, so just turn off culling.
@@ -1081,18 +942,7 @@ void DX12RHI::InitBasePSOs()
 	// fail the depth test if the depth buffer was cleared to 1.
 	skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	skyPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	skyPsoDesc.VS =
-	{
-		GetShaderBufferPointer(mShaders["skyVS"].get()),
-		GetShaderBufferSize(mShaders["skyVS"].get())
-	};
-	skyPsoDesc.PS =
-	{
-		GetShaderBufferPointer(mShaders["skyPS"].get()),
-		GetShaderBufferSize(mShaders["skyPS"].get())
-	};
-	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&skyPsoDesc, IID_PPV_ARGS(&mPSOs["sky"])));
-
+	m_PSOs["sky"] = CreatePSO(skyPsoDesc, nullptr, mShaders["skyVS"].get(), mShaders["skyPS"].get());
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -1872,10 +1722,12 @@ void DX12RHI::DrawSceneToShadowMap()
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + 1 * passCBByteSize;
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCBAddress);
 
-	mCommandList->SetPipelineState(mPSOs["shadow_opaque"].Get());
+	//mCommandList->SetPipelineState(mPSOs["shadow_opaque"].Get());
+	mCommandList->SetPipelineState(m_PSOs["shadow_opaque"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	mCommandList->SetPipelineState(mPSOs["skinnedShadow_opaque"].Get());
+	//mCommandList->SetPipelineState(mPSOs["skinnedShadow_opaque"].Get());
+	mCommandList->SetPipelineState(m_PSOs["skinnedShadow_opaque"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
 	// Change back to GENERIC_READ so we can read the texture in a shader.
@@ -1907,10 +1759,12 @@ void DX12RHI::DrawNormalsAndDepth()
 	auto passCB = mCurrFrameResource->m_PassUniform->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
-	mCommandList->SetPipelineState(mPSOs["drawNormals"].Get());
+	//mCommandList->SetPipelineState(mPSOs["drawNormals"].Get());
+	mCommandList->SetPipelineState(m_PSOs["drawNormals"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	mCommandList->SetPipelineState(mPSOs["skinnedDrawNormals"].Get());
+	//mCommandList->SetPipelineState(mPSOs["skinnedDrawNormals"].Get());
+	mCommandList->SetPipelineState(m_PSOs["skinnedDrawNormals"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
 	// Change back to GENERIC_READ so we can read the texture in a shader.

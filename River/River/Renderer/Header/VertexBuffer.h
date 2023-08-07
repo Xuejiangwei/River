@@ -79,15 +79,12 @@ private:
 class VertexBuffer
 {
 public:
-	VertexBuffer(const VertexBufferLayout& layout);
+	VertexBuffer();
 	virtual ~VertexBuffer();
-
-	const VertexBufferLayout& GetVertexBufferLayout() const { return m_Layout; };
 
 	/*virtual void SetVertexBufferData(void* data, uint32_t size) = 0;
 
 	virtual void SettVertexBufferLayout(const VertexBufferLayout& layout) = 0;*/
 
 protected:
-	VertexBufferLayout m_Layout;
 };

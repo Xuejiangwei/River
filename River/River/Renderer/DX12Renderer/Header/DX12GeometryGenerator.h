@@ -21,6 +21,8 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
+#include "DX12VertexBuffer.h"
+#include "DX12IndexBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
 
 struct SubmeshGeometry
@@ -39,46 +41,78 @@ struct MeshGeometry
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
 	
-	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+	//Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
+	//Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+	//Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
+	//Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
-
-	UINT VertexByteStride = 0;
+	/*UINT VertexByteStride = 0;
 	UINT VertexBufferByteSize = 0;
 	DXGI_FORMAT IndexFormat = DXGI_FORMAT_R16_UINT;
-	UINT IndexBufferByteSize = 0;
+	UINT IndexBufferByteSize = 0;*/
 
-	/*Unique<class VertexBuffer> VertexBuffer;
-	Unique<class IndexBuffer> IndexBuffer;*/
+	Unique<DX12VertexBuffer> m_VertexBuffer;
+	Unique<DX12IndexBuffer> m_IndexBuffer;
 
 	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
 	{
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
-		vbv.StrideInBytes = VertexByteStride;
-		vbv.SizeInBytes = VertexBufferByteSize;
+		
 
-		return vbv;
+		//if(m_VertexBuffer)
+			return m_VertexBuffer->GetView();
+		/*else
+		{
+			D3D12_VERTEX_BUFFER_VIEW vbv;
+			vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
+			vbv.StrideInBytes = VertexByteStride;
+			vbv.SizeInBytes = VertexBufferByteSize;
+			return vbv;
+		}*/
 	}
 
-	D3D12_INDEX_BUFFER_VIEW IndexBufferView()const
+	D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
 	{
-		D3D12_INDEX_BUFFER_VIEW ibv;
-		ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
-		ibv.Format = IndexFormat;
-		ibv.SizeInBytes = IndexBufferByteSize;
+		
+		/*if (m_IndexBuffer)
+		{*/
+			return m_IndexBuffer->GetView();
+		/*}
+		else
+		{
+			D3D12_INDEX_BUFFER_VIEW ibv;
+			ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
+			ibv.Format = IndexFormat;
+			ibv.SizeInBytes = IndexBufferByteSize;
 
-		return ibv;
+			return ibv;
+		}*/
 	}
 
-	void DisposeUploaders()
+	/*void disposeuploaders()
 	{
 		VertexBufferUploader = nullptr;
 		IndexBufferUploader = nullptr;
+	}*/
+
+	template<typename VerticeType, typename IndiceType>
+	void CopyCPUData(VerticeType& vertices, IndiceType& indices)
+	{
+		const UINT vbByteSize = (UINT)vertices.size() * sizeof(VerticeType::value_type);
+		const UINT ibByteSize = (UINT)indices.size() * sizeof(IndiceType::value_type);
+
+		ThrowIfFailed(D3DCreateBlob(vbByteSize, &VertexBufferCPU));
+		CopyMemory(VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+		ThrowIfFailed(D3DCreateBlob(ibByteSize, &IndexBufferCPU));
+		CopyMemory(IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+	}
+
+	void SetVertexBufferAndIndexBuffer(Unique<DX12VertexBuffer>& vertexBuffer, Unique<DX12IndexBuffer>& indexBuffer)
+	{
+		m_VertexBuffer = std::move(vertexBuffer);
+		m_IndexBuffer = std::move(indexBuffer);
 	}
 
 };

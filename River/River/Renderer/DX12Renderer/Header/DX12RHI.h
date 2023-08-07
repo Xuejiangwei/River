@@ -23,6 +23,8 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class DX12VertexBuffer;
+class DX12IndexBuffer;
 class DX12Texture;
 class DX12Shader;
 class DX12RootSignature;
@@ -43,11 +45,13 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) override;
 
-	virtual Unique<class PipelineState> BuildPSO(Share<Shader> vsShader, Share<Shader> psShader, const V_Array<ShaderLayout>& Layout) override;
+	DX12Texture* CreateTexture(const char* name, const char* filePath);
+	
+	Unique<DX12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader);
 
-	virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const VertexBufferLayout& layout) override;
+	Unique<DX12VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
-	virtual Unique<IndexBuffer> CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType) override;
+	Unique<DX12IndexBuffer> CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType);
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
@@ -163,7 +167,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
 
 	static const int SwapChainBufferCount = 2;
-	static const int s_FrameBufferCount = 3;		//因为GBuffer的原因,可能会更大
+	static const int s_FrameBufferCount = 3;
 	static const int s_MaxRenderItem = 100;
 	int mCurrFrameResourceIndex = 0;
 	int mCurrBackBuffer;
@@ -203,10 +207,13 @@ private:
 	RHIInitializeParam m_InitParam;
 	HashMap<String, Unique<DX12Shader>> mShaders;
 	HashMap<String, Unique<DX12RootSignature>> m_RootSignatures;
-	HashMap<String, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
+	//HashMap<String, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
 	HashMap<String, Unique<DX12Texture>> mTextures;
 	HashMap<String, std::unique_ptr<Material>> mMaterials;
 	V_Array<Unique<DX12RenderItem>> mAllRitems;
 	V_Array<Unique<DX12FrameBuffer>> mFrameBuffer;
 	V_Array<DX12RenderItem*> mRitemLayer[(int)RenderLayer::LayerCount];
+	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
+	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
+	HashMap<String, Unique<MeshGeometry>> mGeometries;
 };

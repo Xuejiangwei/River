@@ -8,13 +8,13 @@
 class DX12VertexBuffer : public VertexBuffer
 {
 public:
-	DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32_t byteSize, uint32_t elementSize, const VertexBufferLayout& layout);
+	DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
-	DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout);
+	DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
 	~DX12VertexBuffer();
 
-	void InitLayout();
+	const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return m_VertexBufferView; }
 
 	friend class DX12PipelineState;
 	friend class DX12RHI;
@@ -23,5 +23,5 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_UploaderBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
 
-	V_Array<D3D12_INPUT_ELEMENT_DESC> m_VertexLayout;
+	const V_Array<D3D12_INPUT_ELEMENT_DESC>* m_VertexLayout;
 };

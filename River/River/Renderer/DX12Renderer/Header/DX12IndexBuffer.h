@@ -14,6 +14,8 @@ public:
 	
 	virtual ~DX12IndexBuffer() override;
 
+	const D3D12_INDEX_BUFFER_VIEW& GetView() const { return m_IndexBufferView; }
+
 	friend class DX12RHI;
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
