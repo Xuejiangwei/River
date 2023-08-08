@@ -140,6 +140,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RenderItem.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RootSignature.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12ShadowMap.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12ShadowPass.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12SkinnedData.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Ssao.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Texture.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RootSignature.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Shader.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12ShadowMap.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12ShadowPass.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12SkinnedData.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Ssao.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Texture.h" />
@@ -212,6 +214,7 @@
     <ClInclude Include="Renderer\Header\PipelineState.h" />
     <ClInclude Include="Renderer\Header\RendererUtil.h" />
     <ClInclude Include="Renderer\Header\RenderItem.h" />
+    <ClInclude Include="Renderer\Header\RenderPass.h" />
     <ClInclude Include="Renderer\Header\RHI.h" />
     <ClInclude Include="Renderer\Header\Shader.h" />
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />

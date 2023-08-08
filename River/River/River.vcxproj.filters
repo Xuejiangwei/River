@@ -132,6 +132,9 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12LoadM3d.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12ShadowPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -276,6 +279,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12LoadM3d.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\RenderPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12ShadowPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
