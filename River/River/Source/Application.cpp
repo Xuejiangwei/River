@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "Layer.h"
 #include "Window.h"
+#include "UILayer.h"
 
 #include "RHI.h"
 #include "Camera.h"
@@ -22,6 +23,8 @@ Application::Application()
 		720, 720, m_Window->GetWindowHandle()
 	};
 	RHI::Get()->Initialize(rhiParam);
+
+	AddLayer(MakeShare<UILayer>());
 }
 
 Application::~Application()
@@ -38,12 +41,17 @@ void Application::Run()
 
 		for (auto& layer : m_Layers)
 		{
-			layer->OnUpdate();
+			layer->OnUpdate(m_Time.DeltaTime());
 		}
 
 		m_Window->OnUpdate();
-
 		RHI::Get()->OnUpdate(m_Time);
+
+		for (auto& layer : m_Layers)
+		{
+			layer->OnRender();
+		}
+		
 		RHI::Get()->Render();
 	}
 }
@@ -56,6 +64,20 @@ void Application::Close()
 void Application::AddLayer(Share<Layer> layer)
 {
 	m_Layers.push_back(layer);
+	layer->OnAttach();
+}
+
+void Application::RemoveLayer(Share<Layer> layer)
+{
+	for (auto iter = m_Layers.begin(); iter != m_Layers.end(); iter++)
+	{
+		if (*iter == layer)
+		{
+			layer->OnDetach();
+			m_Layers.erase(iter);
+			return;
+		}
+	}
 }
 
 void Application::OnEvent(Event& e)

@@ -182,7 +182,7 @@ WindowsWindow::~WindowsWindow()
 
 void WindowsWindow::Init(const WindowParam& Param)
 {
-	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	HINSTANCE hInstance = ::GetModuleHandle(nullptr);
 
 	WNDCLASSEX wc = {};
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -224,7 +224,7 @@ void WindowsWindow::Init(const WindowParam& Param)
 void WindowsWindow::OnUpdate()
 {
 	// If there are Window messages then process them.
-	if (PeekMessage(&m_Msg, 0, 0, 0, PM_REMOVE))
+	if (PeekMessage(&m_Msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&m_Msg);
 		DispatchMessage(&m_Msg);

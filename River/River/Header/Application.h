@@ -18,6 +18,8 @@ public:
 
 	void AddLayer(Share<Layer> layer);
 
+	void RemoveLayer(Share<Layer> layer);
+
 	void OnEvent(Event& e);
 
 	const Unique<Window>& GetWindow() const { return m_Window; }

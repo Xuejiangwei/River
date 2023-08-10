@@ -7,7 +7,7 @@
 class M3DLoader
 {
 public:
-    struct Vertex
+    struct DX12Vertex
     {
         DirectX::XMFLOAT3 Pos;
         DirectX::XMFLOAT3 Normal;
@@ -15,7 +15,7 @@ public:
         DirectX::XMFLOAT4 TangentU;
     };
 
-    struct SkinnedVertex
+    struct DX12SkinnedVertex
     {
         DirectX::XMFLOAT3 Pos;
         DirectX::XMFLOAT3 Normal;
@@ -49,12 +49,12 @@ public:
     };
 
     bool LoadM3d(const std::string& filename,
-        std::vector<Vertex>& vertices,
+        std::vector<DX12Vertex>& vertices,
         std::vector<USHORT>& indices,
         std::vector<Subset>& subsets,
         std::vector<M3dMaterial>& mats);
     bool LoadM3d(const std::string& filename,
-        std::vector<SkinnedVertex>& vertices,
+        std::vector<DX12SkinnedVertex>& vertices,
         std::vector<USHORT>& indices,
         std::vector<Subset>& subsets,
         std::vector<M3dMaterial>& mats,
@@ -63,8 +63,8 @@ public:
 private:
     void ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector<M3dMaterial>& mats);
     void ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector<Subset>& subsets);
-    void ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<Vertex>& vertices);
-    void ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<SkinnedVertex>& vertices);
+    void ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<DX12Vertex>& vertices);
+    void ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<DX12SkinnedVertex>& vertices);
     void ReadTriangles(std::ifstream& fin, UINT numTriangles, std::vector<USHORT>& indices);
     void ReadBoneOffsets(std::ifstream& fin, UINT numBones, std::vector<DirectX::XMFLOAT4X4>& boneOffsets);
     void ReadBoneHierarchy(std::ifstream& fin, UINT numBones, std::vector<int>& boneIndexToParentIndex);

@@ -135,6 +135,36 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12ShadowPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Component\Source\LightComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Source\Actor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Header\Component.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\Widget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\Panel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\Button.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\Image.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UILayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\UIWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\UIRenderItem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -285,6 +315,36 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12ShadowPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\Component.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\LightComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Header\Actor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\Widget.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\Panel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\Button.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\Image.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\UILayer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\UIWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\UIRenderItem.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

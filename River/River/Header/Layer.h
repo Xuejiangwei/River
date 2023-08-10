@@ -6,9 +6,15 @@ public:
 	Layer();
 	virtual ~Layer();
 
-	virtual void OnUpdate() = 0;
+	virtual void OnAttach() = 0;
+
+	virtual void OnDetach() = 0;
+
+	virtual void OnUpdate(float deltaTime) = 0;
 
 	virtual bool OnEvent(const class Event& e) = 0;
+
+	virtual void OnRender() {}
 
 private:
 };

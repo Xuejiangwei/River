@@ -5,7 +5,7 @@
 using namespace DirectX;
 
 bool M3DLoader::LoadM3d(const std::string& filename,
-	std::vector<Vertex>& vertices,
+	std::vector<DX12Vertex>& vertices,
 	std::vector<USHORT>& indices,
 	std::vector<Subset>& subsets,
 	std::vector<M3dMaterial>& mats)
@@ -40,7 +40,7 @@ bool M3DLoader::LoadM3d(const std::string& filename,
 }
 
 bool M3DLoader::LoadM3d(const std::string& filename,
-	std::vector<SkinnedVertex>& vertices,
+	std::vector<DX12SkinnedVertex>& vertices,
 	std::vector<USHORT>& indices,
 	std::vector<Subset>& subsets,
 	std::vector<M3dMaterial>& mats,
@@ -122,7 +122,7 @@ void M3DLoader::ReadSubsetTable(std::ifstream& fin, UINT numSubsets, std::vector
 	}
 }
 
-void M3DLoader::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<Vertex>& vertices)
+void M3DLoader::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<DX12Vertex>& vertices)
 {
 	std::string ignore;
 	vertices.resize(numVertices);
@@ -137,7 +137,7 @@ void M3DLoader::ReadVertices(std::ifstream& fin, UINT numVertices, std::vector<V
 	}
 }
 
-void M3DLoader::ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<SkinnedVertex>& vertices)
+void M3DLoader::ReadSkinnedVertices(std::ifstream& fin, UINT numVertices, std::vector<DX12SkinnedVertex>& vertices)
 {
 	std::string ignore;
 	vertices.resize(numVertices);

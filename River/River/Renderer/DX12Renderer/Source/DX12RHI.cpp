@@ -179,6 +179,18 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 {
 	m_PrespectiveCamera.OnUpdate();
 
+	mLightRotationAngle += 0.1f * time.DeltaTime();
+
+	XMMATRIX R = XMMatrixRotationY(mLightRotationAngle);
+	for (int i = 0; i < 3; ++i)
+	{
+		XMVECTOR lightDir = XMLoadFloat3(&mBaseLightDirections[i]);
+		lightDir = XMVector3TransformNormal(lightDir, R);
+		XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
+	}
+
+	UpdateShadowTransform(time);
+
 	mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % s_FrameBufferCount;
 	mCurrFrameResource = mFrameBuffer[mCurrFrameResourceIndex].get();
 	if (mCurrFrameResource->m_FenceValue != 0 && mFence->GetCompletedValue() < mCurrFrameResource->m_FenceValue)
@@ -191,24 +203,19 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 		CloseHandle(eventHandle);
 	}
 
-	mLightRotationAngle += 0.1f * time.DeltaTime();
-
-	XMMATRIX R = XMMatrixRotationY(mLightRotationAngle);
-	for (int i = 0; i < 3; ++i)
-	{
-		XMVECTOR lightDir = XMLoadFloat3(&mBaseLightDirections[i]);
-		lightDir = XMVector3TransformNormal(lightDir, R);
-		XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
-	}
-
 	AnimationMaterials(time);
 	UpdateObjectCBs();
 	UpdateSkinnedCBs(time);
 	UpdateMaterialCBs();
-	UpdateShadowTransform(time);
+	//UpdateShadowTransform(time);
 	UpdateMainPass(time);
 	UpdateShadowPass(time);
 	UpdateSsaoCBs(time);
+}
+
+void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices)
+{
+	//mCurrFrameResource->Update
 }
 
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
@@ -498,7 +505,7 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 
 void DX12RHI::LoadSkinnedModel()
 {
-	std::vector<M3DLoader::SkinnedVertex> vertices;
+	std::vector<M3DLoader::DX12SkinnedVertex> vertices;
 	std::vector<std::uint16_t> indices;
 
 	M3DLoader m3dLoader;
@@ -511,13 +518,13 @@ void DX12RHI::LoadSkinnedModel()
 	mSkinnedModelInst->ClipName = "Take1";
 	mSkinnedModelInst->TimePos = 0.0f;
 
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(SkinnedVertex);
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(DX12SkinnedVertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = mSkinnedModelFilename;
 	geo->CopyCPUData(vertices, indices);
-	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(SkinnedVertex), &m_InputLayers["skinnedDefault"]),
+	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12SkinnedVertex), &m_InputLayers["skinnedDefault"]),
 		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 	for (UINT i = 0; i < (UINT)mSkinnedSubsets.size(); ++i)
@@ -588,7 +595,7 @@ void DX12RHI::BuildShapeGeometry()
 		cylinder.Vertices.size() +
 		quad.Vertices.size();
 
-	std::vector<Vertex> vertices(totalVertexCount);
+	std::vector<DX12Vertex> vertices(totalVertexCount);
 
 	UINT k = 0;
 	for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
@@ -638,13 +645,13 @@ void DX12RHI::BuildShapeGeometry()
 	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 	indices.insert(indices.end(), std::begin(quad.GetIndices16()), std::end(quad.GetIndices16()));
 
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(DX12Vertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
 	geo->Name = "shapeGeo";
 	geo->CopyCPUData(vertices, indices);
-	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(Vertex), &m_InputLayers["skinnedDefault"]),
+	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
 		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 	geo->DrawArgs["box"] = boxSubmesh;
@@ -1065,7 +1072,7 @@ void DX12RHI::Pick(int x, int y)
 		{
 			// NOTE: For the demo, we know what to cast the vertex/index data to.  If we were mixing
 			// formats, some metadata would be needed to figure out what to cast it to.
-			auto vertices = (Vertex*)geo->VertexBufferCPU->GetBufferPointer();
+			auto vertices = (DX12Vertex*)geo->VertexBufferCPU->GetBufferPointer();
 			auto indices = (std::uint32_t*)geo->IndexBufferCPU->GetBufferPointer();
 			UINT triCount = ri->IndexCount / 3;
 

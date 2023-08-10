@@ -24,13 +24,19 @@ Unique<T> MakeUnique(_Types&&... _Args)
 	return std::make_unique<T>(std::forward<_Types>(_Args)...);
 }
 
+using String = std::string;
+
 template<typename T>
 using V_Array = std::vector<T>;
 
 template<class _Kty, class _Ty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>>
 using HashMap = std::unordered_map<_Kty, _Ty, _Hasher, _Keyeq>;
 
-using String = std::string;
+template <class _Kty, class _Ty, class _Pr = std::less<_Kty>>
+using LessRBTreeMap = std::map<_Kty, _Ty, _Pr>;
+
+template <class _Kty, class _Ty, class _Pr = std::greater<_Kty>>
+using GreaterRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 
 namespace River
 {

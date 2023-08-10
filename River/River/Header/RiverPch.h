@@ -3,6 +3,7 @@
 #include <memory>
 #include <cassert>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <vector>
 #include <array>

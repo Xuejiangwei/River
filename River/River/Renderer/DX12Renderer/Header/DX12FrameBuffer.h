@@ -8,7 +8,7 @@
 #include <wrl.h>
 #include "DirectXMath.h"
 
-struct Vertex
+struct DX12Vertex
 {
 	DirectX::XMFLOAT3 Pos;
 	DirectX::XMFLOAT3 Normal;
@@ -16,7 +16,7 @@ struct Vertex
 	DirectX::XMFLOAT3 TangentU;
 };
 
-struct SkinnedVertex
+struct DX12SkinnedVertex
 {
 	DirectX::XMFLOAT3 Pos;
 	DirectX::XMFLOAT3 Normal;
@@ -118,23 +118,36 @@ struct InstanceUniform
 	UINT InstancePad2;
 };
 
+struct UIUniform
+{
+	DirectX::XMFLOAT2 VertexPos;
+	DirectX::XMFLOAT2 VertexUV;
+	UINT8 Color[4];
+};
+
 class DX12FrameBuffer : public FrameBuffer
 {
 public:
 	DX12FrameBuffer(ID3D12Device* device, UINT passCount, UINT objectCount, UINT skinnedObjectCount, UINT materialCount);
+	
 	virtual ~DX12FrameBuffer() override;
+
+	//virtual void UpdateUIUniform(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices) override;
 
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
 	DX12FrameBuffer& operator=(const DX12FrameBuffer& rhs) = delete;
 
 	friend class DX12RHI;
 	friend class Ssao;
+	friend class DX12ShadowPass;
 private:
 	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
 	Unique<DX12UniformBuffer<SkinnedUniform>> m_SkinnedUniform;
 	Unique<DX12UniformBuffer<SsaoUniform>> m_SsaoUniform;
+	Unique<DX12UniformBuffer<UIUniform>> m_EditorUIUniform;
+	Unique<DX12UniformBuffer<UIUniform>> m_UIUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

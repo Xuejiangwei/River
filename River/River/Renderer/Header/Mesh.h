@@ -3,6 +3,17 @@
 #include "RiverHead.h"
 #include "MathStruct.h"
 
+struct UIVertex
+{
+	UIVertex() = default;
+	UIVertex(float x, float y, float z, float u, float v)
+		: Pos(x, y, z), TexC(u, v) {}
+
+	River::Float3 Pos;
+	River::Float2 TexC;
+	uint8_t Color[4];
+};
+
 struct Vertex
 {
 	Vertex() = default;
@@ -19,11 +30,11 @@ struct Vertex
 class Mesh
 {
 public:
-	Mesh(V_Array<Vertex>& vertices, V_Array<unsigned int>& indices);
+	Mesh(V_Array<Vertex>& vertices, V_Array<uint32_t>& indices);
 
 	~Mesh();
 
 private:
 	V_Array<Vertex> m_Vertices;
-	V_Array<unsigned int> m_Indices;
+	V_Array<uint32_t> m_Indices;
 };

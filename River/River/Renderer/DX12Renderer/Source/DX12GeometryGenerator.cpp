@@ -65,7 +65,7 @@ Unique<MeshGeometry>& DX12GeometryGenerator::LoadMeshByFile(const char* filePath
 	XMVECTOR vMin = XMLoadFloat3(&vMinf3);
 	XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
 
-	std::vector<Vertex> vertices(vcount);
+	std::vector<DX12Vertex> vertices(vcount);
 	for (UINT i = 0; i < vcount; ++i)
 	{
 		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
@@ -980,7 +980,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 	auto geo = MakeUnique<MeshGeometry>();
 	geo->Name = name;
 
-	std::vector<Vertex> vertices(meshData.Vertices.size());
+	std::vector<DX12Vertex> vertices(meshData.Vertices.size());
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
 		vertices[i].Pos = meshData.Vertices[i].Position;
@@ -990,7 +990,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 
 	std::vector<uint32_t>& indices = meshData.Indices32;
 
-	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(Vertex);
+	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(DX12Vertex);
 	UINT indicesByteSize = (UINT)meshData.Indices32.size() * (UINT)sizeof(std::int32_t);
 
 
@@ -1016,9 +1016,9 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 
 }
 
-Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, std::vector<Vertex>&vertices, std::vector<uint32_t>& indices)
+Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, std::vector<DX12Vertex>&vertices, std::vector<uint32_t>& indices)
 {
-	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(Vertex);
+	UINT verticesByteSize = (UINT)vertices.size() * (UINT)sizeof(DX12Vertex);
 	UINT indicesByteSize = (UINT)indices.size() * (UINT)sizeof(std::int32_t);
 	
 	auto geo = MakeUnique<MeshGeometry>();

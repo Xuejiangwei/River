@@ -240,7 +240,7 @@ private:
 
 	Unique<MeshGeometry> CreateMeshGeometry(const char* name, MeshData& meshData);
 
-	Unique<MeshGeometry> CreateMeshGeometry(const char* name, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
+	Unique<MeshGeometry> CreateMeshGeometry(const char* name, std::vector<DX12Vertex>& vertices, std::vector<uint32_t>& indices);
 
 private:
 	void Subdivide(MeshData& meshData);
