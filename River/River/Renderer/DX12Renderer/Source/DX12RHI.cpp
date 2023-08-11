@@ -31,6 +31,7 @@ using namespace DirectX;
 #define DEFAULT_SHADER_PATH_5 "F:\\GitHub\\River\\River\\Shaders\\Ssao.hlsl"
 #define DEFAULT_SHADER_PATH_6 "F:\\GitHub\\River\\River\\Shaders\\DrawNormals.hlsl"
 #define DEFAULT_SHADER_PATH_7 "F:\\GitHub\\River\\River\\Shaders\\SsaoBlur.hlsl"
+#define DEFAULT_SHADER_PATH_UI "F:\\GitHub\\River\\River\\Shaders\\UI.hlsl"
 
 #define DEFAULT_TEXTURE_PATH   "F:\\GitHub\\River\\River\\Textures\\"
 #define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
@@ -213,9 +214,19 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 	UpdateSsaoCBs(time);
 }
 
-void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices)
+void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
 {
-	//mCurrFrameResource->Update
+	if (m_EditorUIVertexBuffer == nullptr || m_EditorUIVertexBuffer->GetBufferSize() < vertices.size() * sizeof(UIVertex))
+	{
+		m_EditorUIVertexBuffer.release();
+		m_EditorUIVertexBuffer = CreateVertexBuffer(vertices.data(), (UINT)vertices.size() + 5000, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]);
+	}
+
+	if (m_EditorUIIndexBuffer == nullptr || m_EditorUIIndexBuffer->GetBufferSize() < indices.size() * sizeof(uint16_t))
+	{
+		m_EditorUIIndexBuffer.release();
+		m_EditorUIIndexBuffer = CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Short);
+	}
 }
 
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
@@ -342,6 +353,9 @@ void DX12RHI::Render()
 	mCommandList->SetPipelineState(m_PSOs["sky"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
 
+	mCommandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
+	DrawUI();
+
 	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -388,7 +402,7 @@ Unique<DX12PipelineState> DX12RHI::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC&
 	return MakeUnique<DX12PipelineState>(md3dDevice.Get(), desc);
 }
 
-Unique<DX12VertexBuffer> DX12RHI::CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
+Unique<DX12VertexBuffer> DX12RHI::CreateVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
 {
 	return MakeUnique<DX12VertexBuffer>(md3dDevice.Get(), mCommandList.Get(), vertices, byteSize, elementSize, layout);
 }
@@ -549,19 +563,22 @@ void DX12RHI::BuildShapeGeometry()
 	DX12GeometryGenerator::MeshData grid = geoGen.CreateGrid1(20.0f, 30.0f, 60, 40);
 	DX12GeometryGenerator::MeshData sphere = geoGen.CreateSphere1(0.5f, 20, 20);
 	DX12GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder1(0.5f, 0.3f, 3.0f, 20, 20);
-	DX12GeometryGenerator::MeshData quad = geoGen.CreateQuad1(0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	DX12GeometryGenerator::MeshData quad = geoGen.CreateQuad1(0.f, 0.f, 1.0f, 1.0f, 0.0f);
+	DX12GeometryGenerator::MeshData uiQuad = geoGen.CreateBox1(5.0f, 5.0f, 1.0f, 3);
 
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 	UINT quadVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
+	UINT uiQuadVertexOffset = quadVertexOffset + (UINT)quad.Vertices.size();
 
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
 	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
 	UINT quadIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
+	UINT uiQuadIndexOffset = quadIndexOffset + (UINT)quad.Indices32.size();
 
 	SubmeshGeometry boxSubmesh;
 	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
@@ -588,12 +605,18 @@ void DX12RHI::BuildShapeGeometry()
 	quadSubmesh.StartIndexLocation = quadIndexOffset;
 	quadSubmesh.BaseVertexLocation = quadVertexOffset;
 
+	SubmeshGeometry uiQuadSubmesh;
+	uiQuadSubmesh.IndexCount = (UINT)uiQuad.Indices32.size();
+	uiQuadSubmesh.StartIndexLocation = uiQuadVertexOffset;
+	uiQuadSubmesh.BaseVertexLocation = uiQuadIndexOffset;
+
 	auto totalVertexCount =
 		box.Vertices.size() +
 		grid.Vertices.size() +
 		sphere.Vertices.size() +
 		cylinder.Vertices.size() +
-		quad.Vertices.size();
+		quad.Vertices.size() + 
+		uiQuad.Vertices.size();
 
 	std::vector<DX12Vertex> vertices(totalVertexCount);
 
@@ -638,12 +661,21 @@ void DX12RHI::BuildShapeGeometry()
 		vertices[k].TangentU = quad.Vertices[i].TangentU;
 	}
 
+	for (int i = 0; i < uiQuad.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = uiQuad.Vertices[i].Position;
+		vertices[k].Normal = uiQuad.Vertices[i].Normal;
+		vertices[k].TexC = uiQuad.Vertices[i].TexC;
+		vertices[k].TangentU = uiQuad.Vertices[i].TangentU;
+	}
+
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
 	indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
 	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 	indices.insert(indices.end(), std::begin(quad.GetIndices16()), std::end(quad.GetIndices16()));
+	indices.insert(indices.end(), std::begin(uiQuad.GetIndices16()), std::end(uiQuad.GetIndices16()));
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(DX12Vertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -659,6 +691,7 @@ void DX12RHI::BuildShapeGeometry()
 	geo->DrawArgs["sphere"] = sphereSubmesh;
 	geo->DrawArgs["cylinder"] = cylinderSubmesh;
 	geo->DrawArgs["quad"] = quadSubmesh;
+	geo->DrawArgs["uiQuad"] = uiQuadSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
 }
@@ -760,6 +793,9 @@ void DX12RHI::InitBaseShaders()
 	mShaders["skyVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "VS", "vs_5_1"); 
 	mShaders["skyPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "PS", "ps_5_1"); 
 
+	mShaders["uiVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "VS", "vs_5_1");
+	mShaders["uiPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "PS", "ps_5_1");
+
 	m_InputLayers["default"] = 
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -767,9 +803,6 @@ void DX12RHI::InitBaseShaders()
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
-
-	//mInputLayout = m_InputLayers["default"];
-	
 
 	m_InputLayers["skinnedDefault"] =
 	{
@@ -780,7 +813,13 @@ void DX12RHI::InitBaseShaders()
 		{ "WEIGHTS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "BONEINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 56, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	//mSkinnedInputLayout = m_InputLayers["skinnedDefault"];
+
+	m_InputLayers["ui"] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
 }
 
 void DX12RHI::InitBaseRootSignatures()
@@ -872,6 +911,38 @@ void DX12RHI::InitBaseRootSignatures()
 
 		m_RootSignatures["ssao"] = MakeUnique<DX12RootSignature>(md3dDevice.Get(), rootSigDesc);
 	}
+
+	{
+		CD3DX12_DESCRIPTOR_RANGE table;
+		table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 0);
+
+		CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+		slotRootParameter[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		slotRootParameter[1].InitAsDescriptorTable(1, &table, D3D12_SHADER_VISIBILITY_PIXEL);
+
+		CD3DX12_STATIC_SAMPLER_DESC staticSampler = {};
+		staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		staticSampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		staticSampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		staticSampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		staticSampler.MipLODBias = 0.f;
+		staticSampler.MaxAnisotropy = 0;
+		staticSampler.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		staticSampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		staticSampler.MinLOD = 0.f;
+		staticSampler.MaxLOD = 0.f;
+		staticSampler.ShaderRegister = 0;
+		staticSampler.RegisterSpace = 0;
+		staticSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		CD3DX12_ROOT_SIGNATURE_DESC desc(_countof(slotRootParameter),slotRootParameter,1, &staticSampler,
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+
+		m_RootSignatures["ui"] = MakeUnique<DX12RootSignature>(md3dDevice.Get(), desc);
+	}
 }
 
 void DX12RHI::InitBasePSOs()
@@ -950,6 +1021,22 @@ void DX12RHI::InitBasePSOs()
 	skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 	skyPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
 	m_PSOs["sky"] = CreatePSO(skyPsoDesc, nullptr, mShaders["skyVS"].get(), mShaders["skyPS"].get());
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC uiPsoDesc;
+	ZeroMemory(&uiPsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	uiPsoDesc.pRootSignature = m_RootSignatures["ui"]->GetRootSignature();
+	uiPsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	uiPsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	uiPsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	uiPsoDesc.SampleMask = UINT_MAX;
+	uiPsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	uiPsoDesc.NumRenderTargets = 1;
+	uiPsoDesc.RTVFormats[0] = mBackBufferFormat;
+	uiPsoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1; 
+	uiPsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+	uiPsoDesc.DSVFormat = mDepthStencilFormat;
+
+	m_PSOs["ui"] = CreatePSO(uiPsoDesc, &m_InputLayers["ui"], mShaders["uiVS"].get(), mShaders["uiPS"].get());
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -1661,6 +1748,22 @@ void DX12RHI::InitBaseRenderItems()
 		mRitemLayer[(int)RenderLayer::SkinnedOpaque].push_back(ritem.get());
 		mAllRitems.push_back(std::move(ritem));
 	}
+
+	{
+		auto uiQuadRitem = std::make_unique<DX12RenderItem>();
+		XMStoreFloat4x4(&uiQuadRitem->World, XMMatrixScaling(5.0f, 5.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f));
+		XMStoreFloat4x4(&uiQuadRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
+		uiQuadRitem->ObjCBIndex = objCBIndex++;
+		uiQuadRitem->Mat = mMaterials["mirror0"].get();
+		uiQuadRitem->Geo = mGeometries["shapeGeo"].get();
+		uiQuadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		uiQuadRitem->IndexCount = uiQuadRitem->Geo->DrawArgs["box"].IndexCount;
+		uiQuadRitem->StartIndexLocation = uiQuadRitem->Geo->DrawArgs["box"].StartIndexLocation;
+		uiQuadRitem->BaseVertexLocation = uiQuadRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+
+		mRitemLayer[(int)RenderLayer::Opaque].push_back(uiQuadRitem.get());
+		mAllRitems.push_back(std::move(uiQuadRitem));
+	}
 }
 
 void DX12RHI::InitFrameBuffer()
@@ -1777,6 +1880,11 @@ void DX12RHI::DrawNormalsAndDepth()
 	// Change back to GENERIC_READ so we can read the texture in a shader.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(normalMap,
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ));
+}
+
+void DX12RHI::DrawUI()
+{
+
 }
 
 void DX12RHI::CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* textureRes, D3D12_SHADER_RESOURCE_VIEW_DESC& desc, uint32_t handleOffset)

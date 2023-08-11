@@ -45,13 +45,13 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) override;
 
-	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices) override;
+	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 	
 	Unique<DX12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader);
 
-	Unique<DX12VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
+	Unique<DX12VertexBuffer> CreateVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
 	Unique<DX12IndexBuffer> CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType);
 
@@ -128,6 +128,8 @@ private:
 	void DrawSceneToShadowMap();
 
 	void DrawNormalsAndDepth();
+
+	void DrawUI();
 
 	void CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* textureRes, D3D12_SHADER_RESOURCE_VIEW_DESC& desc, uint32_t handleOffset = 0);
 
@@ -218,4 +220,7 @@ private:
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
 	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
 	HashMap<String, Unique<MeshGeometry>> mGeometries;
+
+	Unique<DX12VertexBuffer> m_EditorUIVertexBuffer;
+	Unique<DX12IndexBuffer> m_EditorUIIndexBuffer;
 };

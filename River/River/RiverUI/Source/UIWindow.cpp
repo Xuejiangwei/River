@@ -23,7 +23,7 @@ void UIWindow::OnUpdate(float deltaTime)
 	}
 }
 
-void UIWindow::OnRender(V_Array<UIVertex>& vertices, V_Array<uint32_t>& indices)
+void UIWindow::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
 	m_RootPanel->OnRender(vertices, indices);
 	for (auto& ps : m_Panels)

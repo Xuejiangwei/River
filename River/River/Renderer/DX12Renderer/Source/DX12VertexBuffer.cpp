@@ -3,7 +3,7 @@
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 
-DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
+DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
 	: m_VertexLayout(layout)
 {
 	D3D12_HEAP_PROPERTIES stHeapProp = { D3D12_HEAP_TYPE_UPLOAD };
@@ -36,7 +36,7 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, float* vertices, uint32
 	m_VertexBufferView.SizeInBytes = byteSize;
 }
 
-DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, float* vertices, uint32_t size, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
+DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* vertices, uint32_t size, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
 	: m_VertexLayout(layout)
 {
 	m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);

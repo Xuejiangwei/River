@@ -57,5 +57,5 @@ void RiverEditorLayer::OnRender()
 		window.second->OnRender(m_RenderVertices, m_RenderIndices);
 	}
 
-	//RHI::Get()->Render();
+	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);
 }

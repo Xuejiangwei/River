@@ -26,5 +26,5 @@ private:
 	LessRBTreeMap<int, Unique<UIWindow>> m_UIWindows;
 
 	V_Array<UIVertex> m_RenderVertices;
-	V_Array<uint32_t> m_RenderIndices;
+	V_Array<uint16_t> m_RenderIndices;
 };

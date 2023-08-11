@@ -52,7 +52,7 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) = 0;
 
-	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices) = 0;
+	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) = 0;
 
 	//virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
 

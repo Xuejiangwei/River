@@ -132,9 +132,8 @@ public:
 	
 	virtual ~DX12FrameBuffer() override;
 
-	//virtual void UpdateUIUniform(V_Array<UIVertex>& vertices, V_Array<uint32_t> indices) override;
-
 	DX12FrameBuffer(const DX12FrameBuffer& rhs) = delete;
+
 	DX12FrameBuffer& operator=(const DX12FrameBuffer& rhs) = delete;
 
 	friend class DX12RHI;
@@ -146,8 +145,6 @@ private:
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
 	Unique<DX12UniformBuffer<SkinnedUniform>> m_SkinnedUniform;
 	Unique<DX12UniformBuffer<SsaoUniform>> m_SsaoUniform;
-	Unique<DX12UniformBuffer<UIUniform>> m_EditorUIUniform;
-	Unique<DX12UniformBuffer<UIUniform>> m_UIUniform;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAlloc;
 	UINT64 m_FenceValue;

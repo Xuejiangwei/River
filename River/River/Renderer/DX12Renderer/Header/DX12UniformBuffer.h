@@ -9,7 +9,7 @@ class DX12UniformBuffer
 {
 public:
 	DX12UniformBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
-		mIsConstantBuffer(isConstantBuffer)
+		mIsConstantBuffer(isConstantBuffer), m_ElementCount(elementCount)
 	{
 		m_ElementByteSize = sizeof(T);
 
@@ -40,7 +40,9 @@ public:
 	}
 
 	DX12UniformBuffer(const DX12UniformBuffer& rhs) = delete;
+
 	DX12UniformBuffer& operator=(const DX12UniformBuffer& rhs) = delete;
+	
 	~DX12UniformBuffer()
 	{
 		if (m_UploadBuffer != nullptr)
@@ -49,20 +51,18 @@ public:
 		m_MappedData = nullptr;
 	}
 
-	ID3D12Resource* Resource()const
-	{
-		return m_UploadBuffer.Get();
-	}
+	ID3D12Resource* Resource() const { return m_UploadBuffer.Get(); }
 
-	void CopyData(int elementIndex, const T& data)
-	{
-		memcpy(&m_MappedData[elementIndex * m_ElementByteSize], &data, sizeof(T));
-	}
+	void CopyData(int elementIndex, const T& data) { memcpy(&m_MappedData[elementIndex * m_ElementByteSize], &data, sizeof(T)); }
+
+	size_t GetByteSize() const { return m_ElementCount * m_ElementByteSize; }
 
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadBuffer;
 	BYTE* m_MappedData = nullptr;
 
+	UINT m_ElementCount = 0;
 	UINT m_ElementByteSize = 0;
 	bool mIsConstantBuffer = false;
+
 };

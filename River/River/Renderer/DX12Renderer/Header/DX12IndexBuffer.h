@@ -16,6 +16,8 @@ public:
 
 	const D3D12_INDEX_BUFFER_VIEW& GetView() const { return m_IndexBufferView; }
 
+	UINT GetBufferSize() const { return m_IndexBufferView.SizeInBytes; }
+
 	friend class DX12RHI;
 private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;

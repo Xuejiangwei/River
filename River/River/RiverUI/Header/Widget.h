@@ -14,7 +14,7 @@ public:
 
 	virtual void OnUpdate(float deltaTime);
 
-	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint32_t>& indices);
+	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices);
 
 	virtual void SetSize(float w, float h);
 

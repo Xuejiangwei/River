@@ -12,7 +12,7 @@ UIRenderItem::~UIRenderItem()
 {
 }
 
-void UIRenderItem::OnRender(V_Array<UIVertex>& vertices, V_Array<uint32_t>& indices)
+void UIRenderItem::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
 	auto pos = m_Owner->GetPosition();
 	auto size = m_Owner->GetSize();

@@ -12,7 +12,7 @@ public:
 
 	~UIRenderItem();
 
-	void OnRender(V_Array<UIVertex>& vertices, V_Array<uint32_t>& indices);
+	void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices);
 
 private:
 	Widget* m_Owner;
