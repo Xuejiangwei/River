@@ -19,7 +19,8 @@ void RiverEditorLayer::OnAttach()
 {
 	//initialize
 	auto rootPanel = MakeUnique<Panel>();
-	
+	rootPanel->SetSize(1, 1);
+	rootPanel->SetPosition(0.3f, 0.3f);
 	{
 		auto testImage = MakeShare<Image>();
 		testImage->SetSize(100, 100);
@@ -52,6 +53,8 @@ bool RiverEditorLayer::OnEvent(const Event& e)
 
 void RiverEditorLayer::OnRender()
 {
+	m_RenderVertices.clear();
+	m_RenderIndices.clear();
 	for (auto& window : m_UIWindows)
 	{
 		window.second->OnRender(m_RenderVertices, m_RenderIndices);

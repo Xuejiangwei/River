@@ -1,39 +1,36 @@
+#include "Common.hlsl" 
 
-cbuffer vertexBuffer : register(b0)
+struct VertexIn
 {
-    float4x4 ProjectionMatrix; 
-};
-            
-SamplerState sampler0 : register(s0);
-Texture2D texture0 : register(t0);
-
-struct VS_INPUT
-{
-    float2 pos : POSITION;
-    float4 col : COLOR0;
-    float2 uv  : TEXCOORD0;
+    float3 PosL : POSITION;
+    float2 TexC : TEXCOORD;
+    uint4 Color : COLOR;
 };
 
-struct PS_INPUT
+struct VertexOut
 {
-    float4 pos : SV_POSITION;
-    float4 col : COLOR0;
-    float2 uv  : TEXCOORD0;
+    float4 PosH : SV_POSITION;
+    float2 TexC : TEXCOORD;
+    float4 Color : COLOR;
 };
 
-PS_INPUT VS(VS_INPUT input)
+VertexOut VS(VertexIn vin)
 {
-    PS_INPUT output;
-    output.pos = mul(ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-    output.col = input.col;
-    output.uv = input.uv;
+    VertexOut vout = (VertexOut) 0.0f;
 
-    return output;
-};
+    // Already in homogeneous clip space.
+    //vout.PosH = float4(vin.PosL, 1.0f);
+    vout.PosH = mul(float4(vin.PosL, 1.0f), gWorld);
+	
+    vout.TexC = vin.TexC;
+	
+    vout.Color = float4(vin.Color.r / 255.f, vin.Color.g / 255.f, vin.Color.b / 255.f, vin.Color.a / 255.f); //vin.Color / 255;
+    
+    return vout;
+}
 
-
-float4 PS(PS_INPUT input) : SV_Target
+float4 PS(VertexOut pin) : SV_Target
 {
-    float4 out_col = input.col * texture0.Sample(sampler0, input.uv);
-    return out_col;
-};
+    return pin.Color;
+    //return float4(gSsaoMap.Sample(gsamLinearWrap, pin.TexC).rrr, 1.0f);
+}

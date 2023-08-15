@@ -29,7 +29,7 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, void* vertices, uint32_
 
 	memcpy(pVertexDataBegin, vertices, byteSize);
 
-	m_VertexBuffer->Unmap(0, nullptr);
+	m_VertexBuffer->Unmap(0, &stReadRange);
 
 	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
 	m_VertexBufferView.StrideInBytes = elementSize;
@@ -48,4 +48,30 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandLi
 
 DX12VertexBuffer::~DX12VertexBuffer()
 {
+}
+
+void DX12VertexBuffer::UpdateData(void* context, void* cmdList, void* vertices, size_t elementCount, uint32_t additionalCount)
+{
+	size_t size = elementCount * m_VertexBufferView.StrideInBytes;
+	if (GetBufferSize() < elementCount * m_VertexBufferView.StrideInBytes)
+	{
+		size = (elementCount + additionalCount) * m_VertexBufferView.StrideInBytes;
+		auto device = static_cast<ID3D12Device*>(context);
+		auto commandList = static_cast<ID3D12GraphicsCommandList*>(cmdList);
+		m_VertexBuffer->Release();
+		m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);
+
+		m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
+		m_VertexBufferView.SizeInBytes = size;
+	}
+	else
+	{
+		UINT8* pVertexDataBegin = nullptr;
+		D3D12_RANGE stReadRange = { 0, 0 };
+		ThrowIfFailed(m_VertexBuffer->Map(0, &stReadRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+
+		memcpy(pVertexDataBegin, vertices, size);
+
+		m_VertexBuffer->Unmap(0, nullptr);
+	}
 }

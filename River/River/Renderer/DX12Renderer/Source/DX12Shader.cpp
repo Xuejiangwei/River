@@ -9,11 +9,11 @@ DX12Shader::DX12Shader(const String& filePath, const D3D_SHADER_MACRO* defines, 
 {
 #if defined(_DEBUG)
 	//调试状态下，打开Shader编译的调试标志，不优化
-	UINT nCompileFlags =
+	UINT nCompileFlags = D3DCOMPILE_ENABLE_STRICTNESS |
 		D3DCOMPILE_DEBUG
 		| D3DCOMPILE_SKIP_OPTIMIZATION;
 #else
-	UINT nCompileFlags = 0;
+	UINT nCompileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #endif
 
 	auto path = S_2_WS(filePath);

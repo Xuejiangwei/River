@@ -53,3 +53,29 @@ DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList
 DX12IndexBuffer::~DX12IndexBuffer()
 {
 }
+
+void DX12IndexBuffer::UpdateData(void* context, void* cmdList, void* indices, size_t count, uint32_t additionalCount)
+{
+	m_Count = count;
+
+	auto indiceDataSize = ShaderDataTypeSize(m_IndiceDataType);
+	if (GetBufferSize() < count * indiceDataSize)
+	{
+		auto size = (count + additionalCount) * indiceDataSize;
+		auto device = static_cast<ID3D12Device*>(context);
+		auto commandList = static_cast<ID3D12GraphicsCommandList*>(cmdList);
+
+		m_IndexBuffer->Release();
+		m_IndexBuffer = CreateDefaultBuffer(device, commandList, indices, size, m_UploaderBuffer);
+		m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
+		m_IndexBufferView.SizeInBytes = size;
+	}
+	else
+	{
+		UINT8* pVertexDataBegin = nullptr;
+		D3D12_RANGE stReadRange = { 0, 0 };
+		ThrowIfFailed(m_IndexBuffer->Map(0, &stReadRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+		memcpy(pVertexDataBegin, indices, count * indiceDataSize);
+		m_IndexBuffer->Unmap(0, nullptr);
+	}
+}

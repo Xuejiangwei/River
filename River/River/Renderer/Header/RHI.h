@@ -37,6 +37,8 @@ enum class RenderLayer
 	LayerCount
 };
 
+class Font;
+
 class RHI
 {
 public:
@@ -70,7 +72,9 @@ public:
 
 protected:
 	bool m4xMsaaState = false;
-	unsigned int m4xMsaaQuality = 0;
+	uint32_t m4xMsaaQuality = 0;
+
+	HashMap<String, Unique<Font>> m_Fonts;
 
 private:
 	static APIMode s_APIMode;

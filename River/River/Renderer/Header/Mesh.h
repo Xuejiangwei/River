@@ -7,7 +7,10 @@ struct UIVertex
 {
 	UIVertex() = default;
 	UIVertex(float x, float y, float z, float u, float v)
-		: Pos(x, y, z), TexC(u, v) {}
+		: Pos(x, y, z), TexC(u, v) 
+	{
+		Color[0] = Color[1] = Color[2] = Color[3] = 125;
+	}
 
 	River::Float3 Pos;
 	River::Float2 TexC;

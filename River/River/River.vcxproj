@@ -108,6 +108,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>RiverPch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(TEMP)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,6 +156,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Shader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12UniformBuffer.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12VertexBuffer.cpp" />
+    <ClCompile Include="Renderer\Source\Font.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
     <ClCompile Include="Renderer\Source\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Material.cpp" />
@@ -221,6 +224,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\UploadBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\Waves.h" />
     <ClInclude Include="Renderer\Header\Camera.h" />
+    <ClInclude Include="Renderer\Header\Font.h" />
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
     <ClInclude Include="Renderer\Header\Material.h" />
@@ -246,7 +250,17 @@
     <ClInclude Include="Window\Header\Window.h" />
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets" Condition="Exists('..\packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets'))" />
+  </Target>
 </Project>

@@ -82,6 +82,8 @@ public:
 	VertexBuffer();
 	virtual ~VertexBuffer();
 
+	virtual void UpdateData(void* context, void* cmdList, void* vertices, size_t elementCount, uint32_t additionalCount = 0) {}
+
 	/*virtual void SetVertexBufferData(void* data, uint32_t size) = 0;
 
 	virtual void SettVertexBufferLayout(const VertexBufferLayout& layout) = 0;*/

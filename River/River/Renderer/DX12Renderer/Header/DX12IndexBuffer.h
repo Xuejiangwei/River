@@ -14,6 +14,8 @@ public:
 	
 	virtual ~DX12IndexBuffer() override;
 
+	virtual void UpdateData(void* context, void* cmdList, void* indices, size_t count, uint32_t additionalCount = 0) override;
+
 	const D3D12_INDEX_BUFFER_VIEW& GetView() const { return m_IndexBufferView; }
 
 	UINT GetBufferSize() const { return m_IndexBufferView.SizeInBytes; }

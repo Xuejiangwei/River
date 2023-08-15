@@ -53,7 +53,11 @@ public:
 
 	Unique<DX12VertexBuffer> CreateVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
+	Unique<DX12VertexBuffer> CreateUploadVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
+
 	Unique<DX12IndexBuffer> CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType);
+
+	Unique<DX12IndexBuffer> CreateUploadIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType);
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
@@ -220,7 +224,4 @@ private:
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
 	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
 	HashMap<String, Unique<MeshGeometry>> mGeometries;
-
-	Unique<DX12VertexBuffer> m_EditorUIVertexBuffer;
-	Unique<DX12IndexBuffer> m_EditorUIIndexBuffer;
 };

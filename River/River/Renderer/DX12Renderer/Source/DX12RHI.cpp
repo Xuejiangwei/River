@@ -22,6 +22,14 @@
 #include <chrono>
 #include <fstream>
 
+#if defined(DEBUG) || defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
+#include "pix3.h"
+
+#endif
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 #define DEFAULT_SHADER_PATH_1 "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
@@ -135,6 +143,8 @@ DX12RHI::~DX12RHI()
 
 void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
+	PIXLoadLatestWinPixGpuCapturerLibrary();
+
 	m_InitParam = param;
 
 	/*m_PrespectiveCamera.LookAt(DirectX::XMFLOAT3(5.0f, 4.0f, -15.0f),
@@ -216,16 +226,26 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
 {
-	if (m_EditorUIVertexBuffer == nullptr || m_EditorUIVertexBuffer->GetBufferSize() < vertices.size() * sizeof(UIVertex))
+	auto& geo = mGeometries["ui"];
+	UINT verticesMore = (UINT)vertices.size() + 5000;
+	UINT indicesMore = (UINT)indices.size() + 10000;
+	if (geo == nullptr)
 	{
-		m_EditorUIVertexBuffer.release();
-		m_EditorUIVertexBuffer = CreateVertexBuffer(vertices.data(), (UINT)vertices.size() + 5000, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]);
-	}
+		const UINT vbByteSize = verticesMore * sizeof(UIVertex);
+		const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
 
-	if (m_EditorUIIndexBuffer == nullptr || m_EditorUIIndexBuffer->GetBufferSize() < indices.size() * sizeof(uint16_t))
+		auto geo = MakeUnique<MeshGeometry>();
+		geo->Name = "shapeGeo";
+		//geo->CopyCPUData(vertices, indices);
+		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
+			CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+
+		mGeometries["ui"] = std::move(geo);
+	}
+	else
 	{
-		m_EditorUIIndexBuffer.release();
-		m_EditorUIIndexBuffer = CreateIndexBuffer(indices.data(), (uint32_t)indices.size(), ShaderDataType::Short);
+		geo->m_VertexBuffer->UpdateData(md3dDevice.Get(), mCommandList.Get(), vertices.data(), vertices.size(), 5000);
+		geo->m_IndexBuffer->UpdateData(md3dDevice.Get(), mCommandList.Get(), indices.data(), indices.size(), 10000);
 	}
 }
 
@@ -353,8 +373,8 @@ void DX12RHI::Render()
 	mCommandList->SetPipelineState(m_PSOs["sky"]->GetPSO());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
 
-	mCommandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
-	DrawUI();
+	/*mCommandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
+	DrawUI();*/
 
 	// Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -407,9 +427,19 @@ Unique<DX12VertexBuffer> DX12RHI::CreateVertexBuffer(void* vertices, uint32_t by
 	return MakeUnique<DX12VertexBuffer>(md3dDevice.Get(), mCommandList.Get(), vertices, byteSize, elementSize, layout);
 }
 
+Unique<DX12VertexBuffer> DX12RHI::CreateUploadVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
+{
+	return MakeUnique<DX12VertexBuffer>(md3dDevice.Get(), vertices, byteSize, elementSize, layout);
+}
+
 Unique<DX12IndexBuffer> DX12RHI::CreateIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType)
 {
 	return MakeUnique<DX12IndexBuffer>(md3dDevice.Get(), mCommandList.Get(), indices, count, indiceDataType);
+}
+
+Unique<DX12IndexBuffer> DX12RHI::CreateUploadIndexBuffer(void* indices, uint32_t count, ShaderDataType indiceDataType)
+{
+	return MakeUnique<DX12IndexBuffer>(md3dDevice.Get(), indices, count, indiceDataType);
 }
 
 void DX12RHI::Resize(const RHIInitializeParam& param)
@@ -496,6 +526,15 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 
 void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 {
+#if defined(DEBUG) || defined(_DEBUG)
+	// Enable the D3D12 debug layer.
+	{
+		ComPtr<ID3D12Debug> debugController;
+		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+		debugController->EnableDebugLayer();
+	}
+#endif
+
 	ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory)));
 
 	EnumAdaptersAndCreateDevice();
@@ -694,6 +733,21 @@ void DX12RHI::BuildShapeGeometry()
 	geo->DrawArgs["uiQuad"] = uiQuadSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
+
+	{
+		auto geo = MakeUnique<MeshGeometry>();
+		geo->Name = "ui";
+		std::vector<UIVertex> vertices(50);
+		std::vector<std::uint16_t> indices(100);
+		geo->CopyCPUData(vertices, indices);
+
+		const UINT vbByteSize = (UINT)vertices.size() * sizeof(UIVertex);
+		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+		geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
+			CreateUploadIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+		mGeometries["ui"] = std::move(geo);
+	}
 }
 
 void DX12RHI::LoadTextures()
@@ -818,7 +872,7 @@ void DX12RHI::InitBaseShaders()
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 }
 
@@ -982,7 +1036,7 @@ void DX12RHI::InitBasePSOs()
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
 	debugPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	m_PSOs["debug"] = CreatePSO(debugPsoDesc, nullptr, mShaders["debugVS"].get(), mShaders["debugPS"].get());
+	m_PSOs["debug"] = CreatePSO(debugPsoDesc, &m_InputLayers["ui"], mShaders["uiVS"].get(), mShaders["uiPS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawNormalsPsoDesc = opaquePsoDesc;
 	drawNormalsPsoDesc.RTVFormats[0] = Ssao::NormalMapFormat;
@@ -1022,7 +1076,7 @@ void DX12RHI::InitBasePSOs()
 	skyPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
 	m_PSOs["sky"] = CreatePSO(skyPsoDesc, nullptr, mShaders["skyVS"].get(), mShaders["skyPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC uiPsoDesc;
+	/*D3D12_GRAPHICS_PIPELINE_STATE_DESC uiPsoDesc;
 	ZeroMemory(&uiPsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	uiPsoDesc.pRootSignature = m_RootSignatures["ui"]->GetRootSignature();
 	uiPsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -1036,7 +1090,7 @@ void DX12RHI::InitBasePSOs()
 	uiPsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	uiPsoDesc.DSVFormat = mDepthStencilFormat;
 
-	m_PSOs["ui"] = CreatePSO(uiPsoDesc, &m_InputLayers["ui"], mShaders["uiVS"].get(), mShaders["uiPS"].get());
+	m_PSOs["ui"] = CreatePSO(uiPsoDesc, &m_InputLayers["ui"], mShaders["uiVS"].get(), mShaders["uiPS"].get());*/
 }
 
 void DX12RHI::EnumAdaptersAndCreateDevice()
@@ -1622,7 +1676,7 @@ void DX12RHI::InitBaseRenderItems()
 	quadRitem->StartIndexLocation = quadRitem->Geo->DrawArgs["quad"].StartIndexLocation;
 	quadRitem->BaseVertexLocation = quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
 
-	mRitemLayer[(int)RenderLayer::Debug].push_back(quadRitem.get());
+	//mRitemLayer[(int)RenderLayer::Debug].push_back(quadRitem.get());
 	mAllRitems.push_back(std::move(quadRitem));
 
 	auto boxRitem = std::make_unique<DX12RenderItem>();
@@ -1750,7 +1804,7 @@ void DX12RHI::InitBaseRenderItems()
 	}
 
 	{
-		auto uiQuadRitem = std::make_unique<DX12RenderItem>();
+		/*auto uiQuadRitem = std::make_unique<DX12RenderItem>();
 		XMStoreFloat4x4(&uiQuadRitem->World, XMMatrixScaling(5.0f, 5.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f));
 		XMStoreFloat4x4(&uiQuadRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
 		uiQuadRitem->ObjCBIndex = objCBIndex++;
@@ -1762,7 +1816,21 @@ void DX12RHI::InitBaseRenderItems()
 		uiQuadRitem->BaseVertexLocation = uiQuadRitem->Geo->DrawArgs["box"].BaseVertexLocation;
 
 		mRitemLayer[(int)RenderLayer::Opaque].push_back(uiQuadRitem.get());
-		mAllRitems.push_back(std::move(uiQuadRitem));
+		mAllRitems.push_back(std::move(uiQuadRitem));*/
+
+		auto quadRitem = std::make_unique<DX12RenderItem>();
+		XMStoreFloat4x4(&quadRitem->World, XMMatrixScaling(1.0f, 1.0f, 2.0f)* XMMatrixTranslation(-0.5f, 0.5f, 0.0f));
+		quadRitem->TexTransform = Identity4x4();
+		quadRitem->ObjCBIndex = objCBIndex++;
+		quadRitem->Mat = mMaterials["bricks0"].get();
+		quadRitem->Geo = mGeometries["ui"].get();
+		quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		quadRitem->IndexCount = quadRitem->Geo->m_IndexBuffer->GetIndexCount();//quadRitem->Geo->DrawArgs["ui"].IndexCount;
+		quadRitem->StartIndexLocation = 0;//quadRitem->Geo->DrawArgs["ui"].StartIndexLocation;
+		quadRitem->BaseVertexLocation = 0;//quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
+
+		mRitemLayer[(int)RenderLayer::Debug].push_back(quadRitem.get());
+		mAllRitems.push_back(std::move(quadRitem));
 	}
 }
 

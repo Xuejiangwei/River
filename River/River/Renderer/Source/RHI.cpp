@@ -1,5 +1,6 @@
 #include "RiverPch.h"
 #include "RHI.h"
+#include "Font.h"
 
 #ifdef _WIN32
 

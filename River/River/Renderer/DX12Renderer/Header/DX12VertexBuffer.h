@@ -12,7 +12,9 @@ public:
 
 	DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* vertices, uint32_t size, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
 
-	~DX12VertexBuffer();
+	virtual ~DX12VertexBuffer() override;
+
+	virtual void UpdateData(void* context, void* cmdList, void* vertices, size_t elementCount, uint32_t additionalCount = 0) override;
 
 	const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return m_VertexBufferView; }
 

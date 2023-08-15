@@ -165,6 +165,9 @@
     <ClCompile Include="RiverUI\Source\UIRenderItem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\Font.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -347,5 +350,11 @@
     <ClInclude Include="RiverUI\Header\UIRenderItem.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\Header\Font.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
