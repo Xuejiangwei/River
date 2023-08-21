@@ -165,7 +165,16 @@
     <ClCompile Include="RiverUI\Source\UIRenderItem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Source\Font.cpp">
+    <ClCompile Include="Renderer\Font\Source\Font.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RiverUI\Source\Text.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -350,7 +359,16 @@
     <ClInclude Include="RiverUI\Header\UIRenderItem.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\Font.h">
+    <ClInclude Include="Renderer\Font\Header\Font.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Font\Header\TTF_Info.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Font\Header\FontAtlas.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RiverUI\Header\Text.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

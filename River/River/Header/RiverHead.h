@@ -6,6 +6,13 @@
 #define GP_ASSERT(expression)
 #endif
 
+#ifdef RIVER_EXPORT
+	#define RIVER_API __declspec(dllexport)
+#else
+	#define RIVER_API __declspec(dllimport)
+#endif // RIVER_API
+
+
 template<typename T>
 using Share = std::shared_ptr<T>;
 
@@ -55,3 +62,12 @@ namespace River
 		return static_cast<remove_reference_t<_Ty>&&>(_Arg);
 	}
 }
+
+using int8 = char;
+using uint8 = unsigned char;
+using int16 = short;
+using uint16 = unsigned short;
+using uint32 = unsigned int;
+using int64 = long long;
+using uint64 = unsigned long long;
+using float64 = double;

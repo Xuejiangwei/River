@@ -10,6 +10,8 @@ public:
 
 	virtual ~Panel() override;
 
+	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
+
 	Panel& operator[](Share<Widget> widget)
 	{
 		m_Children.push_back(widget);

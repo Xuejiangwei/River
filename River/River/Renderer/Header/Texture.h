@@ -2,11 +2,11 @@
 
 #include "RiverHead.h"
 
-class Texture1
+class Texture
 {
 public:
-	Texture1(const String& name, const String& path);
-	virtual ~Texture1();
+	Texture(const String& name, const String& path);
+	virtual ~Texture();
 
 	String Name;
 	String m_Path;

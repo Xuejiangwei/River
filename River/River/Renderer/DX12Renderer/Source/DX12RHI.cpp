@@ -1,5 +1,8 @@
 #include "RiverPch.h"
 #include "RendererUtil.h"
+
+#include "Renderer/Font/Header/FontAtlas.h"
+#include "Renderer/Font/Header/Font.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 #include "Renderer/DX12Renderer/Header/DX12RootSignature.h"
@@ -32,6 +35,9 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
+
+#define DEFAULT_FONT_PATH_1 "F:\\GitHub\\River\\River\\Fonts\\LXGWWenKai-Bold.ttf"
+
 #define DEFAULT_SHADER_PATH_1 "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
 #define DEFAULT_SHADER_PATH_2 "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl"
 #define DEFAULT_SHADER_PATH_3 "F:\\GitHub\\River\\River\\Shaders\\Shadows.hlsl"
@@ -143,7 +149,9 @@ DX12RHI::~DX12RHI()
 
 void DX12RHI::Initialize(const RHIInitializeParam& param)
 {
+#ifdef _DEBUG
 	PIXLoadLatestWinPixGpuCapturerLibrary();
+#endif // _DEBUG
 
 	m_InitParam = param;
 
@@ -251,10 +259,23 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 {
-	decltype(DX12RHI::CreateTexture(name, filePath)) ret = nullptr;
+	DX12Texture* ret = nullptr;
 	if (name && filePath && mTextures.find(name) == std::end(mTextures))
 	{
-		auto texture =  MakeUnique<DX12Texture>(md3dDevice.Get(), mCommandList.Get(), name, filePath);
+		auto texture = MakeUnique<DX12Texture>(md3dDevice.Get(), mCommandList.Get(), name, filePath);
+		ret = texture.get();
+		mTextures[name] = std::move(texture);
+	}
+
+	return ret;
+}
+
+DX12Texture* DX12RHI::CreateTexture(const char* name, const uint8* data, int width, int height)
+{
+	DX12Texture* ret = nullptr;
+	if (name && data && mTextures.find(name) == std::end(mTextures))
+	{
+		auto texture = MakeUnique<DX12Texture>(md3dDevice.Get(), mCommandList.Get(), name, data, width, height);
 		ret = texture.get();
 		mTextures[name] = std::move(texture);
 	}
@@ -777,6 +798,15 @@ void DX12RHI::LoadTextures()
 		mSkinnedTextureNames.push_back(diffuseName);
 		mSkinnedTextureNames.push_back(normalName);
 	}
+
+
+	
+	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
+	uint8* pixels;
+	int width, height;
+	m_Fonts["default"]->GetTextureDataRGBA32(&pixels);
+	auto g = m_Fonts["default"]->m_Font->FindGlyph(12012);
+	CreateTexture("font", pixels, m_Fonts["default"]->m_TextureWidth, m_Fonts["default"]->m_TextureHeight);
 }
 
 void DX12RHI::InitBaseMaterials()
@@ -1647,6 +1677,20 @@ void DX12RHI::InitDescriptorHeaps()
 		GetRtv(SwapChainBufferCount),
 		mCbvSrvUavDescriptorSize,
 		mRtvDescriptorSize);
+
+	nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
+	auto mFontTextureView = mNullTexSrvIndex2 + 1;
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		ZeroMemory(&srvDesc, sizeof(srvDesc));
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		md3dDevice->CreateShaderResourceView(mTextures["font"]->GetResource().Get(), &srvDesc, nullSrv);
+	}
+
 }
 
 void DX12RHI::InitBaseRenderItems()

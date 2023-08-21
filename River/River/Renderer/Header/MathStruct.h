@@ -1,7 +1,21 @@
 #pragma once
 
+
 namespace River
 {
+	struct RGBA32
+	{
+		uint8 r, g, b, a;
+
+		RGBA32() : r(0), g(0), b(0), a(255) {}
+
+		RGBA32(uint8 r, uint8 g, uint8 b, uint8 a)
+			: r(r), g(g), b(b), a(a) {}
+
+		operator uint32() const { return ((uint32)(r) << 24) | ((uint32)(g) << 16)
+			| ((uint32)(g) << 8) | ((uint32)(a) << 0); }
+	};
+
 	struct Float2
 	{
 		float x = 0.f, y = 0.f;
@@ -18,6 +32,11 @@ namespace River
 		Float2 operator*(float other)
 		{
 			return Float2(x * other, y * other);
+		}
+
+		Float2 operator*(Float2 other)
+		{
+			return Float2(x * other.x, y * other.y);
 		}
 	};
 
@@ -185,3 +204,7 @@ namespace River
 		}
 	};
 }
+
+using UINT8_4 = River::RGBA32;
+using FLOAT_2 = River::Float2;
+using FLOAT_4 = River::Float4;

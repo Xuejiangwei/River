@@ -37,7 +37,7 @@ enum class RenderLayer
 	LayerCount
 };
 
-class Font;
+class FontAtlas;
 
 class RHI
 {
@@ -74,7 +74,7 @@ protected:
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
 
-	HashMap<String, Unique<Font>> m_Fonts;
+	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
 private:
 	static APIMode s_APIMode;
