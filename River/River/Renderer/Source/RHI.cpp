@@ -42,3 +42,14 @@ Unique<RHI>& RHI::Get()
 
 	return s_Instance;
 }
+
+FontAtlas* RHI::GetFont(const char* name) const
+{
+	if (!name)
+	{
+		name = "default";
+	}
+
+	auto iter = m_Fonts.find(name);
+	return iter->second.get();
+}

@@ -12,8 +12,8 @@ namespace River
 		RGBA32(uint8 r, uint8 g, uint8 b, uint8 a)
 			: r(r), g(g), b(b), a(a) {}
 
-		operator uint32() const { return ((uint32)(r) << 24) | ((uint32)(g) << 16)
-			| ((uint32)(g) << 8) | ((uint32)(a) << 0); }
+		operator uint32() const { return ((uint32)(r) << 0) | ((uint32)(g) << 8)
+			| ((uint32)(g) << 16) | ((uint32)(a) << 24); }
 	};
 
 	struct Float2

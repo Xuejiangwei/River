@@ -70,6 +70,8 @@ public:
 
 	APIMode GetAPIMode() const { return s_APIMode; }
 
+	FontAtlas* GetFont(const char* name = nullptr) const;
+	
 protected:
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;

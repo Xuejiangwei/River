@@ -52,6 +52,7 @@ FontAtlas::~FontAtlas()
 
 void FontAtlas::GetTextureDataRGBA32(uint8** outPixels)
 {
+	int line = 0;
 	if (m_PixelRGBA32.empty())
 	{
 		uint8* alphaPixels = nullptr;
@@ -62,10 +63,16 @@ void FontAtlas::GetTextureDataRGBA32(uint8** outPixels)
 			m_PixelRGBA32.resize(m_TextureWidth * m_TextureHeight);
 			for (int i = 0; i < m_PixelRGBA32.size(); i++)
 			{
-				m_PixelRGBA32[i].r = 255;
-				m_PixelRGBA32[i].g = 255;
-				m_PixelRGBA32[i].b = 255;
-				m_PixelRGBA32[i].a = *alphaPixels++;
+				m_PixelRGBA32[i].r = *alphaPixels++;
+				m_PixelRGBA32[i].g = 0;
+				m_PixelRGBA32[i].b = 0;
+				m_PixelRGBA32[i].a = 255;
+
+				/*line = i / 4096;
+				if (line < 1024 && i % 1024 < 512)
+				{
+					m_PixelRGBA32[i].g = 255;
+				}*/
 			}
 		}
 	}

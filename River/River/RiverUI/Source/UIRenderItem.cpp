@@ -18,7 +18,7 @@ void UIRenderItem::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indi
 	auto size = m_Owner->GetSize();
 	float depth = 0.0f;
 
-	vertices.push_back(UIVertex(pos.x, pos.y - size.y, depth, 0.0f, 1.0f));
+	vertices.push_back(UIVertex(pos.x, pos.y - size.y, depth, 0.0f, 1.0f, 255, 0, 0, 255));
 	vertices.push_back(UIVertex(pos.x, pos.y, depth, 0.0f, 0.0f));
 	vertices.push_back(UIVertex(pos.x + size.x, pos.y, depth, 1.0f, 0.0f));
 	vertices.push_back(UIVertex(pos.x + size.x, pos.y - size.y, depth, 1.0f, 1.0f));

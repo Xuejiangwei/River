@@ -799,8 +799,6 @@ void DX12RHI::LoadTextures()
 		mSkinnedTextureNames.push_back(normalName);
 	}
 
-
-	
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 	uint8* pixels;
 	int width, height;
@@ -1603,7 +1601,8 @@ void DX12RHI::InitDescriptorHeaps()
 		mTextures["tileDiffuseMap"]->GetResource(),
 		mTextures["tileNormalMap"]->GetResource(),
 		mTextures["defaultDiffuseMap"]->GetResource(),
-		mTextures["defaultNormalMap"]->GetResource()
+		mTextures["defaultNormalMap"]->GetResource(),
+		mTextures["font"]->GetResource(),
 	};
 
 	mSkinnedSrvHeapStart = (UINT)tex2DList.size();
@@ -1678,7 +1677,7 @@ void DX12RHI::InitDescriptorHeaps()
 		mCbvSrvUavDescriptorSize,
 		mRtvDescriptorSize);
 
-	nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
+	/*nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
 	auto mFontTextureView = mNullTexSrvIndex2 + 1;
 	{
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -1689,7 +1688,7 @@ void DX12RHI::InitDescriptorHeaps()
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		md3dDevice->CreateShaderResourceView(mTextures["font"]->GetResource().Get(), &srvDesc, nullSrv);
-	}
+	}*/
 
 }
 

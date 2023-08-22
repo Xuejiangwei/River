@@ -18,7 +18,7 @@ void Widget::OnUpdate(float deltaTime)
 
 void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
-	m_RenderItem->OnRender(vertices, indices);
+	//m_RenderItem->OnRender(vertices, indices);
 }
 
 void Widget::SetSize(float w, float h)

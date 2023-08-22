@@ -5,6 +5,7 @@
 #include "RiverUI/Header/Panel.h"
 #include "RiverUI/Header/Button.h"
 #include "RiverUI/Header/Image.h"
+#include "RiverUI/Header/Text.h"
 #include "RiverUI/Header/UIWindow.h"
 
 RiverEditorLayer::RiverEditorLayer()
@@ -22,15 +23,9 @@ void RiverEditorLayer::OnAttach()
 	rootPanel->SetSize(1, 1);
 	rootPanel->SetPosition(0.3f, 0.3f);
 	{
-		auto testImage = MakeShare<Image>();
-		testImage->SetSize(100, 100);
-		(*rootPanel)[testImage];
-	}
-
-	{
-		auto testButton = MakeShare<Button>();
-		testButton->SetSize(100, 100);
-		(*rootPanel)[testButton];
+		auto text = MakeShare<Text>();
+		text->SetSize(1, 1);
+		(*rootPanel)[text];
 	}
 
 	m_UIWindows[0] = MakeUnique<UIWindow>(rootPanel);
