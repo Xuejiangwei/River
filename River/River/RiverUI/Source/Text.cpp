@@ -18,57 +18,115 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
 	//0x2eec
 	auto font = RHI::Get()->GetFont();
-	auto glyph = font->m_Font->FindGlyph(/*0x2eec*/0x4fe2);
 
-	float scale = 0.1f;
-	float charWidth = glyph->AdvanceX * scale;
-	float x = m_Position.x;
-	float y = m_Position.y;
-	if (glyph->Visible)
-	{
-		float x1 = x + glyph->X0 * scale;
-		float x2 = x + glyph->X1 * scale;
-		float y1 = y + glyph->Y0 * scale;
-		float y2 = y + glyph->Y1 * scale;
-		
-		// Render a character
-		float u1 = glyph->U0;
-		float v1 = glyph->V0;
-		float u2 = glyph->U1;
-		float v2 = glyph->V1;
+	auto textSize = font->m_Font->CalcTextSize(m_Text, m_FontSize);
+    float scale = 1;
+    float x = m_Position.x;
+    float y = m_Position.y;
+   
+    scale = m_FontSize / 720;
+    auto s = m_Text.begin();
+    while (s != m_Text.end())
+    {
+        // Decode and advance source
+        unsigned int c = (unsigned int)*s;
+        if (c < 0x80)
+            s += 1;
+        else
+            s += Font::ImTextCharFromUtf8(&c, s._Unwrapped(), m_Text.end()._Unwrapped());
 
-		//uint32 glyph_col = glyph->Colored ? col_untinted : col;
+        if (c < 32)
+        {
+            if (c == '\n')
+            {
+                x = m_Position.x;
+                y += m_FontSize * scale;
+                //if (y > clip_rect.w)
+                //    break; // break out of main loop
+                continue;
+            }
+            if (c == '\r')
+                continue;
+        }
 
-		uint16 vtx_index = (uint16)vertices.size();
-		/*vertices.push_back(UIVertex(x1, y1, 0.0f, u1, v1, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(x2, y1, 0.0f, u2, v1, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(x2, y2, 0.0f, u2, v2, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(x1, y2, 0.0f, u1, v2, 255, 0, 0, 255));*/
-		vertices.push_back(UIVertex(m_Position.x, m_Position.y - m_Size.y, 0.0f, u1, v2, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(m_Position.x, m_Position.y, 0.0f, u1, v1, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(m_Position.x + m_Size.x, m_Position.y, 0.0f, u2, v1, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(m_Position.x + m_Size.x, m_Position.y - m_Size.y, 0.0f, u2, v2, 255, 0, 0, 255));
-		
-		indices.push_back(vtx_index);
-		indices.push_back(vtx_index + 1);
-		indices.push_back(vtx_index + 2);
-		indices.push_back(vtx_index);
-		indices.push_back(vtx_index + 2);
-		indices.push_back(vtx_index + 3);
+        const ImFontGlyph* glyph = font->m_Font->FindGlyph((uint16)c);
+        if (glyph == NULL)
+            continue;
 
-		auto pos = m_Position;
-		auto size = m_Size;
-		int depth = 0;
-		/*vertices.push_back(UIVertex(pos.x, pos.y - size.y, depth, 0.0f, 1.0f, 255, 0, 0, 255));
-		vertices.push_back(UIVertex(pos.x, pos.y, depth, 0.0f, 0.0f));
-		vertices.push_back(UIVertex(pos.x + size.x, pos.y, depth, 1.0f, 0.0f));
-		vertices.push_back(UIVertex(pos.x + size.x, pos.y - size.y, depth, 1.0f, 1.0f));*/
+        float char_width = glyph->AdvanceX * scale;
+        if (glyph->Visible)
+        {
+            // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
+            float x1 = x + glyph->X0 * scale;
+            float x2 = x + glyph->X1 * scale;
+            float y1 = y + glyph->Y0 * scale;
+            float y2 = y + glyph->Y1 * scale;
+            //if (x1 <= clip_rect.z && x2 >= clip_rect.x)
+            {
+                // Render a character
+                float u1 = glyph->U0;
+                float v1 = glyph->V0;
+                float u2 = glyph->U1;
+                float v2 = glyph->V1;
 
-		/*indices.push_back((uint32_t)vertices.size() - 4);
-		indices.push_back((uint32_t)vertices.size() - 3);
-		indices.push_back((uint32_t)vertices.size() - 2);
-		indices.push_back((uint32_t)vertices.size() - 4);
-		indices.push_back((uint32_t)vertices.size() - 2);
-		indices.push_back((uint32_t)vertices.size() - 1);*/
-	}
+                FLOAT_2 ts = { 0.05, 0.05 };
+
+                // CPU side clipping used to fit text in their frame when the frame is too small. Only does clipping for axis aligned quads.
+                /* if (cpu_fine_clip)
+                {
+                    if (x1 < clip_rect.x)
+                    {
+                        u1 = u1 + (1.0f - (x2 - clip_rect.x) / (x2 - x1)) * (u2 - u1);
+                        x1 = clip_rect.x;
+                    }
+                    if (y1 < clip_rect.y)
+                    {
+                        v1 = v1 + (1.0f - (y2 - clip_rect.y) / (y2 - y1)) * (v2 - v1);
+                        y1 = clip_rect.y;
+                    }
+                    if (x2 > clip_rect.z)
+                    {
+                        u2 = u1 + ((clip_rect.z - x1) / (x2 - x1)) * (u2 - u1);
+                        x2 = clip_rect.z;
+                    }
+                    if (y2 > clip_rect.w)
+                    {
+                        v2 = v1 + ((clip_rect.w - y1) / (y2 - y1)) * (v2 - v1);
+                        y2 = clip_rect.w;
+                    }
+                    if (y1 >= y2)
+                    {
+                        x += char_width;
+                        continue;
+                    }
+                }*/
+
+                // Support for untinted glyphs
+                uint32 glyph_col = River::RGBA32(255, 0, 0, 255); //glyph->Colored ? col_untinted : col;
+
+                // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
+                {
+                    auto vs = (uint16)vertices.size();
+
+                    vertices.push_back(UIVertex(x, m_Position.y - ts.y, 0.0f, u1, v2, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x, m_Position.y, 0.0f, u1, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x + ts.x, m_Position.y, 0.0f, u2, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x + ts.x, m_Position.y - ts.y, 0.0f, u2, v2, 255, 0, 0, 255));
+
+                    indices.push_back(vs);
+                    indices.push_back(vs + 1);
+                    indices.push_back(vs + 2);
+                    indices.push_back(vs);
+                    indices.push_back(vs + 2);
+                    indices.push_back(vs + 3);
+                }
+            }
+        }
+        x += char_width;
+    }
+}
+
+void Text::SetText(const char* text)
+{
+	m_Text = text;
 }

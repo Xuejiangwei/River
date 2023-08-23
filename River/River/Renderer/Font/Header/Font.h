@@ -37,6 +37,10 @@ public:
 
 	const ImFontGlyph* FindGlyphNoFallback(uint16 c) const;
 
+	FLOAT_2 CalcTextSize(const String& text, float size);
+
+	static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end);
+
 	bool DirtyLookupTables = true;
 
 private:
