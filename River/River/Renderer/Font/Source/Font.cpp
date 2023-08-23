@@ -70,7 +70,6 @@ void Font::BuildLookupTable()
     assert(Glyphs.size() < 0xFFFF); // -1 is reserved
     IndexAdvanceX.clear();
     IndexLookup.clear();
-    DirtyLookupTables = false;
     memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
     GrowIndex(max_codepoint + 1);
     for (int i = 0; i < Glyphs.size(); i++)
@@ -163,8 +162,7 @@ void Font::AddGlyph(uint16 codepoint, float x0, float y0, float x1, float y1, fl
     // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
     // We use (U1-U0)*TexWidth instead of X1-X0 to account for oversampling.
     float pad = 1 + 0.99f;
-    DirtyLookupTables = true;
-    MetricsTotalSurface += (int)((glyph.U1 - glyph.U0) * m_Atlas->m_TextureWidth + pad) * (int)((glyph.V1 - glyph.V0) * m_Atlas->m_TextureHeight + pad);
+    //MetricsTotalSurface += (int)((glyph.U1 - glyph.U0) * m_Atlas->m_TextureWidth + pad) * (int)((glyph.V1 - glyph.V0) * m_Atlas->m_TextureHeight + pad);
 }
 
 FLOAT_2 Font::CalcTextSize(const String& text, float size)

@@ -2576,9 +2576,8 @@ void ImFontAtlasBuildFinish(FontAtlas* atlas)
         r->Font->AddGlyph(NULL, (ImWchar)r->GlyphID, r->GlyphOffset.x, r->GlyphOffset.y, r->GlyphOffset.x + r->Width, r->GlyphOffset.y + r->Height, uv0.x, uv0.y, uv1.x, uv1.y, r->GlyphAdvanceX);*/
     }
 
-    //// Build all fonts lookup tables
-    if (atlas->m_Font->DirtyLookupTables)
-        atlas->m_Font->BuildLookupTable();
+    // Build all fonts lookup tables
+    atlas->m_Font->BuildLookupTable();
 
     //atlas->TexReady = true;
 }

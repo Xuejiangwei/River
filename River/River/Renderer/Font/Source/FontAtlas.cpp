@@ -10,10 +10,7 @@
 	#define IM_DRAWLIST_TEX_LINES_WIDTH_MAX     (63)
 #endif
 
-bool    ImFileClose(FILE* f) { return fclose(f) == 0; }
 uint64   ImFileGetSize(FILE* f) { long off = 0, sz = 0; return ((off = ftell(f)) != -1 && !fseek(f, 0, SEEK_END) && (sz = ftell(f)) != -1 && !fseek(f, off, SEEK_SET)) ? (uint64)sz : (uint64)-1; }
-uint64   ImFileRead(void* data, uint64 sz, uint64 count, FILE* f) { return fread(data, (size_t)sz, (size_t)count, f); }
-uint64   ImFileWrite(const void* data, uint64 sz, uint64 count, FILE* f) { return fwrite(data, (size_t)sz, (size_t)count, f); }
 
 FontAtlas::FontAtlas(const char* path, float pixelSize)
 {
@@ -28,16 +25,16 @@ FontAtlas::FontAtlas(const char* path, float pixelSize)
 	size_t file_size = (size_t)ImFileGetSize(f);
 	if (file_size == (size_t)-1)
 	{
-		ImFileClose(f);
+		fclose(f);
 	}
 
 	m_Data.resize(file_size);
-	if (ImFileRead(m_Data.data(), 1, file_size, f) != file_size)
+	if (fread(m_Data.data(), 1, file_size, f) != file_size)
 	{
-		ImFileClose(f);
+		fclose(f);
 	}
 
-	ImFileClose(f);
+	fclose(f);
 
 	m_Font = new Font(path, this, pixelSize);
 }

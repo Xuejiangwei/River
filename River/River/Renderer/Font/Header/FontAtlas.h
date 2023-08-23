@@ -4,9 +4,6 @@
 #include "MathStruct.h"
 #include "Renderer/Font/Header/TTF_Info.h"
 
-// Temporary data for one source font (multiple source fonts can be merged into one destination ImFont)
-// (C++03 doesn't allow instancing ImVector<> with function-local types so we declare the type here.)
-
 struct ImFontBuildDstData
 {
 	int                 SrcCount;           // Number of source fonts targeting this destination font.
