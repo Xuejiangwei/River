@@ -3,6 +3,26 @@
 #include "RiverHead.h"
 #include "MathStruct.h"
 
+struct TTF_Table_Directory
+{
+	uint32 Version;
+	uint16 TableNum;
+	uint16 SearchRange;
+	uint16 EntrySelector;
+	uint16 RangeShift;
+};
+
+struct TTF_Table
+{
+	uint32 Tag;
+	uint32 CheckSum;
+	uint32 Offset;
+	uint32 Length;
+};
+
+RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_W = 122; // Actual texture will be 2 times that + 1 spacing.
+RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_H = 27;
+
 //https://www.cnblogs.com/sjhrun2001/archive/2010/01/19/1651274.html
 template<typename T> static inline T ImClamp(T v, T mn, T mx) { return (v < mn) ? mn : (v > mx) ? mx : v; }
 struct ImFontGlyph
@@ -90,8 +110,10 @@ typedef struct
 
 struct TTF_HeadInfo
 {
+	TTF_Table_Directory HeadDirectory;
+
 	void* userdata;
-	unsigned char* data;              // pointer to .ttf file
+	uint8* data;              // pointer to .ttf file
 	int fontstart;         // offset of start of font
 
 	int numGlyphs;
@@ -107,25 +129,13 @@ struct TTF_HeadInfo
 	stbtt__buf fdselect;               // map from glyph to fontdict
 };
 
-inline void ImBitArraySetBit(uint32* arr, int n) { uint32 mask = (uint32)1 << (n & 31); arr[n >> 5] |= mask; }
-inline void ImBitArrayClearBit(uint32* arr, int n) { uint32 mask = (uint32)1 << (n & 31); arr[n >> 5] &= ~mask; }
+//big end byte 
+inline int16 GetInt16(const uint8_t* p) { return (p[0] << 8) + p[1]; }
+inline uint16 GetUInt16(const uint8* p) { return (p[0] << 8) + p[1]; }
+inline int GetInt32(const uint8_t* p) { return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3]; }
+inline uint32 GetUInt32(const uint8* p) { return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3]; }
 
-inline int16 ttSHORT(const uint8_t* p) { return p[0] * 256 + p[1]; }
-inline uint16 ttUSHORT(const uint8* p) { return p[0] * 256 + p[1]; }
-inline int ttLONG(const uint8_t* p) { return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3]; }
-inline uint32 ttULONG(const uint8* p) { return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3]; }
-inline int ImUpperPowerOfTwo(int v) { v--; v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16; v++; return v; }
-
-#define         IM_BITARRAY_TESTBIT(_ARRAY, _N)                 ((_ARRAY[(_N) >> 5] & ((uint32)1 << ((_N) & 31))) != 0) // Macro version of ImBitArrayTestBit(): ensure args have side-effect or are costly!
-struct ImBitVector
-{
-	V_Array<uint32> Storage;
-	void            Create(int sz) { Storage.resize((sz + 31) >> 5); memset(Storage.data(), 0, (size_t)Storage.size() * sizeof(Storage[0])); }
-	void            Clear() { Storage.clear(); }
-	bool            TestBit(int n) const { assert(n < (Storage.size() << 5)); return IM_BITARRAY_TESTBIT(Storage.data(), n); }
-	void            SetBit(int n) { assert(n < (Storage.size() << 5)); ImBitArraySetBit(Storage.data(), n); }
-	void            ClearBit(int n) { assert(n < (Storage.size() << 5)); ImBitArrayClearBit(Storage.data(), n); }
-};
+inline int UpperPowerOfTwo(int v) { v--; v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16; v++; return v; }
 
 struct FontAtlasCustomRect
 {
@@ -194,9 +204,8 @@ struct ImFontBuildSrcData
 	stbtt_packedchar* PackedChars;        // Output glyphs
 	uint16* SrcRanges;          // Ranges as requested by user (user is allowed to request too much, e.g. 0x0020..0xFFFF)
 	int                 DstIndex;           // Index into atlas->Fonts[] and dst_tmp_array[]
-	int                 GlyphsHighest;      // Highest requested codepoint
+	int GlyphsHighest;      // ×î´óUnicodeÂëÖµ requested codepoint
 	int                 GlyphsCount;        // Glyph count (excluding missing glyphs and glyphs already set by an earlier source font)
-	ImBitVector         GlyphsSet;          // Glyph bit map (random access, 1-bit per codepoint. This will be a maximum of 8KB)
 	V_Array<int>       GlyphsList;         // Glyph codepoints list (flattened version of GlyphsSet)
 };
 
@@ -218,22 +227,15 @@ typedef struct
 	int num_vertices;
 } stbtt__csctx;
 
-inline uint64_t GetSize(FILE* f)
-{
-	uint64_t off = 0, sz = 0;
-	return ((off = ftell(f)) != -1 && !fseek(f, 0, SEEK_END) && (sz = ftell(f)) != -1 &&
-		!fseek(f, off, SEEK_SET)) ? sz : -1;
-}
-
 inline float stbtt_ScaleForPixelHeight(const TTF_HeadInfo* info, float height)
 {
-	int fheight = ttSHORT(info->data + info->hhea + 4) - ttSHORT(info->data + info->hhea + 6);
+	int fheight = GetInt16(info->data + info->hhea + 4) - GetInt16(info->data + info->hhea + 6);
 	return (float)height / fheight;
 }
 
 inline float stbtt_ScaleForMappingEmToPixels(const TTF_HeadInfo* info, float pixels)
 {
-	int unitsPerEm = ttUSHORT(info->data + info->head + 18);
+	int unitsPerEm = GetUInt16(info->data + info->head + 18);
 	return pixels / unitsPerEm;
 }
 
@@ -246,13 +248,13 @@ inline int stbtt__GetGlyfOffset(const TTF_HeadInfo* info, int glyph_index)
 
 	if (info->indexToLocFormat == 0)
 	{
-		g1 = info->glyf + ttUSHORT(info->data + info->loca + glyph_index * 2) * 2;
-		g2 = info->glyf + ttUSHORT(info->data + info->loca + glyph_index * 2 + 2) * 2;
+		g1 = info->glyf + GetUInt16(info->data + info->loca + glyph_index * 2) * 2;
+		g2 = info->glyf + GetUInt16(info->data + info->loca + glyph_index * 2 + 2) * 2;
 	}
 	else
 	{
-		g1 = info->glyf + ttULONG(info->data + info->loca + glyph_index * 4);
-		g2 = info->glyf + ttULONG(info->data + info->loca + glyph_index * 4 + 4);
+		g1 = info->glyf + GetUInt32(info->data + info->loca + glyph_index * 4);
+		g2 = info->glyf + GetUInt32(info->data + info->loca + glyph_index * 4 + 4);
 	}
 
 	return g1 == g2 ? -1 : g1; // if length is 0, return -1
@@ -263,10 +265,10 @@ inline int stbtt_GetGlyphBox(const TTF_HeadInfo* info, int glyph_index, int* x0,
 	int g = stbtt__GetGlyfOffset(info, glyph_index);
 	if (g < 0) return 0;
 
-	if (x0) *x0 = ttSHORT(info->data + g + 2);
-	if (y0) *y0 = ttSHORT(info->data + g + 4);
-	if (x1) *x1 = ttSHORT(info->data + g + 6);
-	if (y1) *y1 = ttSHORT(info->data + g + 8);
+	if (x0) *x0 = GetInt16(info->data + g + 2);
+	if (y0) *y0 = GetInt16(info->data + g + 4);
+	if (x1) *x1 = GetInt16(info->data + g + 6);
+	if (y1) *y1 = GetInt16(info->data + g + 8);
 	
 	return 1;
 }
@@ -285,25 +287,25 @@ inline void stbtt_GetGlyphBitmapBoxSubpixel(const TTF_HeadInfo* font, int glyph,
 	else 
 	{
 		// move to integral bboxes (treating pixels as little squares, what pixels get touched)?
-		if (ix0) *ix0 = floorf(x0 * scale_x + shift_x);
-		if (iy0) *iy0 = floorf(-y1 * scale_y + shift_y);
-		if (ix1) *ix1 = ceilf(x1 * scale_x + shift_x);
-		if (iy1) *iy1 = ceilf(-y0 * scale_y + shift_y);
+		if (ix0) *ix0 = (int)floorf(x0 * scale_x + shift_x);
+		if (iy0) *iy0 = (int)floorf(-y1 * scale_y + shift_y);
+		if (ix1) *ix1 = (int)ceilf(x1 * scale_x + shift_x);
+		if (iy1) *iy1 = (int)ceilf(-y0 * scale_y + shift_y);
 	}
 }
 
 inline void stbtt_GetGlyphHMetrics(const TTF_HeadInfo* info, int glyph_index, int* advanceWidth, int* leftSideBearing)
 {
-	uint16 numOfLongHorMetrics = ttUSHORT(info->data + info->hhea + 34);
+	uint16 numOfLongHorMetrics = GetUInt16(info->data + info->hhea + 34);
 	if (glyph_index < numOfLongHorMetrics)
 	{
-		if (advanceWidth)     *advanceWidth = ttSHORT(info->data + info->hmtx + 4 * glyph_index);
-		if (leftSideBearing)  *leftSideBearing = ttSHORT(info->data + info->hmtx + 4 * glyph_index + 2);
+		if (advanceWidth)     *advanceWidth = GetInt16(info->data + info->hmtx + 4 * glyph_index);
+		if (leftSideBearing)  *leftSideBearing = GetInt16(info->data + info->hmtx + 4 * glyph_index + 2);
 	}
 	else 
 	{
-		if (advanceWidth)     *advanceWidth = ttSHORT(info->data + info->hmtx + 4 * (numOfLongHorMetrics - 1));
-		if (leftSideBearing)  *leftSideBearing = ttSHORT(info->data + info->hmtx + 4 * numOfLongHorMetrics + 2 * (glyph_index - numOfLongHorMetrics));
+		if (advanceWidth)     *advanceWidth = GetInt16(info->data + info->hmtx + 4 * (numOfLongHorMetrics - 1));
+		if (leftSideBearing)  *leftSideBearing = GetInt16(info->data + info->hmtx + 4 * numOfLongHorMetrics + 2 * (glyph_index - numOfLongHorMetrics));
 	}
 }
 
@@ -314,20 +316,18 @@ inline void stbtt_GetGlyphBitmapBox(const TTF_HeadInfo* font, int glyph, float s
 
 inline void stbtt_GetFontVMetrics(const TTF_HeadInfo* info, int* ascent, int* descent, int* lineGap)
 {
-	if (ascent) *ascent = ttSHORT(info->data + info->hhea + 4);
-	if (descent) *descent = ttSHORT(info->data + info->hhea + 6);
-	if (lineGap) *lineGap = ttSHORT(info->data + info->hhea + 8);
+	if (ascent) *ascent = GetInt16(info->data + info->hhea + 4);
+	if (descent) *descent = GetInt16(info->data + info->hhea + 6);
+	if (lineGap) *lineGap = GetInt16(info->data + info->hhea + 8);
 }
 
-int AddCustomRectRegular(V_Array<FontAtlasCustomRect>& rects, int width, int height);
+uint32 TTF_FindTable(TTF_HeadInfo* info, const char* tag);
 
-uint32 stbtt__find_table(uint8* data, uint32 fontstart, const char* tag);
+int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart);
 
-int stbtt_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart);
+int TTF_FindGlyphIndex(const TTF_HeadInfo* info, int unicode_codepoint);
 
-int stbtt_FindGlyphIndex(const TTF_HeadInfo* info, int unicode_codepoint);
-
-int stbtt_PackBegin(stbtt_pack_context* spc, unsigned char* pixels, int pw, int ph, int stride_in_bytes, int padding, void* alloc_context);
+int TTF_PackBegin(stbtt_pack_context* spc, unsigned char* pixels, int pw, int ph, int stride_in_bytes, int padding, void* alloc_context);
 
 void stbrp_init_target(stbrp_context* context, int width, int height, stbrp_node* nodes, int num_nodes);
 
@@ -335,18 +335,18 @@ void ImFontAtlasBuildPackCustomRects(class FontAtlas* font, void* stbrp_context_
 
 int stbrp_pack_rects(stbrp_context* context, stbrp_rect* rects, int num_rects);
 
-int stbtt_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInfo* info, stbtt_pack_range* ranges, int num_ranges, stbrp_rect* rects);
+int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInfo* info, stbtt_pack_range* ranges, int num_ranges, stbrp_rect* rects);
 
-void stbtt_MakeGlyphBitmapSubpixel(const TTF_HeadInfo* info, unsigned char* output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int glyph);
+void TTF_MakeGlyphBitmapSubpixel(const TTF_HeadInfo* info, unsigned char* output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int glyph);
 
-void stbtt_Rasterize(stbtt__bitmap* result, float flatness_in_pixels, stbtt_vertex* vertices, int num_verts, float scale_x, float scale_y, float shift_x, float shift_y, int x_off, int y_off, int invert, void* userdata);
+void TTF_Rasterize(stbtt__bitmap* result, float flatness_in_pixels, stbtt_vertex* vertices, int num_verts, float scale_x, float scale_y, float shift_x, float shift_y, int x_off, int y_off, int invert, void* userdata);
 
-int stbtt_GetGlyphShape(const TTF_HeadInfo* info, int glyph_index, stbtt_vertex** pvertices);
+int TTF_GetGlyphShape(const TTF_HeadInfo* info, int glyph_index, stbtt_vertex** pvertices);
 
-void stbtt_PackEnd(stbtt_pack_context* spc);
+void TTF_PackEnd(stbtt_pack_context* spc);
 
 void ImFontAtlasBuildFinish(class FontAtlas* atlas);
 
-void stbtt_GetPackedQuad(const stbtt_packedchar* chardata, int pw, int ph, int char_index, float* xpos, float* ypos, stbtt_aligned_quad* q, int align_to_integer);
+void TTF_GetPackedQuad(const stbtt_packedchar* chardata, int pw, int ph, int char_index, float* xpos, float* ypos, stbtt_aligned_quad* q, int align_to_integer);
 
 void ImFontAtlasBuildRender8bppRectFromString(class FontAtlas* atlas, int x, int y, int w, int h, const char* in_str, char in_marker_char, unsigned char in_marker_pixel_value);

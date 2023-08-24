@@ -270,7 +270,7 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 	return ret;
 }
 
-DX12Texture* DX12RHI::CreateTexture(const char* name, const uint8* data, int width, int height)
+DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
 {
 	DX12Texture* ret = nullptr;
 	if (name && data && mTextures.find(name) == std::end(mTextures))
@@ -800,11 +800,7 @@ void DX12RHI::LoadTextures()
 	}
 
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
-	uint8* pixels;
-	int width, height;
-	m_Fonts["default"]->GetTextureDataRGBA32(&pixels);
-	auto g = m_Fonts["default"]->m_Font->FindGlyph(12012);
-	CreateTexture("font", pixels, m_Fonts["default"]->m_TextureWidth, m_Fonts["default"]->m_TextureHeight);
+	CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
 }
 
 void DX12RHI::InitBaseMaterials()

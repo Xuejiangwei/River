@@ -45,6 +45,8 @@ using LessRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 template <class _Kty, class _Ty, class _Pr = std::greater<_Kty>>
 using GreaterRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 
+using BitArray = std::vector<bool>;
+
 namespace River
 {
 	template <class _Ty>

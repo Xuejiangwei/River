@@ -49,7 +49,7 @@ public:
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
-	DX12Texture* CreateTexture(const char* name, const uint8* data, int width, int height);
+	DX12Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
 	
 	Unique<DX12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader);
 

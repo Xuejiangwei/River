@@ -177,6 +177,9 @@
     <ClCompile Include="RiverUI\Source\Text.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\Source\FileUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\Engine.h">
@@ -369,6 +372,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RiverUI\Header\Text.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\Header\FileUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

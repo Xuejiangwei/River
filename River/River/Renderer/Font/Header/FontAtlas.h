@@ -4,14 +4,6 @@
 #include "MathStruct.h"
 #include "Renderer/Font/Header/TTF_Info.h"
 
-struct ImFontBuildDstData
-{
-	int                 SrcCount;           // Number of source fonts targeting this destination font.
-	int                 GlyphsHighest;
-	int                 GlyphsCount;
-	ImBitVector        GlyphsSet;          // This is used to resolve collision when multiple sources are merged into a same destination font.
-};
-
 enum ImFontAtlasFlags_
 {
 	ImFontAtlasFlags_None = 0,
@@ -27,10 +19,14 @@ public:
 
 	~FontAtlas();
 
-	void GetTextureDataRGBA32(uint8** outPixels);
+	const uint8* GetTextureDataRGBA32();
+
+	int GetTextureWidth() const { return m_TextureWidth; }
+
+	int GetTextureHeight() const { return m_TextureHeight; }
 
 private:
-	void GetTextureDataAsAlpha8(uint8** outPixels);
+	const uint8* GetTextureDataAsAlpha8();
 
 	void Build();
 
@@ -55,7 +51,7 @@ public:
 	int m_PackIdLines;        // Custom texture rectangle ID for baked anti-aliased lines
 
 	TTF_HeadInfo m_FontInfo;
-	class Font* m_Font;
+	Unique<class Font> m_Font;
 
 	int m_Flags = 0;
 };

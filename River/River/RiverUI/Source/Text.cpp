@@ -69,7 +69,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                 float u2 = glyph->U1;
                 float v2 = glyph->V1;
 
-                FLOAT_2 ts = { 0.05, 0.05 };
+                FLOAT_2 ts = { 0.05f, 0.05f };
 
                 // CPU side clipping used to fit text in their frame when the frame is too small. Only does clipping for axis aligned quads.
                 /* if (cpu_fine_clip)

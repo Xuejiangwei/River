@@ -186,6 +186,7 @@
     </ClCompile>
     <ClCompile Include="Source\RiverTime.cpp" />
     <ClCompile Include="Source\UILayer.cpp" />
+    <ClCompile Include="Utils\Source\FileUtils.cpp" />
     <ClCompile Include="Utils\Source\StringUtils.cpp" />
     <ClCompile Include="Window\Source\Window.cpp" />
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
@@ -252,6 +253,7 @@
     <ClInclude Include="RiverUI\Header\UIRenderItem.h" />
     <ClInclude Include="RiverUI\Header\UIWindow.h" />
     <ClInclude Include="RiverUI\Header\Widget.h" />
+    <ClInclude Include="Utils\Header\FileUtils.h" />
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
