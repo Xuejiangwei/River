@@ -20,6 +20,14 @@ struct TTF_Table
 	uint32 Length;
 };
 
+struct TTF_CMap
+{
+	uint16 Format;
+	uint16 Length;
+	uint16 Language;
+	//Todo
+};
+
 RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_W = 122; // Actual texture will be 2 times that + 1 spacing.
 RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_H = 27;
 

@@ -2033,7 +2033,7 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
     incSize += sizeof(TTF_Table_Directory::EntrySelector);
     info->HeadDirectory.RangeShift = GetUInt16(data + incSize);
 
-    auto cmap = TTF_FindTable(info, "cmap");             // required
+    auto cmap = TTF_FindTable(info, "cmap");         // required
     info->loca = TTF_FindTable(info, "loca");             // required
     info->head = TTF_FindTable(info, "head");             // required
     info->glyf = TTF_FindTable(info, "glyf");             // required
@@ -2041,8 +2041,6 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
     info->hmtx = TTF_FindTable(info, "hmtx");             // required
     info->kern = TTF_FindTable(info, "kern");             // not required
     info->gpos = TTF_FindTable(info, "GPOS");             // not required
-
-
 
     if (!cmap || !info->head || !info->hhea || !info->hmtx) return 0;
 
@@ -2055,10 +2053,10 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
         // initialization for CFF / Type2 fonts (OTF)
     }
 
-    auto t = TTF_FindTable(info, "maxp");
-    if (t)
+    auto maxpOffset = TTF_FindTable(info, "maxp");
+    if (maxpOffset)
     {
-        info->numGlyphs = GetUInt16(info->data + t + 4);
+        info->numGlyphs = GetUInt16(info->data + maxpOffset + sizeof(TTF_Table::Offset));
     }
     else
     {
@@ -2067,10 +2065,7 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
 
     info->svg = -1;
 
-    // find a cmap encoding table we understand *now* to avoid searching
-    // later. (todo: could make this installable)
-    // the same regardless of glyph.
-    auto numTables = GetUInt16(info->data + cmap + 2);
+    auto numTables = GetUInt16(info->data + cmap + sizeof(TTF_CMap::Format));
     info->indexMap = 0;
 
     for (int i = 0; i < numTables; ++i)
