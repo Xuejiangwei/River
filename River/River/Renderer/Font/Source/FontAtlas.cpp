@@ -108,7 +108,7 @@ void FontAtlas::BuildTrueType()
 		{
 			for (unsigned int codepoint = src_range[0]; codepoint <= src_range[1]; codepoint++)
 			{
-				if (!TTF_FindGlyphIndex(&srcData.FontInfo, codepoint))    // It is actually in the font?
+				if (!TTF_FindGlyphIndex(&srcData.FontInfo, codepoint))
 					continue;
 
 				srcData.GlyphsCount++;
@@ -193,12 +193,12 @@ void FontAtlas::BuildTrueType()
 	TTF_PackBegin(&spc, NULL, m_TextureWidth, TEX_HEIGHT_MAX, 0, 1, NULL);
 	ImFontAtlasBuildPackCustomRects(this, spc.pack_info);
 
-	//打包每个字体
+	//包裹每个字体，计算出每个字体的左下角位置与宽高
 	{
 		if (srcData.GlyphsCount == 0)
 			return;//continue;
 
-		stbrp_pack_rects((stbrp_context*)spc.pack_info, srcData.Rects, srcData.GlyphsCount);
+		TTF_PackRects((stbrp_context*)spc.pack_info, srcData.Rects, srcData.GlyphsCount);
 
 		// Extend texture height and mark missing glyphs as non-packed so we won't render them.
 		// FIXME: We are not handling packing failure here (would happen if we got off TEX_HEIGHT_MAX or if a single if larger than TexWidth?)
@@ -216,25 +216,12 @@ void FontAtlas::BuildTrueType()
 	spc.height = m_TextureHeight;
 
 	// 8. Render/rasterize font characters into the texture
-	//for (int src_i = 0; src_i < src_tmp_array.size(); src_i++)
-	{
-		if (srcData.GlyphsCount == 0)
-			return;//continue;
+	if (srcData.GlyphsCount == 0)
+		return;//continue;
 
-		TTF_PackFontRangesRenderIntoRects(&spc, &srcData.FontInfo, &srcData.PackRange, 1, srcData.Rects);
-
-		// Apply multiply operator
-		/*if (cfg.RasterizerMultiply != 1.0f)
-		{
-			unsigned char multiply_table[256];
-			ImFontAtlasBuildMultiplyCalcLookupTable(multiply_table, cfg.RasterizerMultiply);
-			stbrp_rect* r = &src_tmp.Rects[0];
-			for (int glyph_i = 0; glyph_i < src_tmp.GlyphsCount; glyph_i++, r++)
-				if (r->was_packed)
-					ImFontAtlasBuildMultiplyRectAlpha8(multiply_table, atlas->TexPixelsAlpha8, r->x, r->y, r->w, r->h, atlas->TexWidth * 1);
-		}*/
-		srcData.Rects = NULL;
-	}
+	//将每个字体光栅化到alpha8上
+	TTF_PackFontRangesRenderIntoRects(&spc, &srcData.FontInfo, &srcData.PackRange, 1, srcData.Rects);
+	srcData.Rects = NULL;
 
 	// End packing
 	TTF_PackEnd(&spc);

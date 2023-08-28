@@ -3,6 +3,21 @@
 #include "RiverHead.h"
 #include "MathStruct.h"
 
+enum class TTF_HeadType
+{
+	head,		//字体头，字体的全局信息
+	cmap,		//字符代码到图元的映射，将字符代码映射为图元的索引
+	glyf,		//图元数据，图元的轮廓定义及网格调整指令
+	maxp,		//最大需要求表，字体中所需内存分配情况的汇总数据
+	mmtx,		//水平规格，图元水平规格
+	loca,		//位置表索引，把图元索引转换为图元的位置
+	name,       //命名表，版权说明、字体名、字体族名、风格名等等
+	hhea,		//水平布局头,包含布局其字符水平书写的字体所需的信息，如：从左到右或从右到左、基于基线上升/下降、倾斜等
+	hmtx,		//水平度量，字体水平布局星系：上高、下高、行间距、最大前进宽度、最小左支撑、最小右支撑
+	kerm,		//字距调整表，字距调整对的数组
+	post,		//PostScript信息，所有图元的PostScript   FontInfo目录项和PostScript名
+};
+
 struct TTF_Table_Directory
 {
 	uint32 Version;
@@ -20,12 +35,62 @@ struct TTF_Table
 	uint32 Length;
 };
 
+struct TTF_Head
+{
+	uint32_t					m_Version;
+	uint32_t					m_FontRevision;
+	uint32_t				m_ChecksumAdjustment;
+	uint32_t				m_MagicNumber;
+	uint16_t				m_Flags;
+	uint16_t				m_UnitsPerEm;
+	int64_t	m_Created;
+	int64_t	m_Modified;
+	int16_t					m_xMin;
+	int16_t					m_yMin;
+	int16_t					m_xMax;
+	int16_t					m_yMax;
+	uint16_t				m_macType;
+	uint16_t				m_lowestRecPPEM;
+	int16_t					m_fondDirectionHint;
+	int16_t					m_indexToLocFormat;
+	int16_t					m_glyphDataFormat;
+};
+
+struct TTF_EncodingRecord
+{
+	uint16 PlatformId;
+	uint16 EncodingId;
+	uint32 Offset;
+};
+
 struct TTF_CMap
 {
 	uint16 Format;
 	uint16 Length;
-	uint16 Language;
+	//TTF_EncodingRecord EncodingRecords[Length];
 	//Todo
+};
+
+struct TTF_Glyph
+{
+	uint16 ContourNum;		//如果轮廓数为正数或零，则为单个字形； 如果轮廓数小于零，则字形为复合字形
+	uint16 MinX;
+	uint16 MinY;
+	uint16 MaxX;
+	uint16 MaxY;
+};
+
+//简单字形的数据定义，主要通过 xCoordinates、yCoordinates、endPtsOfContours 和 flags 确定字形的每个轮廓已经矢量方向，
+//然后通过 instructionLength、instructions 描述的指令调整字形的最终显示。
+
+struct TTF_GlyphSingle
+{
+	uint16 EndPtsOfContours;		//[n]个 每个轮廓的最后一个点的数组；n 是轮廓的数量；数组项是每个点的索引
+	uint16 InstructionLength;		//指令所需的总字节数
+	uint8 instructions;				//此字形的指令数组，长度为InstructionLength
+	uint8 Flags;					//m个，标志数组，描述是否在曲线上、是否重复等情况
+	uint8 xCoordinates;				//m个，x 坐标数组；第一个是相对于（0,0），其他是相对于前一点
+	uint8 yCoordinates;				//m个，y 坐标数组；第一个是相对于（0,0），其他是相对于前一点
 };
 
 RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_W = 122; // Actual texture will be 2 times that + 1 spacing.
@@ -127,7 +192,7 @@ struct TTF_HeadInfo
 	int numGlyphs;
 	int loca, head, glyf, hhea, hmtx, kern, gpos, svg;
 	int indexMap;
-	int indexToLocFormat;              // format needed to map from glyph index to glyph
+	int indexToLocFormat;             //0 是 short, 1 是 int
 
 	stbtt__buf cff;                    // cff font data
 	stbtt__buf charstrings;            // the charstring index
@@ -247,7 +312,7 @@ inline float stbtt_ScaleForMappingEmToPixels(const TTF_HeadInfo* info, float pix
 	return pixels / unitsPerEm;
 }
 
-inline int stbtt__GetGlyfOffset(const TTF_HeadInfo* info, int glyph_index)
+inline int TTF_GetGlyfOffset(const TTF_HeadInfo* info, int glyph_index)
 {
 	int g1, g2;
 
@@ -270,7 +335,7 @@ inline int stbtt__GetGlyfOffset(const TTF_HeadInfo* info, int glyph_index)
 
 inline int stbtt_GetGlyphBox(const TTF_HeadInfo* info, int glyph_index, int* x0, int* y0, int* x1, int* y1)
 {
-	int g = stbtt__GetGlyfOffset(info, glyph_index);
+	int g = TTF_GetGlyfOffset(info, glyph_index);
 	if (g < 0) return 0;
 
 	if (x0) *x0 = GetInt16(info->data + g + 2);
@@ -341,7 +406,7 @@ void stbrp_init_target(stbrp_context* context, int width, int height, stbrp_node
 
 void ImFontAtlasBuildPackCustomRects(class FontAtlas* font, void* stbrp_context_opaque);
 
-int stbrp_pack_rects(stbrp_context* context, stbrp_rect* rects, int num_rects);
+int TTF_PackRects(stbrp_context* context, stbrp_rect* rects, int num_rects);
 
 int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInfo* info, stbtt_pack_range* ranges, int num_ranges, stbrp_rect* rects);
 

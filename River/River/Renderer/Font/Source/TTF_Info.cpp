@@ -123,24 +123,6 @@ enum {
 #define stbtt_tag4(p,c0,c1,c2,c3) ((p)[0] == (c0) && (p)[1] == (c1) && (p)[2] == (c2) && (p)[3] == (c3))
 #define stbtt_tag(p,str) stbtt_tag4(p,str[0],str[1],str[2],str[3])
 
-static int rect_height_compare(const void* a, const void* b)
-{
-    const stbrp_rect* p = (const stbrp_rect*)a;
-    const stbrp_rect* q = (const stbrp_rect*)b;
-    if (p->h > q->h)
-        return -1;
-    if (p->h < q->h)
-        return  1;
-    return (p->w > q->w) ? -1 : (p->w < q->w);
-}
-
-static int rect_original_order(const void* a, const void* b)
-{
-    const stbrp_rect* p = (const stbrp_rect*)a;
-    const stbrp_rect* q = (const stbrp_rect*)b;
-    return (p->was_packed < q->was_packed) ? -1 : (p->was_packed > q->was_packed);
-}
-
 static stbtt__buf stbtt__new_buf(const void* p, size_t size)
 {
     stbtt__buf r;
@@ -1540,7 +1522,7 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context* c, int widt
 {
     int best_waste = (1 << 30), best_x, best_y = (1 << 30);
     stbrp__findresult fr;
-    stbrp_node** prev, * node, * tail, ** best = NULL;
+    stbrp_node** prev, * node, * tail, ** best = nullptr;
 
     // align to multiple of c->align
     width = (width + c->align - 1);
@@ -1549,35 +1531,42 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context* c, int widt
     assert(width % c->align == 0);
 
     // if it can't possibly fit, bail immediately
-    if (width > c->width || height > c->height) {
-        fr.prev_link = NULL;
+    if (width > c->width || height > c->height)
+    {
+        fr.prev_link = nullptr;
         fr.x = fr.y = 0;
         return fr;
     }
 
     node = c->active_head;
     prev = &c->active_head;
-    while (node->x + width <= c->width) {
+    while (node->x + width <= c->width)
+    {
         int y, waste;
         y = stbrp__skyline_find_min_y(c, node, node->x, width, &waste);
-        if (c->heuristic == STBRP_HEURISTIC_Skyline_BL_sortHeight) { // actually just want to test BL
+        if (c->heuristic == STBRP_HEURISTIC_Skyline_BL_sortHeight) // actually just want to test BL
+        { 
             // bottom left
-            if (y < best_y) {
+            if (y < best_y) 
+            {
                 best_y = y;
                 best = prev;
             }
         }
-        else {
+        else 
+        {
             // best-fit
             if (y + height <= c->height) {
                 // can only use it if it first vertically
-                if (y < best_y || (y == best_y && waste < best_waste)) {
+                if (y < best_y || (y == best_y && waste < best_waste)) 
+                {
                     best_y = y;
                     best_waste = waste;
                     best = prev;
                 }
             }
         }
+
         prev = &node->next;
         node = node->next;
     }
@@ -1601,7 +1590,8 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context* c, int widt
     //
     // This makes BF take about 2x the time
 
-    if (c->heuristic == STBRP_HEURISTIC_Skyline_BF_sortHeight) {
+    if (c->heuristic == STBRP_HEURISTIC_Skyline_BF_sortHeight) 
+    {
         tail = c->active_head;
         node = c->active_head;
         prev = &c->active_head;
@@ -1643,22 +1633,23 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context* c, int widt
 static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context* context, int width, int height)
 {
     // find best position according to heuristic
-    stbrp__findresult res = stbrp__skyline_find_best_pos(context, width, height);
+    stbrp__findresult result = stbrp__skyline_find_best_pos(context, width, height);
     stbrp_node* node, * cur;
 
     // bail if:
     //    1. it failed
     //    2. the best node doesn't fit (we don't always check this)
     //    3. we're out of memory
-    if (res.prev_link == NULL || res.y + height > context->height || context->free_head == NULL) {
-        res.prev_link = NULL;
-        return res;
+    if (result.prev_link == nullptr || result.y + height > context->height || context->free_head == nullptr)
+    {
+        result.prev_link = nullptr;
+        return result;
     }
 
     // on success, create new node
     node = context->free_head;
-    node->x = (int)res.x;
-    node->y = (int)(res.y + height);
+    node->x = result.x;
+    node->y = result.y + height;
 
     context->free_head = node->next;
 
@@ -1666,20 +1657,23 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context* context, i
     // let 'cur' point to the remaining nodes needing to be
     // stiched back in
 
-    cur = *res.prev_link;
-    if (cur->x < res.x) {
+    cur = *result.prev_link;
+    if (cur->x < result.x) 
+    {
         // preserve the existing one, so start testing with the next one
         stbrp_node* next = cur->next;
         cur->next = node;
         cur = next;
     }
-    else {
-        *res.prev_link = node;
+    else 
+    {
+        *result.prev_link = node;
     }
 
     // from here, traverse cur and free the nodes, until we get to one
     // that shouldn't be freed
-    while (cur->next && cur->next->x <= res.x + width) {
+    while (cur->next && cur->next->x <= result.x + width)
+    {
         stbrp_node* next = cur->next;
         // move the current node to the free list
         cur->next = context->free_head;
@@ -1690,8 +1684,8 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context* context, i
     // stitch the list back in
     node->next = cur;
 
-    if (cur->x < res.x + width)
-        cur->x = (int)(res.x + width);
+    if (cur->x < result.x + width)
+        cur->x = (int)(result.x + width);
 
 #ifdef _DEBUG
     cur = context->active_head;
@@ -1704,12 +1698,14 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context* context, i
     {
         int count = 0;
         cur = context->active_head;
-        while (cur) {
+        while (cur) 
+        {
             cur = cur->next;
             ++count;
         }
         cur = context->free_head;
-        while (cur) {
+        while (cur)
+        {
             cur = cur->next;
             ++count;
         }
@@ -1717,7 +1713,7 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context* context, i
     }
 #endif
 
-    return res;
+    return result;
 }
 
 static float stbtt__oversample_shift(int oversample)
@@ -1735,7 +1731,8 @@ static float stbtt__oversample_shift(int oversample)
 static int stbtt__close_shape(stbtt_vertex* vertices, int num_vertices, int was_off, int start_off,
     int sx, int sy, int scx, int scy, int cx, int cy)
 {
-    if (start_off) {
+    if (start_off)
+    {
         if (was_off)
             stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (cx + scx) >> 1, (cy + scy) >> 1, cx, cy);
         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, scx, scy);
@@ -1756,7 +1753,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
     uint8* data = info->data;
     stbtt_vertex* vertices = 0;
     int num_vertices = 0;
-    int g = stbtt__GetGlyfOffset(info, glyph_index);
+    int g = TTF_GetGlyfOffset(info, glyph_index);
 
     *pvertices = NULL;
 
@@ -1764,16 +1761,28 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
     numberOfContours = GetInt16(data + g);
 
-    if (numberOfContours > 0) {
-        uint8 flags = 0, flagcount;
-        int ins, i, j = 0, m, n, next_move, was_off = 0, off, start_off = 0;
-        int x, y, cx, cy, sx, sy, scx, scy;
-        uint8* points;
-        endPtsOfContours = (data + g + 10);
-        ins = GetUInt16(data + g + 10 + numberOfContours * 2);
-        points = data + g + 10 + numberOfContours * 2 + 2 + ins;
 
-        n = 1 + GetUInt16(endPtsOfContours + numberOfContours * 2 - 2);
+    //简单图元
+    if (numberOfContours > 0) 
+    {
+        //简单图元的数据
+        //USHORT   endPtsOfContours[n];   //n=number   of   contours
+        //USHORT   instructionlength;
+        //BYTE   instruction[i];       //i   =   instruction   length
+        //BYTE   flags[];                   //variable   size
+        //BYTE   xCoordinates[];     //variable   size
+        //BYTE   yCoordinates[];     //variable   size
+
+        uint8 flags = 0, flagcount;
+        int insLength, i, j = 0, m, n, next_move, was_off = 0, off, start_off = 0;
+        int x, y, cx, cy, sx, sy, scx, scy;
+        uint8* flagPoints;
+        endPtsOfContours = (data + g + sizeof(TTF_Glyph));
+        insLength = GetUInt16(endPtsOfContours + numberOfContours * sizeof(TTF_GlyphSingle::EndPtsOfContours));
+        flagPoints = endPtsOfContours + numberOfContours * sizeof(TTF_GlyphSingle::EndPtsOfContours) + sizeof(TTF_GlyphSingle::InstructionLength) + insLength;
+
+        //获得最后一个Contours的结束点索引
+        n = 1 + GetUInt16(endPtsOfContours + numberOfContours * sizeof(TTF_GlyphSingle::EndPtsOfContours) - sizeof(TTF_GlyphSingle::EndPtsOfContours));
 
         m = n + 2 * numberOfContours;  // a loose bound on how many vertices we might need
         vertices = (stbtt_vertex*)STBTT_malloc(m * sizeof(vertices[0]), info->userdata);
@@ -1791,46 +1800,60 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
         // first load flags
 
-        for (i = 0; i < n; ++i) {
-            if (flagcount == 0) {
-                flags = *points++;
+        for (i = 0; i < n; ++i) 
+        {
+            if (flagcount == 0) 
+            {
+                flags = *flagPoints++;
                 if (flags & 8)
-                    flagcount = *points++;
+                    flagcount = *flagPoints++;
             }
             else
+            {
                 --flagcount;
+            }
+
             vertices[off + i].type = flags;
         }
 
         // now load x coordinates
         x = 0;
-        for (i = 0; i < n; ++i) {
+        for (i = 0; i < n; ++i)
+        {
             flags = vertices[off + i].type;
-            if (flags & 2) {
-                int16 dx = *points++;
+            if (flags & 2) 
+            {
+                int16 dx = *flagPoints++;
                 x += (flags & 16) ? dx : -dx; // ???
             }
-            else {
-                if (!(flags & 16)) {
-                    x = x + (int16)(points[0] * 256 + points[1]);
-                    points += 2;
+            else 
+            {
+                if (!(flags & 16)) 
+                {
+                    x = x + (int16)(flagPoints[0] * 256 + flagPoints[1]);
+                    flagPoints += 2;
                 }
             }
+
             vertices[off + i].x = (int16)x;
         }
 
         // now load y coordinates
         y = 0;
-        for (i = 0; i < n; ++i) {
+        for (i = 0; i < n; ++i) 
+        {
             flags = vertices[off + i].type;
-            if (flags & 4) {
-                int16 dy = *points++;
+            if (flags & 4) 
+            {
+                int16 dy = *flagPoints++;
                 y += (flags & 32) ? dy : -dy; // ???
             }
-            else {
-                if (!(flags & 32)) {
-                    y = y + (int16)(points[0] * 256 + points[1]);
-                    points += 2;
+            else 
+            {
+                if (!(flags & 32)) 
+                {
+                    y = y + (int16)(flagPoints[0] * 256 + flagPoints[1]);
+                    flagPoints += 2;
                 }
             }
             vertices[off + i].y = (int16)y;
@@ -1844,47 +1867,55 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             x = (int16)vertices[off + i].x;
             y = (int16)vertices[off + i].y;
 
-            if (next_move == i) {
+            if (next_move == i) 
+            {
                 if (i != 0)
                     num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, sx, sy, scx, scy, cx, cy);
 
                 // now start the new one
                 start_off = !(flags & 1);
-                if (start_off) {
+                if (start_off) 
+                {
                     // if we start off with an off-curve point, then when we need to find a point on the curve
                     // where we can start, and we need to save some state for when we wraparound.
                     scx = x;
                     scy = y;
-                    if (!(vertices[off + i + 1].type & 1)) {
+                    if (!(vertices[off + i + 1].type & 1)) 
+                    {
                         // next point is also a curve point, so interpolate an on-point curve
                         sx = (x + (int)vertices[off + i + 1].x) >> 1;
                         sy = (y + (int)vertices[off + i + 1].y) >> 1;
                     }
-                    else {
+                    else
+                    {
                         // otherwise just use the next point as our start point
                         sx = (int)vertices[off + i + 1].x;
                         sy = (int)vertices[off + i + 1].y;
                         ++i; // we're using point i+1 as the starting point, so skip it
                     }
                 }
-                else {
+                else 
+                {
                     sx = x;
                     sy = y;
                 }
+
                 stbtt_setvertex(&vertices[num_vertices++], STBTT_vmove, sx, sy, 0, 0);
                 was_off = 0;
                 next_move = 1 + GetUInt16(endPtsOfContours + j * 2);
                 ++j;
             }
             else {
-                if (!(flags & 1)) { // if it's a curve
+                if (!(flags & 1)) 
+                { // if it's a curve
                     if (was_off) // two off-curve control points in a row means interpolate an on-curve midpoint
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (cx + x) >> 1, (cy + y) >> 1, cx, cy);
                     cx = x;
                     cy = y;
                     was_off = 1;
                 }
-                else {
+                else
+                {
                     if (was_off)
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, x, y, cx, cy);
                     else
@@ -1895,7 +1926,8 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
         }
         num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, sx, sy, scx, scy, cx, cy);
     }
-    else if (numberOfContours < 0) {
+    else if (numberOfContours < 0) 
+    {
         // Compound shapes.
         int more = 1;
         uint8* comp = data + g + 10;
@@ -2033,7 +2065,7 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
     incSize += sizeof(TTF_Table_Directory::EntrySelector);
     info->HeadDirectory.RangeShift = GetUInt16(data + incSize);
 
-    auto cmap = TTF_FindTable(info, "cmap");         // required
+    auto cmap = TTF_FindTable(info, "cmap");               // required
     info->loca = TTF_FindTable(info, "loca");             // required
     info->head = TTF_FindTable(info, "head");             // required
     info->glyf = TTF_FindTable(info, "glyf");             // required
@@ -2070,27 +2102,29 @@ int TTF_InitFont(TTF_HeadInfo* info, uint8* data, int fontstart)
 
     for (int i = 0; i < numTables; ++i)
     {
-        uint32_t encoding_record = cmap + 4 + 8 * i;
-        // find an encoding we understand:
-        switch (GetUInt16(info->data + encoding_record)) {
-        case STBTT_PLATFORM_ID_MICROSOFT:
-            switch (GetUInt16(info->data + encoding_record + 2)) {
-            case STBTT_MS_EID_UNICODE_BMP:
-            case STBTT_MS_EID_UNICODE_FULL:
-                // MS/Unicode
-                info->indexMap= cmap + GetUInt32(info->data + encoding_record + 4);
+        uint32_t encodingRecord = cmap + sizeof(TTF_CMap) + sizeof(TTF_EncodingRecord) * i;
+        switch (GetUInt16(info->data + encodingRecord)) 
+        {
+            case STBTT_PLATFORM_ID_MICROSOFT:
+                switch (GetUInt16(info->data + encodingRecord + offsetof(TTF_EncodingRecord, EncodingId)))
+                {
+                    case STBTT_MS_EID_UNICODE_BMP:
+                    case STBTT_MS_EID_UNICODE_FULL:
+                        // MS/Unicode
+                        info->indexMap= cmap + GetUInt32(info->data + encodingRecord + offsetof(TTF_EncodingRecord, Offset));
+                        break;
+                }
                 break;
-            }
-            break;
-        case STBTT_PLATFORM_ID_UNICODE:
-            // Mac/iOS has these
-            // all the encodingIDs are unicode, so we don't bother to check it
-            info->indexMap = cmap + GetUInt32(info->data + encoding_record + 4);
-            break;
+            case STBTT_PLATFORM_ID_UNICODE:
+                // Mac/iOS has these
+                // all the encodingIDs are unicode, so we don't bother to check it
+                info->indexMap = cmap + GetUInt32(info->data + encodingRecord + offsetof(TTF_EncodingRecord, Offset));
+                break;
         }
     }
     if (info->indexMap == 0) return 0;
 
+    //int o = offsetof(TTF_Head, m_indexToLocFormat);
     info->indexToLocFormat = GetUInt16(info->data + info->head + 50);
 
     return 1;
@@ -2102,24 +2136,28 @@ int TTF_FindGlyphIndex(const TTF_HeadInfo* info, int unicode_codepoint)
     uint32_t index_map = info->indexMap;
 
     uint16_t format = GetUInt16(data + index_map + 0);
-    if (format == 0) { // apple byte encoding
+    if (format == 0) 
+    { // apple byte encoding
         int32_t bytes = GetUInt16(data + index_map + 2);
         if (unicode_codepoint < bytes - 6)
             return ttBYTE(data + index_map + 6 + unicode_codepoint);
         return 0;
     }
-    else if (format == 6) {
+    else if (format == 6) 
+    {
         uint32_t first = GetUInt16(data + index_map + 6);
         uint32_t count = GetUInt16(data + index_map + 8);
         if ((uint32_t)unicode_codepoint >= first && (uint32_t)unicode_codepoint < first + count)
             return GetUInt16(data + index_map + 10 + (unicode_codepoint - first) * 2);
         return 0;
     }
-    else if (format == 2) {
+    else if (format == 2) 
+    {
         // STBTT_assert(0); // @TODO: high-byte mapping for japanese/chinese/korean
         return 0;
     }
-    else if (format == 4) { // standard mapping for windows fonts: binary search collection of ranges
+    else if (format == 4) 
+    { // standard mapping for windows fonts: binary search collection of ranges
         uint16_t segcount = GetUInt16(data + index_map + 6) >> 1;
         uint16_t searchRange = GetUInt16(data + index_map + 8) >> 1;
         uint16_t entrySelector = GetUInt16(data + index_map + 10);
@@ -2165,12 +2203,14 @@ int TTF_FindGlyphIndex(const TTF_HeadInfo* info, int unicode_codepoint)
             return GetUInt16(data + offset + (unicode_codepoint - start) * 2 + index_map + 14 + segcount * 6 + 2 + 2 * item);
         }
     }
-    else if (format == 12 || format == 13) {
+    else if (format == 12 || format == 13)
+    {
         uint32_t ngroups = GetUInt32(data + index_map + 12);
         int32_t low, high;
         low = 0; high = (int32_t)ngroups;
         // Binary search the right group.
-        while (low < high) {
+        while (low < high) 
+        {
             int32_t mid = low + ((high - low) >> 1); // rounds down, so low <= mid < high
             uint32_t start_char = GetUInt32(data + index_map + 16 + mid * 12);
             uint32_t end_char = GetUInt32(data + index_map + 16 + mid * 12 + 4);
@@ -2178,7 +2218,8 @@ int TTF_FindGlyphIndex(const TTF_HeadInfo* info, int unicode_codepoint)
                 high = mid;
             else if ((uint32_t)unicode_codepoint > end_char)
                 low = mid + 1;
-            else {
+            else
+            {
                 uint32_t start_glyph = GetUInt32(data + index_map + 16 + mid * 12 + 8);
                 if (format == 12)
                     return start_glyph + unicode_codepoint - start_char;
@@ -2264,7 +2305,7 @@ void ImFontAtlasBuildPackCustomRects(class FontAtlas* atlas, void* stbrp_context
         pack_rects[i].w = user_rects[i].Width;
         pack_rects[i].h = user_rects[i].Height;
     }
-    stbrp_pack_rects(pack_context, &pack_rects[0], (int)pack_rects.size());
+    TTF_PackRects(pack_context, &pack_rects[0], (int)pack_rects.size());
     for (int i = 0; i < pack_rects.size(); i++)
     {
         if (pack_rects[i].was_packed)
@@ -2277,42 +2318,67 @@ void ImFontAtlasBuildPackCustomRects(class FontAtlas* atlas, void* stbrp_context
     }
 }
 
-int stbrp_pack_rects(stbrp_context* context, stbrp_rect* rects, int num_rects)
+int TTF_PackRects(stbrp_context* context, stbrp_rect* rects, int num_rects)
 {
     int i, all_rects_packed = 1;
 
     // we use the 'was_packed' field internally to allow sorting/unsorting
-    for (i = 0; i < num_rects; ++i) {
+    for (i = 0; i < num_rects; ++i) 
+    {
         rects[i].was_packed = i;
     }
 
     // sort according to heuristic
-    std::qsort(rects, num_rects, sizeof(rects[0]), rect_height_compare);
-
-    for (i = 0; i < num_rects; ++i) {
-        if (rects[i].w == 0 || rects[i].h == 0) {
-            rects[i].x = rects[i].y = 0;  // empty rect needs no space
+    std::qsort(rects, num_rects, sizeof(rects[0]), [](const void* a, const void* b)
+        {
+            const stbrp_rect* p = (const stbrp_rect*)a;
+            const stbrp_rect* q = (const stbrp_rect*)b;
+            if (p->h > q->h)
+                return -1;
+            if (p->h < q->h)
+                return  1;
+            return (p->w > q->w) ? -1 : (p->w < q->w);
         }
-        else {
+    );
+
+    for (i = 0; i < num_rects; ++i) 
+    {
+        if (rects[i].w == 0 || rects[i].h == 0) 
+        {
+            rects[i].x = rects[i].y = 0;  // 空Rect不需要空间
+        }
+        else 
+        {
             stbrp__findresult fr = stbrp__skyline_pack_rectangle(context, rects[i].w, rects[i].h);
-            if (fr.prev_link) {
+            if (fr.prev_link) 
+            {
                 rects[i].x = (int)fr.x;
                 rects[i].y = (int)fr.y;
             }
-            else {
+            else 
+            {
                 rects[i].x = rects[i].y = STBRP__MAXVAL;
             }
         }
     }
 
     // unsort
-    std::qsort(rects, num_rects, sizeof(rects[0]), rect_original_order);
+    std::qsort(rects, num_rects, sizeof(rects[0]), [](const void* a, const void* b)
+        {
+            const stbrp_rect* p = (const stbrp_rect*)a;
+            const stbrp_rect* q = (const stbrp_rect*)b;
+            return (p->was_packed < q->was_packed) ? -1 : (p->was_packed > q->was_packed);
+        }
+    );
 
     // set was_packed flags and all_rects_packed status
-    for (i = 0; i < num_rects; ++i) {
+    for (i = 0; i < num_rects; ++i) 
+    {
         rects[i].was_packed = !(rects[i].x == STBRP__MAXVAL && rects[i].y == STBRP__MAXVAL);
         if (!rects[i].was_packed)
+        {
             all_rects_packed = 0;
+        }
     }
 
     // return the all_rects_packed status
@@ -2328,7 +2394,8 @@ int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInf
     int old_v_over = spc->v_oversample;
 
     k = 0;
-    for (i = 0; i < num_ranges; ++i) {
+    for (i = 0; i < num_ranges; ++i)
+    {
         float fh = ranges[i].font_size;
         float scale = fh > 0 ? stbtt_ScaleForPixelHeight(info, fh) : stbtt_ScaleForMappingEmToPixels(info, -fh);
         float recip_h, recip_v, sub_x, sub_y;
@@ -2338,9 +2405,11 @@ int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInf
         recip_v = 1.0f / spc->v_oversample;
         sub_x = stbtt__oversample_shift(spc->h_oversample);
         sub_y = stbtt__oversample_shift(spc->v_oversample);
-        for (j = 0; j < ranges[i].num_chars; ++j) {
+        for (j = 0; j < ranges[i].num_chars; ++j)
+        {
             stbrp_rect* r = &rects[k];
-            if (r->was_packed && r->w != 0 && r->h != 0) {
+            if (r->was_packed && r->w != 0 && r->h != 0)
+            {
                 stbtt_packedchar* bc = &ranges[i].chardata_for_range[j];
                 int advance, lsb, x0, y0, x1, y1;
                 int codepoint = ranges[i].array_of_unicode_codepoints == NULL ? ranges[i].first_unicode_codepoint_in_range + j : ranges[i].array_of_unicode_codepoints[j];
@@ -2353,12 +2422,8 @@ int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInf
                 r->w -= pad;
                 r->h -= pad;
                 stbtt_GetGlyphHMetrics(info, glyph, &advance, &lsb);
-                stbtt_GetGlyphBitmapBox(info, glyph,
-                    scale * spc->h_oversample,
-                    scale * spc->v_oversample,
-                    &x0, &y0, &x1, &y1);
-                TTF_MakeGlyphBitmapSubpixel(info,
-                    spc->pixels + r->x + r->y * spc->stride_in_bytes,
+                stbtt_GetGlyphBitmapBox(info, glyph, scale * spc->h_oversample, scale * spc->v_oversample, &x0, &y0, &x1, &y1);
+                TTF_MakeGlyphBitmapSubpixel(info, spc->pixels + r->x + r->y * spc->stride_in_bytes,
                     r->w - spc->h_oversample + 1,
                     r->h - spc->v_oversample + 1,
                     spc->stride_in_bytes,
@@ -2390,13 +2455,16 @@ int TTF_PackFontRangesRenderIntoRects(stbtt_pack_context* spc, const TTF_HeadInf
                 if (glyph == 0)
                     missing_glyph = j;
             }
-            else if (spc->skip_missing) {
+            else if (spc->skip_missing)
+            {
                 return_value = 0;
             }
-            else if (r->was_packed && r->w == 0 && r->h == 0 && missing_glyph >= 0) {
+            else if (r->was_packed && r->w == 0 && r->h == 0 && missing_glyph >= 0)
+            {
                 ranges[i].chardata_for_range[j] = ranges[i].chardata_for_range[missing_glyph];
             }
-            else {
+            else
+            {
                 return_value = 0; // if any fail, report failure
             }
 
