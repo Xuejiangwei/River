@@ -1761,6 +1761,18 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
     numberOfContours = GetInt16(data + g);
 
+    enum Flag
+    {
+        OnCurve = 1 << 0,
+        XShortVector = 1 << 1,
+        YShortVector = 1 << 2,
+        Repeat = 1 << 3,
+        XSame = 1 << 4,
+        YSame = 1 << 5,
+        OverSimple = 1 << 6,
+        Reserved = 1 << 7
+    };
+
 
     //¼òµ¥Í¼Ôª
     if (numberOfContours > 0) 
@@ -1805,7 +1817,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             if (flagcount == 0) 
             {
                 flags = *flagPoints++;
-                if (flags & 8)
+                if (flags & Flag::Repeat)
                     flagcount = *flagPoints++;
             }
             else
@@ -1821,14 +1833,14 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
         for (i = 0; i < n; ++i)
         {
             flags = vertices[off + i].type;
-            if (flags & 2) 
+            if (flags & Flag::XShortVector)
             {
                 int16 dx = *flagPoints++;
-                x += (flags & 16) ? dx : -dx; // ???
+                x += (flags & Flag::XSame) ? dx : -dx; // ???
             }
             else 
             {
-                if (!(flags & 16)) 
+                if (!(flags & Flag::XSame))
                 {
                     x = x + (int16)(flagPoints[0] * 256 + flagPoints[1]);
                     flagPoints += 2;
@@ -1843,14 +1855,14 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
         for (i = 0; i < n; ++i) 
         {
             flags = vertices[off + i].type;
-            if (flags & 4) 
+            if (flags & Flag::YShortVector)
             {
                 int16 dy = *flagPoints++;
-                y += (flags & 32) ? dy : -dy; // ???
+                y += (flags & Flag::YSame) ? dy : -dy; // ???
             }
             else 
             {
-                if (!(flags & 32)) 
+                if (!(flags & Flag::YSame))
                 {
                     y = y + (int16)(flagPoints[0] * 256 + flagPoints[1]);
                     flagPoints += 2;
@@ -1862,7 +1874,8 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
         // now convert them to our format
         num_vertices = 0;
         sx = sy = cx = cy = scx = scy = 0;
-        for (i = 0; i < n; ++i) {
+        for (i = 0; i < n; ++i) 
+        {
             flags = vertices[off + i].type;
             x = (int16)vertices[off + i].x;
             y = (int16)vertices[off + i].y;
@@ -1870,17 +1883,19 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             if (next_move == i) 
             {
                 if (i != 0)
+                {
                     num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, sx, sy, scx, scy, cx, cy);
+                }
 
                 // now start the new one
-                start_off = !(flags & 1);
+                start_off = !(flags & Flag::OnCurve);
                 if (start_off) 
                 {
                     // if we start off with an off-curve point, then when we need to find a point on the curve
                     // where we can start, and we need to save some state for when we wraparound.
                     scx = x;
                     scy = y;
-                    if (!(vertices[off + i + 1].type & 1)) 
+                    if (!(vertices[off + i + 1].type & Flag::OnCurve))
                     {
                         // next point is also a curve point, so interpolate an on-point curve
                         sx = (x + (int)vertices[off + i + 1].x) >> 1;
@@ -1906,7 +1921,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                 ++j;
             }
             else {
-                if (!(flags & 1)) 
+                if (!(flags & Flag::OnCurve))
                 { // if it's a curve
                     if (was_off) // two off-curve control points in a row means interpolate an on-curve midpoint
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (cx + x) >> 1, (cy + y) >> 1, cx, cy);
@@ -1942,8 +1957,8 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             flags = GetInt16(comp); comp += 2;
             gidx = GetInt16(comp); comp += 2;
 
-            if (flags & 2) { // XY values
-                if (flags & 1) { // shorts
+            if (flags & Flag::XShortVector) { // XY values
+                if (flags & Flag::OnCurve) { // shorts
                     mtx[4] = GetInt16(comp); comp += 2;
                     mtx[5] = GetInt16(comp); comp += 2;
                 }
@@ -1956,16 +1971,19 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                 // @TODO handle matching point
                 STBTT_assert(0);
             }
-            if (flags & (1 << 3)) { // WE_HAVE_A_SCALE
+            if (flags & Flag::Repeat)
+            { // WE_HAVE_A_SCALE
                 mtx[0] = mtx[3] = GetInt16(comp) / 16384.0f; comp += 2;
                 mtx[1] = mtx[2] = 0;
             }
-            else if (flags & (1 << 6)) { // WE_HAVE_AN_X_AND_YSCALE
+            else if (flags & Flag::OverSimple)
+            { // WE_HAVE_AN_X_AND_YSCALE
                 mtx[0] = GetInt16(comp) / 16384.0f; comp += 2;
                 mtx[1] = mtx[2] = 0;
                 mtx[3] = GetInt16(comp) / 16384.0f; comp += 2;
             }
-            else if (flags & (1 << 7)) { // WE_HAVE_A_TWO_BY_TWO
+            else if (flags & Flag::Reserved)
+            { // WE_HAVE_A_TWO_BY_TWO
                 mtx[0] = GetInt16(comp) / 16384.0f; comp += 2;
                 mtx[1] = GetInt16(comp) / 16384.0f; comp += 2;
                 mtx[2] = GetInt16(comp) / 16384.0f; comp += 2;
@@ -1978,9 +1996,11 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
             // Get indexed glyph.
             comp_num_verts = TTF_GetGlyphShape(info, gidx, &comp_verts);
-            if (comp_num_verts > 0) {
+            if (comp_num_verts > 0) 
+            {
                 // Transform vertices.
-                for (i = 0; i < comp_num_verts; ++i) {
+                for (i = 0; i < comp_num_verts; ++i) 
+                {
                     stbtt_vertex* v = &comp_verts[i];
                     short x, y;
                     x = v->x; y = v->y;
@@ -1992,7 +2012,8 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                 }
                 // Append vertices.
                 tmp = (stbtt_vertex*)STBTT_malloc((num_vertices + comp_num_verts) * sizeof(stbtt_vertex), info->userdata);
-                if (!tmp) {
+                if (!tmp)
+                {
                     if (vertices) STBTT_free(vertices, info->userdata);
                     if (comp_verts) STBTT_free(comp_verts, info->userdata);
                     return 0;
@@ -2005,10 +2026,11 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                 num_vertices += comp_num_verts;
             }
             // More components ?
-            more = flags & (1 << 5);
+            more = flags & (Flag::YSame);
         }
     }
-    else {
+    else
+    {
         // numberOfCounters == 0, do nothing
     }
 
