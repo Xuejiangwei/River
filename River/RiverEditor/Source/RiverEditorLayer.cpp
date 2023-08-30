@@ -25,8 +25,8 @@ void RiverEditorLayer::OnAttach()
 	{
 		auto text = MakeShare<Text>();
 		text->SetSize(1, 1);
-		text->SetFontSize(16.0f);
-		text->SetText(u8"\u2eec\u2ee6 This.");
+		text->SetFontSize(100.0f);
+		text->SetText(u8"齐鸟 This.aabbaabbaabb");
 		(*rootPanel)[text];
 	}
 

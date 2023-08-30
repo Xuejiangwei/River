@@ -165,28 +165,28 @@ static void stbtt__track_vertex(stbtt__csctx* c, int x, int y)
     c->started = 1;
 }
 
-static void stbtt_setvertex(stbtt_vertex* v, uint8 type, int x, int y, int cx, int cy)
+static void stbtt_setvertex(stbtt_vertex* v, uint8 type, int x, int y, int curveX, int curveY)
 {
     v->type = type;
     v->x = (int16)x;
     v->y = (int16)y;
-    v->cx = (int16)cx;
-    v->cy = (int16)cy;
+    v->curveX = (int16)curveX;
+    v->curveY = (int16)curveY;
 }
 
-static void stbtt__csctx_v(stbtt__csctx* c, uint8 type, int x, int y, int cx, int cy, int cx1, int cy1)
+static void stbtt__csctx_v(stbtt__csctx* c, uint8 type, int x, int y, int curveX, int curveY, int curveX1, int curveY1)
 {
     if (c->bounds) {
         stbtt__track_vertex(c, x, y);
         if (type == STBTT_vcubic) {
-            stbtt__track_vertex(c, cx, cy);
-            stbtt__track_vertex(c, cx1, cy1);
+            stbtt__track_vertex(c, curveX, curveY);
+            stbtt__track_vertex(c, curveX1, curveY1);
         }
     }
     else {
-        stbtt_setvertex(&c->pvertices[c->num_vertices], type, x, y, cx, cy);
-        c->pvertices[c->num_vertices].cx1 = (int16)cx1;
-        c->pvertices[c->num_vertices].cy1 = (int16)cy1;
+        stbtt_setvertex(&c->pvertices[c->num_vertices], type, x, y, curveX, curveY);
+        c->pvertices[c->num_vertices].curveX1 = (int16)curveX1;
+        c->pvertices[c->num_vertices].curveY1 = (int16)curveY1;
     }
     c->num_vertices++;
 }
@@ -320,13 +320,13 @@ static stbtt__buf stbtt__get_subrs(stbtt__buf cff, stbtt__buf fontdict)
 
 static void stbtt__csctx_rccurve_to(stbtt__csctx* ctx, float dx1, float dy1, float dx2, float dy2, float dx3, float dy3)
 {
-    float cx1 = ctx->x + dx1;
-    float cy1 = ctx->y + dy1;
-    float cx2 = cx1 + dx2;
-    float cy2 = cy1 + dy2;
+    float curveX1 = ctx->x + dx1;
+    float curveY1 = ctx->y + dy1;
+    float cx2 = curveX1 + dx2;
+    float cy2 = curveY1 + dy2;
     ctx->x = cx2 + dx3;
     ctx->y = cy2 + dy3;
-    stbtt__csctx_v(ctx, STBTT_vcubic, (int)ctx->x, (int)ctx->y, (int)cx1, (int)cy1, (int)cx2, (int)cy2);
+    stbtt__csctx_v(ctx, STBTT_vcubic, (int)ctx->x, (int)ctx->y, (int)curveX1, (int)curveY1, (int)cx2, (int)cy2);
 }
 
 static float stbtt__sized_triangle_area(float height, float width)
@@ -1491,15 +1491,15 @@ static stbtt__point* stbtt_FlattenCurves(stbtt_vertex* vertices, int num_verts, 
                 break;
             case STBTT_vcurve:
                 stbtt__tesselate_curve(points, &num_points, x, y,
-                    vertices[i].cx, vertices[i].cy,
+                    vertices[i].curveX, vertices[i].curveY,
                     vertices[i].x, vertices[i].y,
                     objspace_flatness_squared, 0);
                 x = vertices[i].x, y = vertices[i].y;
                 break;
             case STBTT_vcubic:
                 stbtt__tesselate_cubic(points, &num_points, x, y,
-                    vertices[i].cx, vertices[i].cy,
-                    vertices[i].cx1, vertices[i].cy1,
+                    vertices[i].curveX, vertices[i].curveY,
+                    vertices[i].curveX1, vertices[i].curveY1,
                     vertices[i].x, vertices[i].y,
                     objspace_flatness_squared, 0);
                 x = vertices[i].x, y = vertices[i].y;
@@ -1729,17 +1729,17 @@ static float stbtt__oversample_shift(int oversample)
 }
 
 static int stbtt__close_shape(stbtt_vertex* vertices, int num_vertices, int was_off, int start_off,
-    int sx, int sy, int scx, int scy, int cx, int cy)
+    int sx, int sy, int scx, int scy, int curveX, int curveY)
 {
     if (start_off)
     {
         if (was_off)
-            stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (cx + scx) >> 1, (cy + scy) >> 1, cx, cy);
+            stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (curveX + scx) >> 1, (curveY + scy) >> 1, curveX, curveY);
         stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, scx, scy);
     }
     else {
         if (was_off)
-            stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, cx, cy);
+            stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, sx, sy, curveX, curveY);
         else
             stbtt_setvertex(&vertices[num_vertices++], STBTT_vline, sx, sy, 0, 0);
     }
@@ -1787,7 +1787,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
         uint8 flags = 0, flagcount;
         int insLength, i, j = 0, m, n, next_move, was_off = 0, off, start_off = 0;
-        int x, y, cx, cy, sx, sy, scx, scy;
+        int x, y, curveX, curveY, startX, startY, startCurveX, startCurveY;
         uint8* flagPoints;
         endPtsOfContours = (data + g + sizeof(TTF_Glyph));
         insLength = GetUInt16(endPtsOfContours + numberOfContours * sizeof(TTF_GlyphSingle::EndPtsOfContours));
@@ -1873,7 +1873,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
 
         // now convert them to our format
         num_vertices = 0;
-        sx = sy = cx = cy = scx = scy = 0;
+        startX = startY = curveX = curveY = startCurveX = startCurveY = 0;
         for (i = 0; i < n; ++i) 
         {
             flags = vertices[off + i].type;
@@ -1884,7 +1884,7 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             {
                 if (i != 0)
                 {
-                    num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, sx, sy, scx, scy, cx, cy);
+                    num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, startX, startY, startCurveX, startCurveY, curveX, curveY);
                 }
 
                 // now start the new one
@@ -1893,53 +1893,54 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                 {
                     // if we start off with an off-curve point, then when we need to find a point on the curve
                     // where we can start, and we need to save some state for when we wraparound.
-                    scx = x;
-                    scy = y;
+                    startCurveX = x;
+                    startCurveY = y;
                     if (!(vertices[off + i + 1].type & Flag::OnCurve))
                     {
                         // next point is also a curve point, so interpolate an on-point curve
-                        sx = (x + (int)vertices[off + i + 1].x) >> 1;
-                        sy = (y + (int)vertices[off + i + 1].y) >> 1;
+                        startX = (x + (int)vertices[off + i + 1].x) >> 1;
+                        startY = (y + (int)vertices[off + i + 1].y) >> 1;
                     }
                     else
                     {
                         // otherwise just use the next point as our start point
-                        sx = (int)vertices[off + i + 1].x;
-                        sy = (int)vertices[off + i + 1].y;
+                        startX = (int)vertices[off + i + 1].x;
+                        startY = (int)vertices[off + i + 1].y;
                         ++i; // we're using point i+1 as the starting point, so skip it
                     }
                 }
                 else 
                 {
-                    sx = x;
-                    sy = y;
+                    startX = x;
+                    startY = y;
                 }
 
-                stbtt_setvertex(&vertices[num_vertices++], STBTT_vmove, sx, sy, 0, 0);
+                stbtt_setvertex(&vertices[num_vertices++], STBTT_vmove, startX, startY, 0, 0);
                 was_off = 0;
                 next_move = 1 + GetUInt16(endPtsOfContours + j * 2);
                 ++j;
             }
-            else {
+            else 
+            {
                 if (!(flags & Flag::OnCurve))
                 { // if it's a curve
                     if (was_off) // two off-curve control points in a row means interpolate an on-curve midpoint
-                        stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (cx + x) >> 1, (cy + y) >> 1, cx, cy);
-                    cx = x;
-                    cy = y;
+                        stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, (curveX + x) >> 1, (curveY + y) >> 1, curveX, curveY);
+                    curveX = x;
+                    curveY = y;
                     was_off = 1;
                 }
                 else
                 {
                     if (was_off)
-                        stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, x, y, cx, cy);
+                        stbtt_setvertex(&vertices[num_vertices++], STBTT_vcurve, x, y, curveX, curveY);
                     else
                         stbtt_setvertex(&vertices[num_vertices++], STBTT_vline, x, y, 0, 0);
                     was_off = 0;
                 }
             }
         }
-        num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, sx, sy, scx, scy, cx, cy);
+        num_vertices = stbtt__close_shape(vertices, num_vertices, was_off, start_off, startX, startY, startCurveX, startCurveY, curveX, curveY);
     }
     else if (numberOfContours < 0) 
     {
@@ -1948,7 +1949,8 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
         uint8* comp = data + g + 10;
         num_vertices = 0;
         vertices = 0;
-        while (more) {
+        while (more) 
+        {
             uint16 flags, gidx;
             int comp_num_verts = 0, i;
             stbtt_vertex* comp_verts = 0, * tmp = 0;
@@ -1957,12 +1959,15 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
             flags = GetInt16(comp); comp += 2;
             gidx = GetInt16(comp); comp += 2;
 
-            if (flags & Flag::XShortVector) { // XY values
-                if (flags & Flag::OnCurve) { // shorts
+            if (flags & Flag::XShortVector) 
+            { // XY values
+                if (flags & Flag::OnCurve) 
+                { // shorts
                     mtx[4] = GetInt16(comp); comp += 2;
                     mtx[5] = GetInt16(comp); comp += 2;
                 }
-                else {
+                else
+                {
                     mtx[4] = ttCHAR(comp); comp += 1;
                     mtx[5] = ttCHAR(comp); comp += 1;
                 }
@@ -2006,9 +2011,9 @@ static int stbtt__GetGlyphShapeTT(const TTF_HeadInfo* info, int glyph_index, stb
                     x = v->x; y = v->y;
                     v->x = (short)(m * (mtx[0] * x + mtx[2] * y + mtx[4]));
                     v->y = (short)(n * (mtx[1] * x + mtx[3] * y + mtx[5]));
-                    x = v->cx; y = v->cy;
-                    v->cx = (short)(m * (mtx[0] * x + mtx[2] * y + mtx[4]));
-                    v->cy = (short)(n * (mtx[1] * x + mtx[3] * y + mtx[5]));
+                    x = v->curveX; y = v->curveY;
+                    v->curveX = (short)(m * (mtx[0] * x + mtx[2] * y + mtx[4]));
+                    v->curveY = (short)(n * (mtx[1] * x + mtx[3] * y + mtx[5]));
                 }
                 // Append vertices.
                 tmp = (stbtt_vertex*)STBTT_malloc((num_vertices + comp_num_verts) * sizeof(stbtt_vertex), info->userdata);

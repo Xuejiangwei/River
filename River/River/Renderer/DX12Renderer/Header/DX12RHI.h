@@ -114,7 +114,7 @@ private:
 
 	void FlushCommandQueue();
 
-	ID3D12Resource* CurrentBackBuffer() const { return m_SwapChainBuffer[mCurrBackBuffer].Get(); }
+	ID3D12Resource* CurrentBackBuffer() const { return m_SwapChainBuffer[m_CurrBackBufferIndex].Get(); }
 
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
 
@@ -141,22 +141,22 @@ private:
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuSrv(int index) const
 	{
-		auto srv = CD3DX12_CPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		srv.Offset(index, mCbvSrvUavDescriptorSize);
+		auto srv = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		srv.Offset(index, m_CbvSrvUavDescriptorSize);
 		return srv;
 	}
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrv(int index) const
 	{
-		auto srv = CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		srv.Offset(index, mCbvSrvUavDescriptorSize);
+		auto srv = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		srv.Offset(index, m_CbvSrvUavDescriptorSize);
 		return srv;
 	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetRtv(int index)const
 	{
-		auto rtv = CD3DX12_CPU_DESCRIPTOR_HANDLE(mRtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		rtv.Offset(index, mRtvDescriptorSize);
+		auto rtv = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		rtv.Offset(index, m_RtvDescriptorSize);
 		return rtv;
 	}
 
@@ -167,63 +167,64 @@ private:
 		return dsv;
 	}
 
-private:
-	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
-	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice;
-
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
-
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
-
-	static const int SwapChainBufferCount = 2;
+public:
+	static const int s_SwapChainBufferCount = 2;
 	static const int s_FrameBufferCount = 3;
 	static const int s_MaxRenderItem = 100;
-	int mCurrFrameResourceIndex = 0;
-	int mCurrBackBuffer;
 
-	UINT mRtvDescriptorSize;
-	UINT m_DsvDescriptorSize;
-	UINT mCbvSrvUavDescriptorSize;
+private:
+	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
+	Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 
-	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CommandQueue;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandList;
+	
+	int m_CurrFrameResourceIndex;
+	int m_CurrBackBufferIndex;
+
+	uint32 m_RtvDescriptorSize;
+	uint32 m_DsvDescriptorSize;
+	uint32 m_CbvSrvUavDescriptorSize;
+
+	Microsoft::WRL::ComPtr<IDXGISwapChain> m_SwapChain;
+
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DsvHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_SwapChainBuffer[SwapChainBufferCount];
-	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_SwapChainBuffer[s_SwapChainBufferCount];
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
-	UINT64 mCurrentFence;
-	HANDLE hEventFence = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
+	UINT64 m_CurrentFence;
+	HANDLE m_HandleEventFence = nullptr;
 
-	D3D12_VIEWPORT mScreenViewport;
-	D3D12_RECT mScissorRect;
+	D3D12_VIEWPORT m_ScreenViewport;
+	D3D12_RECT m_ScissorRect;
 
 	DX12Camera m_PrespectiveCamera;
 	DX12Camera m_OrthoGraphicCamera;
 
-	DX12FrameBuffer* mCurrFrameResource = nullptr;
-	//int mCurrFrameResourceIndex = 0;
+	DX12FrameBuffer* m_CurrFrameResource = nullptr;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
-
-	DXGI_FORMAT	mRenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT	m_RenderTargetFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT m_DepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	DXGI_FORMAT m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	RHIInitializeParam m_InitParam;
-	HashMap<String, Unique<DX12Shader>> mShaders;
+	HashMap<String, Unique<DX12Shader>> m_Shaders;
 	HashMap<String, Unique<DX12RootSignature>> m_RootSignatures;
-	//HashMap<String, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
-	HashMap<String, Unique<DX12Texture>> mTextures;
-	HashMap<String, std::unique_ptr<Material>> mMaterials;
-	V_Array<Unique<DX12RenderItem>> mAllRitems;
-	V_Array<Unique<DX12FrameBuffer>> mFrameBuffer;
-	V_Array<DX12RenderItem*> mRitemLayer[(int)RenderLayer::LayerCount];
+	HashMap<String, Unique<DX12Texture>> m_Textures;
+	HashMap<String, std::unique_ptr<Material>> m_Materials;
+	V_Array<Unique<DX12RenderItem>> m_AllRitems;
+	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
+	V_Array<DX12RenderItem*> m_RitemLayer[(int)RenderLayer::LayerCount];
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
 	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
-	HashMap<String, Unique<MeshGeometry>> mGeometries;
+	HashMap<String, Unique<MeshGeometry>> m_Geometries;
+
+	DX12RenderItem* m_UIRenderItem;
 };

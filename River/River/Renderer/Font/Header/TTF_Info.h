@@ -97,6 +97,8 @@ RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_W = 122; // Actual texture will 
 RIVER_API const int FONT_ATLAS_DEFAULT_TEX_DATA_H = 27;
 
 //https://www.cnblogs.com/sjhrun2001/archive/2010/01/19/1651274.html
+//https://opentype.js.org/glyph-inspector.html
+//https://zhuanlan.zhihu.com/p/610796157
 template<typename T> static inline T ImClamp(T v, T mn, T mx) { return (v < mn) ? mn : (v > mx) ? mx : v; }
 struct ImFontGlyph
 {
@@ -177,7 +179,7 @@ typedef struct
 
 typedef struct
 {
-	short x, y, cx, cy, cx1, cy1;
+	short x, y, curveX, curveY, curveX1, curveY1;
 	unsigned char type, padding;
 } stbtt_vertex;
 

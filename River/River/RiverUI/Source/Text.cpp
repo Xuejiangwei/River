@@ -5,6 +5,7 @@
 #include "Renderer/Font/Header/Font.h"
 
 Text::Text()
+    : m_FontSize(10.0f)
 {
 }
 
@@ -24,7 +25,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     float x = m_Position.x;
     float y = m_Position.y;
    
-    scale = m_FontSize / 720;
+    scale = m_FontSize / 720 / font->m_Font->GetPixelSize();
     auto s = m_Text.begin();
     while (s != m_Text.end())
     {
@@ -53,7 +54,9 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
         if (glyph == NULL)
             continue;
 
+
         float char_width = glyph->AdvanceX * scale;
+        float height = 1.0f;
         if (glyph->Visible)
         {
             // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
@@ -61,6 +64,9 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
             float x2 = x + glyph->X1 * scale;
             float y1 = y + glyph->Y0 * scale;
             float y2 = y + glyph->Y1 * scale;
+
+            float w = x2 - x1;
+            float h = y2 - y1;
             //if (x1 <= clip_rect.z && x2 >= clip_rect.x)
             {
                 // Render a character
@@ -69,7 +75,6 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                 float u2 = glyph->U1;
                 float v2 = glyph->V1;
 
-                FLOAT_2 ts = { 0.05f, 0.05f };
 
                 // CPU side clipping used to fit text in their frame when the frame is too small. Only does clipping for axis aligned quads.
                 /* if (cpu_fine_clip)
@@ -108,10 +113,12 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                 {
                     auto vs = (uint16)vertices.size();
 
-                    vertices.push_back(UIVertex(x, m_Position.y - ts.y, 0.0f, u1, v2, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x, m_Position.y, 0.0f, u1, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x + ts.x, m_Position.y, 0.0f, u2, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x + ts.x, m_Position.y - ts.y, 0.0f, u2, v2, 255, 0, 0, 255));
+                    //1 2
+                    //0 3
+                    vertices.push_back(UIVertex(x1, m_Position.y, 0.0f, u1, v2, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x1, m_Position.y + h, 0.0f, u1, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, m_Position.y + h, 0.0f, u2, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, m_Position.y, 0.0f, u2, v2, 255, 0, 0, 255));
 
                     indices.push_back(vs);
                     indices.push_back(vs + 1);

@@ -13,7 +13,7 @@ Ssao::Ssao(
     UINT width, UINT height)
 
 {
-    md3dDevice = device;
+    m_Device = device;
 
     OnResize(width, height);
 
@@ -133,28 +133,28 @@ void Ssao::RebuildDescriptors(ID3D12Resource* depthStencilBuffer)
     srvDesc.Format = NormalMapFormat;
     srvDesc.Texture2D.MostDetailedMip = 0;
     srvDesc.Texture2D.MipLevels = 1;
-    md3dDevice->CreateShaderResourceView(mNormalMap.Get(), &srvDesc, mhNormalMapCpuSrv);
+    m_Device->CreateShaderResourceView(mNormalMap.Get(), &srvDesc, mhNormalMapCpuSrv);
 
     srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    md3dDevice->CreateShaderResourceView(depthStencilBuffer, &srvDesc, mhDepthMapCpuSrv);
+    m_Device->CreateShaderResourceView(depthStencilBuffer, &srvDesc, mhDepthMapCpuSrv);
 
     srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    md3dDevice->CreateShaderResourceView(mRandomVectorMap.Get(), &srvDesc, mhRandomVectorMapCpuSrv);
+    m_Device->CreateShaderResourceView(mRandomVectorMap.Get(), &srvDesc, mhRandomVectorMapCpuSrv);
 
     srvDesc.Format = AmbientMapFormat;
-    md3dDevice->CreateShaderResourceView(mAmbientMap0.Get(), &srvDesc, mhAmbientMap0CpuSrv);
-    md3dDevice->CreateShaderResourceView(mAmbientMap1.Get(), &srvDesc, mhAmbientMap1CpuSrv);
+    m_Device->CreateShaderResourceView(mAmbientMap0.Get(), &srvDesc, mhAmbientMap0CpuSrv);
+    m_Device->CreateShaderResourceView(mAmbientMap1.Get(), &srvDesc, mhAmbientMap1CpuSrv);
 
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
     rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
     rtvDesc.Format = NormalMapFormat;
     rtvDesc.Texture2D.MipSlice = 0;
     rtvDesc.Texture2D.PlaneSlice = 0;
-    md3dDevice->CreateRenderTargetView(mNormalMap.Get(), &rtvDesc, mhNormalMapCpuRtv);
+    m_Device->CreateRenderTargetView(mNormalMap.Get(), &rtvDesc, mhNormalMapCpuRtv);
 
     rtvDesc.Format = AmbientMapFormat;
-    md3dDevice->CreateRenderTargetView(mAmbientMap0.Get(), &rtvDesc, mhAmbientMap0CpuRtv);
-    md3dDevice->CreateRenderTargetView(mAmbientMap1.Get(), &rtvDesc, mhAmbientMap1CpuRtv);
+    m_Device->CreateRenderTargetView(mAmbientMap0.Get(), &rtvDesc, mhAmbientMap0CpuRtv);
+    m_Device->CreateRenderTargetView(mAmbientMap1.Get(), &rtvDesc, mhAmbientMap1CpuRtv);
 }
 
 void Ssao::SetPSOs(ID3D12PipelineState* ssaoPso, ID3D12PipelineState* ssaoBlurPso)
@@ -178,7 +178,7 @@ void Ssao::OnResize(UINT newWidth, UINT newHeight)
         mViewport.MinDepth = 0.0f;
         mViewport.MaxDepth = 1.0f;
 
-        mScissorRect = { 0, 0, (int)mRenderTargetWidth / 2, (int)mRenderTargetHeight / 2 };
+        m_ScissorRect = { 0, 0, (int)mRenderTargetWidth / 2, (int)mRenderTargetHeight / 2 };
 
         BuildResources();
     }
@@ -190,7 +190,7 @@ void Ssao::ComputeSsao(
     int blurCount)
 {
     cmdList->RSSetViewports(1, &mViewport);
-    cmdList->RSSetScissorRects(1, &mScissorRect);
+    cmdList->RSSetScissorRects(1, &m_ScissorRect);
 
     // We compute the initial SSAO to AmbientMap0.
 
@@ -322,7 +322,7 @@ void Ssao::BuildResources()
     float normalClearColor[] = { 0.0f, 0.0f, 1.0f, 0.0f };
     CD3DX12_CLEAR_VALUE optClear(NormalMapFormat, normalClearColor);
     auto hprop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+    ThrowIfFailed(m_Device->CreateCommittedResource(
         &hprop,
         D3D12_HEAP_FLAG_NONE,
         &texDesc,
@@ -338,7 +338,7 @@ void Ssao::BuildResources()
     float ambientClearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     optClear = CD3DX12_CLEAR_VALUE(AmbientMapFormat, ambientClearColor);
 
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+    ThrowIfFailed(m_Device->CreateCommittedResource(
         &hprop,
         D3D12_HEAP_FLAG_NONE,
         &texDesc,
@@ -346,7 +346,7 @@ void Ssao::BuildResources()
         &optClear,
         IID_PPV_ARGS(&mAmbientMap0)));
 
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+    ThrowIfFailed(m_Device->CreateCommittedResource(
         &hprop,
         D3D12_HEAP_FLAG_NONE,
         &texDesc,
@@ -372,7 +372,7 @@ void Ssao::BuildRandomVectorTexture(ID3D12GraphicsCommandList* cmdList)
     texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     auto hprop = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+    ThrowIfFailed(m_Device->CreateCommittedResource(
         &hprop,
         D3D12_HEAP_FLAG_NONE,
         &texDesc,
@@ -390,7 +390,7 @@ void Ssao::BuildRandomVectorTexture(ID3D12GraphicsCommandList* cmdList)
 
     auto hprop_upload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto sd = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-    ThrowIfFailed(md3dDevice->CreateCommittedResource(
+    ThrowIfFailed(m_Device->CreateCommittedResource(
         &hprop_upload,
         D3D12_HEAP_FLAG_NONE,
         &sd,
