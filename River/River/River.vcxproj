@@ -136,6 +136,8 @@
     <ClCompile Include="Actor\Source\Actor.cpp" />
     <ClCompile Include="Component\Header\Component.cpp" />
     <ClCompile Include="Component\Source\LightComponent.cpp" />
+    <ClCompile Include="Component\Source\MeshComponent.cpp" />
+    <ClCompile Include="Component\Source\SkinMeshComponent.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
@@ -195,6 +197,8 @@
     <ClInclude Include="Actor\Header\Actor.h" />
     <ClInclude Include="Component\Header\Component.h" />
     <ClInclude Include="Component\Header\LightComponent.h" />
+    <ClInclude Include="Component\Header\MeshComponent.h" />
+    <ClInclude Include="Component\Header\SkinMeshComponent.h" />
     <ClInclude Include="Header\Application.h" />
     <ClInclude Include="Header\Engine.h" />
     <ClInclude Include="Header\Event.h" />
@@ -208,6 +212,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\d3dx12.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12DefaultConfig.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12FrameBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12IndexBuffer.h" />

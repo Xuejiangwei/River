@@ -22,12 +22,13 @@ Material::~Material()
 {
 }
 
-void Material::InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int diffuseSrvIndex, int normalSrvIndex)
+void Material::InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, 
+	Texture* diffuseSrvIndex, Texture* normalSrvIndex)
 {
 	DiffuseAlbedo = diffuseAlbedo;
 	FresnelR0 = fresnelR0;
 	Roughness = roughness;
 	MatCBIndex = cbIndx;
-	DiffuseSrvHeapIndex = diffuseSrvIndex;
-	NormalSrvHeapIndex = normalSrvIndex;
+	m_DiffuseTexture = diffuseSrvIndex;
+	m_NormalTexture = normalSrvIndex;
 }

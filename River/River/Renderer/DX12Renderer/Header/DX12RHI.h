@@ -230,6 +230,7 @@ private:
 	DX12RenderItem* m_UIRenderItem;
 
 	Unique<ShadowMap> m_ShadowMap;
+	std::unique_ptr<Ssao> m_Ssao;
 	PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
 };

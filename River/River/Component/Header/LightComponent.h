@@ -6,8 +6,9 @@ class LightComponent
 {
 public:
 	LightComponent();
+
 	~LightComponent();
 
 private:
-
+	FLOAT_3 m_Position;
 };

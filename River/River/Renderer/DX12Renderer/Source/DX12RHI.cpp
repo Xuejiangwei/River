@@ -26,50 +26,14 @@
 #include <fstream>
 
 #if defined(DEBUG) || defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-
-#include "pix3.h"
-
+	#define _CRTDBG_MAP_ALLOC
+	#include <crtdbg.h>
+	#include "pix3.h"
 #endif
 
+#include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
+
 using Microsoft::WRL::ComPtr;
-using namespace DirectX;
-
-#define DEFAULT_FONT_PATH_1 "F:\\GitHub\\River\\River\\Fonts\\LXGWWenKai-Bold.ttf"
-
-#define DEFAULT_SHADER_PATH_1 "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
-#define DEFAULT_SHADER_PATH_2 "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl"
-#define DEFAULT_SHADER_PATH_3 "F:\\GitHub\\River\\River\\Shaders\\Shadows.hlsl"
-#define DEFAULT_SHADER_PATH_4 "F:\\GitHub\\River\\River\\Shaders\\ShadowDebug.hlsl"
-#define DEFAULT_SHADER_PATH_5 "F:\\GitHub\\River\\River\\Shaders\\Ssao.hlsl"
-#define DEFAULT_SHADER_PATH_6 "F:\\GitHub\\River\\River\\Shaders\\DrawNormals.hlsl"
-#define DEFAULT_SHADER_PATH_7 "F:\\GitHub\\River\\River\\Shaders\\SsaoBlur.hlsl"
-#define DEFAULT_SHADER_PATH_UI "F:\\GitHub\\River\\River\\Shaders\\UI.hlsl"
-
-#define DEFAULT_TEXTURE_PATH   "F:\\GitHub\\River\\River\\Textures\\"
-#define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
-#define DEFAULT_TEXTURE_PATH_2 "F:\\GitHub\\River\\River\\Textures\\stone.dds"
-#define DEFAULT_TEXTURE_PATH_3 "F:\\GitHub\\River\\River\\Textures\\tile.dds"
-#define DEFAULT_TEXTURE_PATH_4 "F:\\GitHub\\River\\River\\Textures\\grass.dds"
-#define DEFAULT_TEXTURE_PATH_5 "F:\\GitHub\\River\\River\\Textures\\water1.dds"
-#define DEFAULT_TEXTURE_PATH_6 "F:\\GitHub\\River\\River\\Textures\\WireFence.dds"
-#define DEFAULT_TEXTURE_PATH_7 "F:\\GitHub\\River\\River\\Textures\\bricks3.dds"
-#define DEFAULT_TEXTURE_PATH_8 "F:\\GitHub\\River\\River\\Textures\\checkboard.dds"
-#define DEFAULT_TEXTURE_PATH_9 "F:\\GitHub\\River\\River\\Textures\\ice.dds"
-#define DEFAULT_TEXTURE_PATH_10 "F:\\GitHub\\River\\River\\Textures\\white1x1.dds"
-#define DEFAULT_TEXTURE_PATH_11 "F:\\GitHub\\River\\River\\Textures\\WoodCrate01.dds"
-#define DEFAULT_TEXTURE_PATH_12 "F:\\GitHub\\River\\River\\Textures\\grasscube1024.dds"
-#define DEFAULT_TEXTURE_PATH_13 "F:\\GitHub\\River\\River\\Textures\\bricks2.dds"
-#define DEFAULT_TEXTURE_PATH_14 "F:\\GitHub\\River\\River\\Textures\\bricks2_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_15 "F:\\GitHub\\River\\River\\Textures\\tile_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_16 "F:\\GitHub\\River\\River\\Textures\\default_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_17 "F:\\GitHub\\River\\River\\Textures\\snowcube1024.dds"
-#define DEFAULT_TEXTURE_PATH_18 "F:\\GitHub\\River\\River\\Textures\\desertcube1024.dds"
-
-#define DEFAULT_MODEL_PATH_1 "F:\\GitHub\\River\\River\\Models\\skull.txt"
-#define DEFAULT_MODEL_PATH_2 "F:\\GitHub\\River\\River\\Models\\car.txt"
-#define DEFAULT_MODEL_PATH_3 "F:\\GitHub\\River\\River\\Models\\soldier.m3d"
 
 DirectX::BoundingSphere mSceneBounds;
 float mLightNearZ = 0.0f;
@@ -88,8 +52,6 @@ UINT mNullCubeSrvIndex = 0;
 UINT mNullTexSrvIndex1 = 0;
 UINT mNullTexSrvIndex2 = 0;
 CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv;
-
-std::unique_ptr<Ssao> mSsao;
 
 float mLightRotationAngle = 0.0f;
 DirectX::XMFLOAT3 mBaseLightDirections[3] = {
@@ -118,12 +80,10 @@ struct SkinnedModelInstance
 		if (TimePos > SkinnedInfo->GetClipEndTime(ClipName))
 			TimePos = 0.0f;
 
-		// Compute the final transforms for this time position.
 		SkinnedInfo->GetFinalTransforms(ClipName, TimePos, FinalTransforms);
 	}
 };
 
-UINT mSkinnedSrvHeapStart = 0;
 std::unique_ptr<SkinnedModelInstance> mSkinnedModelInst;
 SkinnedData mSkinnedInfo;
 std::vector<M3DLoader::Subset> mSkinnedSubsets;
@@ -166,7 +126,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 	{
 		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
-		mSsao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
+		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
 		//DX12GeometryGenerator::Get()->Initialize();
 		LoadSkinnedModel();
@@ -180,7 +140,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitFrameBuffer();
 		InitBasePSOs();
 
-		mSsao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
+		m_Ssao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
 	}
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -329,7 +289,7 @@ void DX12RHI::Render()
 	// 
 
 	m_CommandList->SetGraphicsRootSignature(m_RootSignatures["ssao"]->GetRootSignature());
-	mSsao->ComputeSsao(m_CommandList.Get(), m_CurrFrameResource, 2);
+	m_Ssao->ComputeSsao(m_CommandList.Get(), m_CurrFrameResource, 2);
 
 	//
 	// Main rendering pass.
@@ -535,11 +495,11 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 
 	m_PrespectiveCamera.SetLens(0.25f * PI, (float)param.WindowWidth / param.WindowHeight, 1.0f, 1000.0f);
-	if (mSsao != nullptr)
+	if (m_Ssao != nullptr)
 	{
-		mSsao->OnResize(param.WindowWidth, param.WindowHeight);
+		m_Ssao->OnResize(param.WindowWidth, param.WindowHeight);
 
-		mSsao->RebuildDescriptors(m_DepthStencilBuffer.Get());
+		m_Ssao->RebuildDescriptors(m_DepthStencilBuffer.Get());
 	}
 }
 
@@ -804,13 +764,17 @@ void DX12RHI::LoadTextures()
 void DX12RHI::InitBaseMaterials()
 {
 	auto bricks = MakeUnique<Material>("bricks0");
-	bricks->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f, 0, 0, 1);
+	bricks->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f, 0, 
+		m_Textures["bricksDiffuseMap"].get(), m_Textures["bricksNormalMap"].get());
 	auto tile = MakeUnique<Material>("tile0");
-	tile->InitBaseParam({ 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f, 1, 2, 3);
+	tile->InitBaseParam({ 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f, 1, 
+		m_Textures["tileDiffuseMap"].get(), m_Textures["tileNormalMap"].get());
 	auto mirror = MakeUnique<Material>("mirror0");
-	mirror->InitBaseParam({ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f, 2, 4, 5);
+	mirror->InitBaseParam({ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f, 2, 
+		m_Textures["defaultDiffuseMap"].get(), m_Textures["defaultNormalMap"].get());
 	auto sky = MakeUnique<Material>("sky");
-	sky->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, 6, 7);
+	sky->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, 
+		m_Textures["skyCubeMap"].get(), m_Textures["skyCubeMap"].get());
 
 	m_Materials["bricks0"] = std::move(bricks);
 	m_Materials["tile0"] = std::move(tile);
@@ -818,14 +782,11 @@ void DX12RHI::InitBaseMaterials()
 	m_Materials["sky"] = std::move(sky);
 
 	UINT matCBIndex = 4;
-	UINT srvHeapIndex = mSkinnedSrvHeapStart;
 	for (UINT i = 0; i < mSkinnedMats.size(); ++i)
 	{
-		int DiffuseSrvHeapIndex = srvHeapIndex++;
-		int NormalSrvHeapIndex = srvHeapIndex++;
 		auto mat = MakeUnique<Material>(mSkinnedMats[i].m_Name.c_str());
 		mat->InitBaseParam(*(River::Float4*)(&mSkinnedMats[i].DiffuseAlbedo), *(River::Float3*)(&mSkinnedMats[i].FresnelR0), mSkinnedMats[i].Roughness,
-			matCBIndex++, DiffuseSrvHeapIndex, NormalSrvHeapIndex);
+			matCBIndex++, m_Textures[mSkinnedTextureNames[i * 2]].get(), m_Textures[mSkinnedTextureNames[i * 2 + 1]].get());//DiffuseSrvHeapIndex, NormalSrvHeapIndex);
 		m_Materials[mSkinnedMats[i].m_Name] = std::move(mat);
 	}
 }
@@ -1418,8 +1379,8 @@ void DX12RHI::UpdateMaterialCBs()
 			matData.FresnelR0 = *(DirectX::XMFLOAT3*)(&mat->FresnelR0);
 			matData.Roughness = mat->Roughness;
 			DirectX::XMStoreFloat4x4((DirectX::XMFLOAT4X4*)(&mat->MatTransform), XMMatrixTranspose(matTransform));
-			matData.DiffuseMapIndex = mat->DiffuseSrvHeapIndex;
-			matData.NormalMapIndex = mat->NormalSrvHeapIndex;
+			matData.DiffuseMapIndex = mat->m_DiffuseTexture->GetTextureId(); //mat->DiffuseSrvHeapIndex;
+			matData.NormalMapIndex = mat->m_NormalTexture->GetTextureId(); //mat->NormalSrvHeapIndex;
 
 			currMaterialCB->CopyData(mat->MatCBIndex, matData);
 
@@ -1523,14 +1484,14 @@ void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
 	ssaoCB.InvProj = m_MainPassCB.InvProj;
 	XMStoreFloat4x4(&ssaoCB.ProjTex, XMMatrixTranspose(P * T));
 
-	mSsao->GetOffsetVectors(ssaoCB.OffsetVectors);
+	m_Ssao->GetOffsetVectors(ssaoCB.OffsetVectors);
 
-	auto blurWeights = mSsao->CalcGaussWeights(2.5f);
+	auto blurWeights = m_Ssao->CalcGaussWeights(2.5f);
 	ssaoCB.BlurWeights[0] = XMFLOAT4(&blurWeights[0]);
 	ssaoCB.BlurWeights[1] = XMFLOAT4(&blurWeights[4]);
 	ssaoCB.BlurWeights[2] = XMFLOAT4(&blurWeights[8]);
 
-	ssaoCB.InvRenderTargetSize = XMFLOAT2(1.0f / mSsao->SsaoMapWidth(), 1.0f / mSsao->SsaoMapHeight());
+	ssaoCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_Ssao->SsaoMapWidth(), 1.0f / m_Ssao->SsaoMapHeight());
 
 	// Coordinates given in view space.
 	ssaoCB.OcclusionRadius = 0.5f;
@@ -1589,24 +1550,22 @@ void DX12RHI::InitDescriptorHeaps()
 	//
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	std::vector<ComPtr<ID3D12Resource>> tex2DList =
+	std::vector<DX12Texture*> tex2DList =
 	{
-		m_Textures["bricksDiffuseMap"]->GetResource(),
-		m_Textures["bricksNormalMap"]->GetResource(),
-		m_Textures["tileDiffuseMap"]->GetResource(),
-		m_Textures["tileNormalMap"]->GetResource(),
-		m_Textures["defaultDiffuseMap"]->GetResource(),
-		m_Textures["defaultNormalMap"]->GetResource(),
-		m_Textures["font"]->GetResource(),
+		m_Textures["bricksDiffuseMap"].get(),
+		m_Textures["bricksNormalMap"].get(),
+		m_Textures["tileDiffuseMap"].get(),
+		m_Textures["tileNormalMap"].get(),
+		m_Textures["defaultDiffuseMap"].get(),
+		m_Textures["defaultNormalMap"].get(),
+		m_Textures["font"].get(),
 	};
-
-	mSkinnedSrvHeapStart = (UINT)tex2DList.size();
 
 	for (UINT i = 0; i < (UINT)mSkinnedTextureNames.size(); ++i)
 	{
 		auto texResource = m_Textures[mSkinnedTextureNames[i]]->GetResource();
 		assert(texResource != nullptr);
-		tex2DList.push_back(texResource);
+		tex2DList.push_back(m_Textures[mSkinnedTextureNames[i]].get());
 	}
 
 	auto skyCubeMap = m_Textures["skyCubeMap"]->GetResource();
@@ -1617,11 +1576,12 @@ void DX12RHI::InitDescriptorHeaps()
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	for (UINT i = 0; i < (UINT)tex2DList.size(); ++i)
+	for (uint32 i = 0; i < (uint32)tex2DList.size(); ++i)
 	{
-		srvDesc.Format = tex2DList[i]->GetDesc().Format;
-		srvDesc.Texture2D.MipLevels = tex2DList[i]->GetDesc().MipLevels;
-		m_Device->CreateShaderResourceView(tex2DList[i].Get(), &srvDesc, hDescriptor);
+		tex2DList[i]->SetTextureId(i);
+		srvDesc.Format = tex2DList[i]->GetResource()->GetDesc().Format;
+		srvDesc.Texture2D.MipLevels = tex2DList[i]->GetResource()->GetDesc().MipLevels;
+		m_Device->CreateShaderResourceView(tex2DList[i]->GetResource().Get(), &srvDesc, hDescriptor);
 
 		// next descriptor
 		hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
@@ -1660,7 +1620,7 @@ void DX12RHI::InitDescriptorHeaps()
 
 	m_ShadowMap->BuildDescriptors(GetCpuSrv(mShadowMapHeapIndex), GetGpuSrv(mShadowMapHeapIndex), GetDsv(1));
 
-	mSsao->BuildDescriptors(
+	m_Ssao->BuildDescriptors(
 		m_DepthStencilBuffer.Get(),
 		GetCpuSrv(mSsaoHeapIndexStart),
 		GetGpuSrv(mSsaoHeapIndexStart),
@@ -1953,8 +1913,8 @@ void DX12RHI::DrawNormalsAndDepth()
 	m_CommandList->RSSetViewports(1, &m_ScreenViewport);
 	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	auto normalMap = mSsao->NormalMap();
-	auto normalMapRtv = mSsao->NormalMapRtv();
+	auto normalMap = m_Ssao->NormalMap();
+	auto normalMapRtv = m_Ssao->NormalMapRtv();
 
 	// Change to RENDER_TARGET.
 	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(normalMap,

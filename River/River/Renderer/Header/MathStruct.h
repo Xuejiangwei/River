@@ -207,4 +207,5 @@ namespace River
 
 using UINT8_4 = River::RGBA32;
 using FLOAT_2 = River::Float2;
+using FLOAT_3 = River::Float3;
 using FLOAT_4 = River::Float4;
