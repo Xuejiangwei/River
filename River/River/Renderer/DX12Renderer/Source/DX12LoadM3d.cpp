@@ -95,7 +95,7 @@ void M3DLoader::ReadMaterials(std::ifstream& fin, UINT numMaterials, std::vector
 	fin >> ignore; // materials header text
 	for (UINT i = 0; i < numMaterials; ++i)
 	{
-		fin >> ignore >> mats[i].Name;
+		fin >> ignore >> mats[i].m_Name;
 		fin >> ignore >> mats[i].DiffuseAlbedo.x >> mats[i].DiffuseAlbedo.y >> mats[i].DiffuseAlbedo.z;
 		fin >> ignore >> mats[i].FresnelR0.x >> mats[i].FresnelR0.y >> mats[i].FresnelR0.z;
 		fin >> ignore >> mats[i].Roughness;

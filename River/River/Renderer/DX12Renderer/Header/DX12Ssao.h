@@ -124,7 +124,7 @@ private:
 
     DirectX::XMFLOAT4 mOffsets[14];
 
-    D3D12_VIEWPORT mViewport;
+    D3D12_VIEWPORT m_Viewport;
     D3D12_RECT m_ScissorRect;
 };
 

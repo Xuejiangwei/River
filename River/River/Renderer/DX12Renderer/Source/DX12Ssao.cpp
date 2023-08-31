@@ -171,12 +171,12 @@ void Ssao::OnResize(UINT newWidth, UINT newHeight)
         mRenderTargetHeight = newHeight;
 
         // We render to ambient map at half the resolution.
-        mViewport.TopLeftX = 0.0f;
-        mViewport.TopLeftY = 0.0f;
-        mViewport.Width = mRenderTargetWidth / 2.0f;
-        mViewport.Height = mRenderTargetHeight / 2.0f;
-        mViewport.MinDepth = 0.0f;
-        mViewport.MaxDepth = 1.0f;
+        m_Viewport.TopLeftX = 0.0f;
+        m_Viewport.TopLeftY = 0.0f;
+        m_Viewport.Width = mRenderTargetWidth / 2.0f;
+        m_Viewport.Height = mRenderTargetHeight / 2.0f;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
 
         m_ScissorRect = { 0, 0, (int)mRenderTargetWidth / 2, (int)mRenderTargetHeight / 2 };
 
@@ -189,7 +189,7 @@ void Ssao::ComputeSsao(
     DX12FrameBuffer* currFrame,
     int blurCount)
 {
-    cmdList->RSSetViewports(1, &mViewport);
+    cmdList->RSSetViewports(1, &m_Viewport);
     cmdList->RSSetScissorRects(1, &m_ScissorRect);
 
     // We compute the initial SSAO to AmbientMap0.

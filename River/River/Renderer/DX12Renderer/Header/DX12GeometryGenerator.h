@@ -36,7 +36,7 @@ struct SubmeshGeometry
 
 struct MeshGeometry
 {
-	std::string Name;
+	std::string m_Name;
 
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;

@@ -7,13 +7,13 @@ Material::Material()
 }
 
 Material::Material(String& name)
-	: Name(std::move(name)), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
+	: m_Name(std::move(name)), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
 	, MatTransform(River::Matrix4x4::UnitMatrix())
 {
 }
 
 Material::Material(const char* name)
-	: Name(name), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
+	: m_Name(name), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
 	, MatTransform(River::Matrix4x4::UnitMatrix())
 {
 }

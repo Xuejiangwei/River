@@ -23,6 +23,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class ShadowMap;
 class DX12VertexBuffer;
 class DX12IndexBuffer;
 class DX12Texture;
@@ -227,4 +228,8 @@ private:
 	HashMap<String, Unique<MeshGeometry>> m_Geometries;
 
 	DX12RenderItem* m_UIRenderItem;
+
+	Unique<ShadowMap> m_ShadowMap;
+	PassUniform m_MainPassCB;
+	PassUniform m_ShadowPassCB;
 };

@@ -72,8 +72,6 @@ using namespace DirectX;
 #define DEFAULT_MODEL_PATH_3 "F:\\GitHub\\River\\River\\Models\\soldier.m3d"
 
 DirectX::BoundingSphere mSceneBounds;
-PassUniform mMainPassCB;
-PassUniform mShadowPassCB;
 float mLightNearZ = 0.0f;
 float mLightFarZ = 0.0f;
 DirectX::XMFLOAT3 mLightPosW;
@@ -83,7 +81,6 @@ DirectX::XMFLOAT4X4 mShadowTransform = Identity4x4();
 
 DirectX::BoundingFrustum mCamFrustum;
 DX12RenderItem* mPickedRitem = nullptr;
-UINT mSkyTexHeapIndex;
 UINT mShadowMapHeapIndex;
 UINT mSsaoHeapIndexStart = 0;
 UINT mSsaoAmbientMapIndex = 0;
@@ -91,7 +88,7 @@ UINT mNullCubeSrvIndex = 0;
 UINT mNullTexSrvIndex1 = 0;
 UINT mNullTexSrvIndex2 = 0;
 CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv;
-std::unique_ptr<ShadowMap> mShadowMap;
+
 std::unique_ptr<Ssao> mSsao;
 
 float mLightRotationAngle = 0.0f;
@@ -168,7 +165,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
 	{
-		mShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
+		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
 		mSsao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
 		//DX12GeometryGenerator::Get()->Initialize();
@@ -183,7 +180,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitFrameBuffer();
 		InitBasePSOs();
 
-		//mSsao->SetPSOs(mPSOs["ssao"].Get(), mPSOs["ssaoBlur"].Get());
 		mSsao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
 	}
 
@@ -243,7 +239,7 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 		const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
 
 		auto geo = MakeUnique<MeshGeometry>();
-		geo->Name = "shapeGeo";
+		geo->m_Name = "shapeGeo";
 		//geo->CopyCPUData(vertices, indices);
 		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
 			CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
@@ -377,7 +373,7 @@ void DX12RHI::Render()
 	// index into an array of cube maps.
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	skyTexDescriptor.Offset(mSkyTexHeapIndex, m_CbvSrvUavDescriptorSize);
+	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), m_CbvSrvUavDescriptorSize);
 	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
 
 	//mCommandList->SetPipelineState(mPSOs["opaque"].Get());
@@ -598,7 +594,7 @@ void DX12RHI::LoadSkinnedModel()
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
-	geo->Name = mSkinnedModelFilename;
+	geo->m_Name = mSkinnedModelFilename;
 	geo->CopyCPUData(vertices, indices);
 	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12SkinnedVertex), &m_InputLayers["skinnedDefault"]),
 		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
@@ -615,7 +611,7 @@ void DX12RHI::LoadSkinnedModel()
 		geo->DrawArgs[name] = submesh;
 	}
 
-	m_Geometries[geo->Name] = std::move(geo);
+	m_Geometries[geo->m_Name] = std::move(geo);
 }
 
 void DX12RHI::BuildShapeGeometry()
@@ -743,7 +739,7 @@ void DX12RHI::BuildShapeGeometry()
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
-	geo->Name = "shapeGeo";
+	geo->m_Name = "shapeGeo";
 	geo->CopyCPUData(vertices, indices);
 	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
 		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
@@ -755,11 +751,11 @@ void DX12RHI::BuildShapeGeometry()
 	geo->DrawArgs["quad"] = quadSubmesh;
 	geo->DrawArgs["uiQuad"] = uiQuadSubmesh;
 
-	m_Geometries[geo->Name] = std::move(geo);
+	m_Geometries[geo->m_Name] = std::move(geo);
 
 	{
 		auto geo = MakeUnique<MeshGeometry>();
-		geo->Name = "ui";
+		geo->m_Name = "ui";
 		std::vector<UIVertex> vertices(50);
 		std::vector<std::uint16_t> indices(100);
 		//geo->CopyCPUData(vertices, indices);
@@ -827,10 +823,10 @@ void DX12RHI::InitBaseMaterials()
 	{
 		int DiffuseSrvHeapIndex = srvHeapIndex++;
 		int NormalSrvHeapIndex = srvHeapIndex++;
-		auto mat = MakeUnique<Material>(mSkinnedMats[i].Name.c_str());
+		auto mat = MakeUnique<Material>(mSkinnedMats[i].m_Name.c_str());
 		mat->InitBaseParam(*(River::Float4*)(&mSkinnedMats[i].DiffuseAlbedo), *(River::Float3*)(&mSkinnedMats[i].FresnelR0), mSkinnedMats[i].Roughness,
 			matCBIndex++, DiffuseSrvHeapIndex, NormalSrvHeapIndex);
-		m_Materials[mSkinnedMats[i].Name] = std::move(mat);
+		m_Materials[mSkinnedMats[i].m_Name] = std::move(mat);
 	}
 }
 
@@ -1435,6 +1431,7 @@ void DX12RHI::UpdateMaterialCBs()
 
 void DX12RHI::UpdateMainPass(const RiverTime& time)
 {
+
 	XMMATRIX view = m_PrespectiveCamera.GetView();
 	XMMATRIX proj = m_PrespectiveCamera.GetProj();
 
@@ -1453,31 +1450,31 @@ void DX12RHI::UpdateMainPass(const RiverTime& time)
 	XMMATRIX viewProjTex = XMMatrixMultiply(viewProj, T);
 	XMMATRIX shadowTransform = XMLoadFloat4x4(&mShadowTransform);
 
-	XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
-	XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	XMStoreFloat4x4(&mMainPassCB.ViewProjTex, XMMatrixTranspose(viewProjTex));
-	XMStoreFloat4x4(&mMainPassCB.ShadowTransform, XMMatrixTranspose(shadowTransform));
-	mMainPassCB.EyePosW = m_PrespectiveCamera.GetPosition();
-	mMainPassCB.RenderTargetSize = XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
-	mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
-	mMainPassCB.NearZ = 1.0f;
-	mMainPassCB.FarZ = 1000.0f;
-	mMainPassCB.TotalTime = time.TotalTime();
-	mMainPassCB.DeltaTime = time.DeltaTime();
-	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	mMainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
-	mMainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
-	mMainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
-	mMainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	mMainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
-	mMainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+	XMStoreFloat4x4(&m_MainPassCB.View, XMMatrixTranspose(view));
+	XMStoreFloat4x4(&m_MainPassCB.InvView, XMMatrixTranspose(invView));
+	XMStoreFloat4x4(&m_MainPassCB.Proj, XMMatrixTranspose(proj));
+	XMStoreFloat4x4(&m_MainPassCB.InvProj, XMMatrixTranspose(invProj));
+	XMStoreFloat4x4(&m_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	XMStoreFloat4x4(&m_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	XMStoreFloat4x4(&m_MainPassCB.ViewProjTex, XMMatrixTranspose(viewProjTex));
+	XMStoreFloat4x4(&m_MainPassCB.ShadowTransform, XMMatrixTranspose(shadowTransform));
+	m_MainPassCB.EyePosW = m_PrespectiveCamera.GetPosition();
+	m_MainPassCB.RenderTargetSize = XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
+	m_MainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
+	m_MainPassCB.NearZ = 1.0f;
+	m_MainPassCB.FarZ = 1000.0f;
+	m_MainPassCB.TotalTime = time.TotalTime();
+	m_MainPassCB.DeltaTime = time.DeltaTime();
+	m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	m_MainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
+	m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
+	m_MainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
+	m_MainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	m_MainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
+	m_MainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
 
 	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(0, mMainPassCB);
+	currPassCB->CopyData(0, m_MainPassCB);
 }
 
 void DX12RHI::UpdateShadowPass(const RiverTime& time)
@@ -1490,23 +1487,23 @@ void DX12RHI::UpdateShadowPass(const RiverTime& time)
 	XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
 	XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
 
-	UINT w = mShadowMap->Width();
-	UINT h = mShadowMap->Height();
+	UINT w = m_ShadowMap->Width();
+	UINT h = m_ShadowMap->Height();
 
-	XMStoreFloat4x4(&mShadowPassCB.View, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&mShadowPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&mShadowPassCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&mShadowPassCB.InvProj, XMMatrixTranspose(invProj));
-	XMStoreFloat4x4(&mShadowPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&mShadowPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	mShadowPassCB.EyePosW = mLightPosW;
-	mShadowPassCB.RenderTargetSize = XMFLOAT2((float)w, (float)h);
-	mShadowPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / w, 1.0f / h);
-	mShadowPassCB.NearZ = mLightNearZ;
-	mShadowPassCB.FarZ = mLightFarZ;
+	XMStoreFloat4x4(&m_ShadowPassCB.View, XMMatrixTranspose(view));
+	XMStoreFloat4x4(&m_ShadowPassCB.InvView, XMMatrixTranspose(invView));
+	XMStoreFloat4x4(&m_ShadowPassCB.Proj, XMMatrixTranspose(proj));
+	XMStoreFloat4x4(&m_ShadowPassCB.InvProj, XMMatrixTranspose(invProj));
+	XMStoreFloat4x4(&m_ShadowPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	XMStoreFloat4x4(&m_ShadowPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	m_ShadowPassCB.EyePosW = mLightPosW;
+	m_ShadowPassCB.RenderTargetSize = XMFLOAT2((float)w, (float)h);
+	m_ShadowPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / w, 1.0f / h);
+	m_ShadowPassCB.NearZ = mLightNearZ;
+	m_ShadowPassCB.FarZ = mLightFarZ;
 
 	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(1, mShadowPassCB);
+	currPassCB->CopyData(1, m_ShadowPassCB);
 }
 
 void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
@@ -1522,8 +1519,8 @@ void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 
-	ssaoCB.Proj = mMainPassCB.Proj;
-	ssaoCB.InvProj = mMainPassCB.InvProj;
+	ssaoCB.Proj = m_MainPassCB.Proj;
+	ssaoCB.InvProj = m_MainPassCB.InvProj;
 	XMStoreFloat4x4(&ssaoCB.ProjTex, XMMatrixTranspose(P * T));
 
 	mSsao->GetOffsetVectors(ssaoCB.OffsetVectors);
@@ -1612,7 +1609,6 @@ void DX12RHI::InitDescriptorHeaps()
 		tex2DList.push_back(texResource);
 	}
 
-
 	auto skyCubeMap = m_Textures["skyCubeMap"]->GetResource();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -1638,8 +1634,8 @@ void DX12RHI::InitDescriptorHeaps()
 	srvDesc.Format = skyCubeMap->GetDesc().Format;
 	m_Device->CreateShaderResourceView(skyCubeMap.Get(), &srvDesc, hDescriptor);
 
-	mSkyTexHeapIndex = (UINT)tex2DList.size();
-	mShadowMapHeapIndex = mSkyTexHeapIndex + 1;
+	m_Textures["skyCubeMap"]->SetTextureId((UINT)tex2DList.size());
+	mShadowMapHeapIndex = m_Textures["skyCubeMap"]->GetTextureId() + 1;
 	mSsaoHeapIndexStart = mShadowMapHeapIndex + 1;
 	mSsaoAmbientMapIndex = mSsaoHeapIndexStart + 3;
 	mNullCubeSrvIndex = mSsaoHeapIndexStart + 5;
@@ -1662,10 +1658,7 @@ void DX12RHI::InitDescriptorHeaps()
 	nullSrv.Offset(1, m_CbvSrvUavDescriptorSize);
 	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
 
-	mShadowMap->BuildDescriptors(
-		GetCpuSrv(mShadowMapHeapIndex),
-		GetGpuSrv(mShadowMapHeapIndex),
-		GetDsv(1));
+	m_ShadowMap->BuildDescriptors(GetCpuSrv(mShadowMapHeapIndex), GetGpuSrv(mShadowMapHeapIndex), GetDsv(1));
 
 	mSsao->BuildDescriptors(
 		m_DepthStencilBuffer.Get(),
@@ -1828,7 +1821,7 @@ void DX12RHI::InitBaseRenderItems()
 
 		ritem->TexTransform = Identity4x4();
 		ritem->ObjCBIndex = objCBIndex++;
-		ritem->Mat = m_Materials[mSkinnedMats[i].Name].get();
+		ritem->Mat = m_Materials[mSkinnedMats[i].m_Name].get();
 		ritem->Geo = m_Geometries[mSkinnedModelFilename].get();
 		ritem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		ritem->IndexCount = ritem->Geo->DrawArgs[submeshName].IndexCount;
@@ -1922,19 +1915,19 @@ void DX12RHI::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<
 
 void DX12RHI::DrawSceneToShadowMap()
 {
-	m_CommandList->RSSetViewports(1, &mShadowMap->Viewport());
-	m_CommandList->RSSetScissorRects(1, &mShadowMap->ScissorRect());
+	m_CommandList->RSSetViewports(1, &m_ShadowMap->Viewport());
+	m_CommandList->RSSetScissorRects(1, &m_ShadowMap->ScissorRect());
 
 	// Change to DEPTH_WRITE.
-	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
+	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ShadowMap->Resource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	// Clear the back buffer and depth buffer.
-	m_CommandList->ClearDepthStencilView(mShadowMap->Dsv(),
+	m_CommandList->ClearDepthStencilView(m_ShadowMap->Dsv(),
 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	// Specify the buffers we are going to render to.
-	m_CommandList->OMSetRenderTargets(0, nullptr, false, &mShadowMap->Dsv());
+	m_CommandList->OMSetRenderTargets(0, nullptr, false, &m_ShadowMap->Dsv());
 
 	// Bind the pass constant buffer for the shadow map pass.
 	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
@@ -1951,7 +1944,7 @@ void DX12RHI::DrawSceneToShadowMap()
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
 	// Change back to GENERIC_READ so we can read the texture in a shader.
-	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mShadowMap->Resource(),
+	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ShadowMap->Resource(),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 

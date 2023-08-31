@@ -3,6 +3,8 @@
 #include "RiverHead.h"
 #include "MathStruct.h"
 
+class Texture;
+
 class Material
 {
 public:
@@ -16,7 +18,7 @@ public:
 
 	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, int diffuseSrvIndex, int normalSrvIndex);
 
-	String Name;
+	String m_Name;
 	int NumFramesDirty = 3; //frame buffer num
 	int MatCBIndex = -1;
 	int DiffuseSrvHeapIndex = -1;
@@ -26,4 +28,7 @@ public:
 	River::Float4 DiffuseAlbedo;
 	River::Float3 FresnelR0;
 	River::Matrix4x4 MatTransform;
+
+	Texture* m_DiffuseTexture;
+	Texture* m_NormalTexture;
 };

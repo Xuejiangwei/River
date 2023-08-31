@@ -978,7 +978,7 @@ void DX12GeometryGenerator::BuildCylinderBottomCap(float bottomRadius, float top
 Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name, MeshData& meshData)
 {
 	auto geo = MakeUnique<MeshGeometry>();
-	geo->Name = name;
+	geo->m_Name = name;
 
 	std::vector<DX12Vertex> vertices(meshData.Vertices.size());
 	for (size_t i = 0; i < vertices.size(); i++)
@@ -1022,7 +1022,7 @@ Unique<MeshGeometry> DX12GeometryGenerator::CreateMeshGeometry(const char* name,
 	UINT indicesByteSize = (UINT)indices.size() * (UINT)sizeof(std::int32_t);
 	
 	auto geo = MakeUnique<MeshGeometry>();
-	geo->Name = name;
+	geo->m_Name = name;
 
 	ThrowIfFailed(D3DCreateBlob(verticesByteSize, &geo->VertexBufferCPU));
 	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), verticesByteSize);

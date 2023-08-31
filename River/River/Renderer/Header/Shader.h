@@ -18,7 +18,7 @@ enum class ShaderLayotClassification
 
 struct ShaderLayout
 {
-	String Name;
+	String m_Name;
 	int Index;
 	ShaderLayotFormat Format;
 	int Slot;
