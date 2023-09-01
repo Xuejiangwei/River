@@ -2,13 +2,18 @@
 
 #include "Component.h"
 
-class LightComponent
+class LightComponent : public Component
 {
 public:
 	LightComponent();
 
-	~LightComponent();
+	virtual ~LightComponent() override;
+
+	virtual void Tick(float deltaTime);
+
+
 
 private:
 	FLOAT_3 m_Position;
+	FLOAT_3 m_Rotation;
 };

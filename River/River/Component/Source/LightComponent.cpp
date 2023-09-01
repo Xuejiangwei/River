@@ -8,3 +8,7 @@ LightComponent::LightComponent()
 LightComponent::~LightComponent()
 {
 }
+
+void LightComponent::Tick(float deltaTime)
+{
+}

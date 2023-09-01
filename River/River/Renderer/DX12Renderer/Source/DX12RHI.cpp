@@ -60,7 +60,6 @@ DirectX::XMFLOAT3 mBaseLightDirections[3] = {
 	DirectX::XMFLOAT3(0.0f, -0.707f, -0.707f)
 };
 DirectX::XMFLOAT3 mRotatedLightDirections[3];
-std::string mSkinnedModelFilename = "soldier";
 struct SkinnedModelInstance
 {
 	SkinnedData* SkinnedInfo = nullptr;
@@ -554,7 +553,7 @@ void DX12RHI::LoadSkinnedModel()
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
 	auto geo = std::make_unique<MeshGeometry>();
-	geo->m_Name = mSkinnedModelFilename;
+	geo->m_Name = "soldier";
 	geo->CopyCPUData(vertices, indices);
 	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12SkinnedVertex), &m_InputLayers["skinnedDefault"]),
 		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
@@ -1782,7 +1781,7 @@ void DX12RHI::InitBaseRenderItems()
 		ritem->TexTransform = Identity4x4();
 		ritem->ObjCBIndex = objCBIndex++;
 		ritem->Mat = m_Materials[mSkinnedMats[i].m_Name].get();
-		ritem->Geo = m_Geometries[mSkinnedModelFilename].get();
+		ritem->Geo = m_Geometries["soldier"].get();
 		ritem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		ritem->IndexCount = ritem->Geo->DrawArgs[submeshName].IndexCount;
 		ritem->StartIndexLocation = ritem->Geo->DrawArgs[submeshName].StartIndexLocation;
