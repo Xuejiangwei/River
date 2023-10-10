@@ -18,9 +18,6 @@
     <ClCompile Include="Source\River.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Window\Source\Window.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -138,7 +135,7 @@
     <ClCompile Include="Component\Source\LightComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Actor\Source\Actor.cpp">
+    <ClCompile Include="Object\Source\Object.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Component\Header\Component.cpp">
@@ -186,11 +183,26 @@
     <ClCompile Include="Component\Source\SkinMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Level\Source\Level.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Level\Source\World.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\GameInstance.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Source\ObjectUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Source\RawPolyhedron.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Header\Engine.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Header\RiverHead.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -344,7 +356,7 @@
     <ClInclude Include="Component\Header\LightComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Actor\Header\Actor.h">
+    <ClInclude Include="Object\Header\Object.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RiverUI\Header\Widget.h">
@@ -390,6 +402,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Component\Header\SkinMeshComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Level\Header\Level.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Level\Header\World.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\GameInstance.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Header\ObjectUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Parse\Header\ParseObj.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\RawPolyhedron.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

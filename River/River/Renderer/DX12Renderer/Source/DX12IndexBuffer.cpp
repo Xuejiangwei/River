@@ -53,7 +53,7 @@ DX12IndexBuffer::~DX12IndexBuffer()
 {
 }
 
-void DX12IndexBuffer::UpdateData(void* context, void* cmdList, void* indices, size_t count, uint32_t additionalCount)
+void DX12IndexBuffer::UpdateData(void* context, void* cmdList, void* indices, uint32 count, uint32 additionalCount)
 {
 	m_Count = count;
 

@@ -4,16 +4,16 @@
 
 class Component;
 
-class Actor
+class Object
 {
 public:
-	Actor();
+	Object();
 
-	~Actor();
+	~Object();
 
 	virtual void Tick(float deltaTime);
 
-	void AddComponent(Unique<Component>& component);
+	void AddComponent(Share<Component> component);
 
 	template<typename T>
 	T* GetComponent(bool mustHave = true)
@@ -35,5 +35,5 @@ public:
 	}
 
 private:
-	V_Array<Unique<Component>> m_Components;
+	V_Array<Share<Component>> m_Components;
 };

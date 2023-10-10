@@ -1,5 +1,6 @@
 #include "RiverPch.h"
 #include "Application.h"
+#include "GameInstance.h"
 #include "Layer.h"
 #include "Window.h"
 #include "UILayer.h"
@@ -13,6 +14,7 @@ Application::Application()
 	: m_Running(true)
 {
 	s_Instance = this;
+	m_CurrentGameInstance = MakeUnique<GameInstance>();
 
 	m_Window = Window::Create();
 	WindowParam param = { 720, 720 };

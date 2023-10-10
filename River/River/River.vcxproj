@@ -133,11 +133,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Actor\Source\Actor.cpp" />
+    <ClCompile Include="Level\Source\Level.cpp" />
+    <ClCompile Include="Level\Source\World.cpp" />
+    <ClCompile Include="Object\Source\Object.cpp" />
     <ClCompile Include="Component\Header\Component.cpp" />
     <ClCompile Include="Component\Source\LightComponent.cpp" />
     <ClCompile Include="Component\Source\MeshComponent.cpp" />
     <ClCompile Include="Component\Source\SkinMeshComponent.cpp" />
+    <ClCompile Include="Object\Source\ObjectUtils.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
@@ -161,11 +164,13 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
     <ClCompile Include="Renderer\Source\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Material.cpp" />
     <ClCompile Include="Renderer\Source\Mesh.cpp" />
     <ClCompile Include="Renderer\Source\PipelineState.cpp" />
+    <ClCompile Include="Renderer\Source\RawPolyhedron.cpp" />
     <ClCompile Include="Renderer\Source\RenderItem.cpp" />
     <ClCompile Include="Renderer\Source\RHI.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
@@ -180,7 +185,7 @@
     <ClCompile Include="RiverUI\Source\UIWindow.cpp" />
     <ClCompile Include="RiverUI\Source\Widget.cpp" />
     <ClCompile Include="Source\Application.cpp" />
-    <ClCompile Include="Source\Engine.cpp" />
+    <ClCompile Include="Source\GameInstance.cpp" />
     <ClCompile Include="Source\Layer.cpp" />
     <ClCompile Include="Source\River.cpp" />
     <ClCompile Include="Source\RiverPch.cpp">
@@ -194,13 +199,15 @@
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Actor\Header\Actor.h" />
+    <ClInclude Include="Header\GameInstance.h" />
+    <ClInclude Include="Level\Header\Level.h" />
+    <ClInclude Include="Level\Header\World.h" />
+    <ClInclude Include="Object\Header\Object.h" />
     <ClInclude Include="Component\Header\Component.h" />
     <ClInclude Include="Component\Header\LightComponent.h" />
     <ClInclude Include="Component\Header\MeshComponent.h" />
     <ClInclude Include="Component\Header\SkinMeshComponent.h" />
     <ClInclude Include="Header\Application.h" />
-    <ClInclude Include="Header\Engine.h" />
     <ClInclude Include="Header\Event.h" />
     <ClInclude Include="Header\RiverTime.h" />
     <ClInclude Include="Header\KeyCode.h" />
@@ -209,6 +216,7 @@
     <ClInclude Include="Header\RiverHead.h" />
     <ClInclude Include="Header\RiverPch.h" />
     <ClInclude Include="Header\UILayer.h" />
+    <ClInclude Include="Object\Header\ObjectUtils.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\d3dx12.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h" />
@@ -241,6 +249,7 @@
     <ClInclude Include="Renderer\Header\Material.h" />
     <ClInclude Include="Renderer\Header\Mesh.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
+    <ClInclude Include="Renderer\Header\RawPolyhedron.h" />
     <ClInclude Include="Renderer\Header\RendererUtil.h" />
     <ClInclude Include="Renderer\Header\RenderItem.h" />
     <ClInclude Include="Renderer\Header\RenderPass.h" />
@@ -251,6 +260,7 @@
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
     <ClInclude Include="Renderer\Header\MathStruct.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
+    <ClInclude Include="Renderer\Parse\Header\ParseObj.h" />
     <ClInclude Include="RiverUI\Header\Button.h" />
     <ClInclude Include="RiverUI\Header\Image.h" />
     <ClInclude Include="RiverUI\Header\Panel.h" />

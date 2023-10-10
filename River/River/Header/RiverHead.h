@@ -1,10 +1,10 @@
 #pragma once
 
-#ifdef _DEBUG
-#define GP_ASSERT(expression) assert(expression)
-#else
-#define GP_ASSERT(expression)
-#endif
+//#ifdef _DEBUG
+//#define _ASSERT(expression) assert(expression)
+//#else
+//#define _ASSERT(expression)
+//#endif
 
 #ifdef RIVER_EXPORT
 	#define RIVER_API __declspec(dllexport)

@@ -1,18 +1,9 @@
-//#include "RiverPch.h"
-//#include "RiverHead.h"
-//#include "Window.h"
-//
-//int main()
-//{
-//	Share<Window> win = Window::Get();
-//	win->Create({ 720, 720 });
-//
-//	return 0;
-//}
-
 #include "RiverPch.h"
 #include "RiverEditorApplication.h"
 #include "RiverEditorLayer.h"
+
+#include "Object/Header/ObjectUtils.h"
+#include "Component/Header/MeshComponent.h"
 
 RiverEditorApplication::RiverEditorApplication()
 	: Application()
@@ -22,6 +13,13 @@ RiverEditorApplication::RiverEditorApplication()
 
 RiverEditorApplication::~RiverEditorApplication()
 {
+}
+
+void RiverEditorApplication::Initialize()
+{
+	//Éú³ÉObject
+	auto obj = ProduceObject();
+	obj->AddComponent(MakeShare<MeshComponent>());
 }
 
 Application* CreateApplication()

@@ -6,15 +6,15 @@
 class IndexBuffer
 {
 public:
-	IndexBuffer(uint32_t count, ShaderDataType indiceDataType);
+	IndexBuffer(uint32 count, ShaderDataType indiceDataType);
 	
 	virtual ~IndexBuffer();
 
-	virtual void UpdateData(void* context, void* cmdList, void* indices, size_t count, uint32_t additionalCount = 0) {}
+	virtual void UpdateData(void* context, void* cmdList, void* indices, uint32 count, uint32 additionalCount = 0) {}
 
-	uint32_t GetIndexCount() const { return m_Count; }
+	uint32 GetIndexCount() const { return m_Count; }
 
 protected:
-	uint32_t m_Count;
+	uint32 m_Count;
 	ShaderDataType m_IndiceDataType;
 };
