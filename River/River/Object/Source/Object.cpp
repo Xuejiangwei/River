@@ -18,6 +18,11 @@ void Object::Tick(float deltaTime)
 	}
 }
 
+void Object::SetPosition(const FLOAT_3& position)
+{
+	m_Position = position;
+}
+
 void Object::AddComponent(Share<Component> component)
 {
 	m_Components.push_back(component);

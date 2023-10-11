@@ -46,6 +46,8 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) override;
 
+	virtual void UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices) override;
+
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
@@ -233,4 +235,6 @@ private:
 	std::unique_ptr<Ssao> m_Ssao;
 	PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
+
+
 };

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Renderer/Header/MathStruct.h"
-#include "Renderer/Header/Mesh.h"
+#include "MathStruct.h"
+#include "Renderer/Mesh/Header/Mesh.h"
 
 class UIRenderItem;
 

@@ -39,6 +39,7 @@ DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, void* vertices, uint32_
 DX12VertexBuffer::DX12VertexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, void* vertices, uint32_t size, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
 	: m_VertexLayout(layout)
 {
+	//此处创建的为default堆，若需要能更新数据的话需要upload堆
 	m_VertexBuffer = CreateDefaultBuffer(device, commandList, vertices, size, m_UploaderBuffer);
 
 	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
@@ -57,7 +58,9 @@ DX12VertexBuffer::~DX12VertexBuffer()
 void DX12VertexBuffer::UpdateData(void* context, void* cmdList, void* vertices, size_t elementCount, uint32_t additionalCount)
 {
 	size_t size = elementCount * m_VertexBufferView.StrideInBytes;
-	if (GetBufferSize() < elementCount * m_VertexBufferView.StrideInBytes)
+	D3D12_HEAP_PROPERTIES prop;
+	m_VertexBuffer->GetHeapProperties(&prop, nullptr);
+	if (GetBufferSize() < elementCount * m_VertexBufferView.StrideInBytes || prop.Type != D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD)
 	{
 		size = (elementCount + additionalCount) * m_VertexBufferView.StrideInBytes;
 		auto device = static_cast<ID3D12Device*>(context);

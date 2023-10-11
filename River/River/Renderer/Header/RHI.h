@@ -3,9 +3,9 @@
 #include "RiverHead.h"
 #include "RiverTime.h"
 #include "Shader.h"
-#include "Mesh.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "Renderer/Mesh/Header/Mesh.h"
 
 #include <vector>
 
@@ -54,6 +54,8 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) = 0;
 
+	virtual void UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices) = 0;
+
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) = 0;
 
 	//virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
@@ -75,6 +77,7 @@ public:
 protected:
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
+	uint32 m_MaxRenderItemCount = 1000;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 

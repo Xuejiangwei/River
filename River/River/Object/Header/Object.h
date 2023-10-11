@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
+#include "MathStruct.h"
 
 class Component;
 
@@ -14,6 +15,8 @@ public:
 	virtual void Tick(float deltaTime);
 
 	void AddComponent(Share<Component> component);
+
+	void SetPosition(const FLOAT_3& position);
 
 	template<typename T>
 	T* GetComponent(bool mustHave = true)
@@ -36,4 +39,5 @@ public:
 
 private:
 	V_Array<Share<Component>> m_Components;
+	FLOAT_3 m_Position;
 };

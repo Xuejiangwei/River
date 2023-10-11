@@ -187,6 +187,32 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 	UpdateSsaoCBs(time);
 }
 
+void DX12RHI::UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices)
+{
+	auto& geo = m_Geometries["scene"];
+	UINT verticesMore = (UINT)vertices.size() + 100;
+	UINT indicesMore = (UINT)indices.size() + 300;
+	if (geo == nullptr)
+	{
+		const UINT vbByteSize = verticesMore * sizeof(Vertex);
+		const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
+
+		auto geo = MakeUnique<MeshGeometry>();
+		geo->m_Name = "shapeGeo";
+		//geo->CopyCPUData(vertices, indices);
+		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(Vertex), &m_InputLayers["default"]),
+			CreateIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+
+		m_Geometries["scene"] = std::move(geo);
+	}
+	else
+	{
+		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), vertices.size(), 1000);
+		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), indices.size(), 3000);
+	}
+
+}
+
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
 {
 	auto& geo = m_Geometries["ui"];
@@ -338,6 +364,36 @@ void DX12RHI::Render()
 	//mCommandList->SetPipelineState(mPSOs["opaque"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Opaque]);
+
+	{
+		auto& geo = m_Geometries["scene"];
+		if (geo)
+		{
+			m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
+			m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+			m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + 1 * objCBByteSize;
+
+			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+			m_CommandList->DrawIndexedInstanced(32, 1, 0, 0, 0);
+		
+			m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
+			m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+			m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + 3 * objCBByteSize;
+
+			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+			m_CommandList->DrawIndexedInstanced(32, 1, 0, 0, 0);
+		}
+	}
 
 	//mCommandList->SetPipelineState(mPSOs["skinnedOpaque"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["skinnedOpaque"]->GetPSO());
@@ -1673,7 +1729,7 @@ void DX12RHI::InitBaseRenderItems()
 	m_AllRitems.push_back(std::move(quadRitem));
 
 	auto boxRitem = std::make_unique<DX12RenderItem>();
-	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f));
+	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 2.0f) * XMMatrixTranslation(1.0f, 0.5f, 1.0f));
 	XMStoreFloat4x4(&boxRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
 	boxRitem->ObjCBIndex = 2;
 	boxRitem->Mat = m_Materials["bricks0"].get();
@@ -1832,7 +1888,7 @@ void DX12RHI::InitFrameBuffer()
 {
 	for (int i = 0; i < s_FrameBufferCount; ++i)
 	{
-		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, (UINT)m_AllRitems.size(),
+		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, m_MaxRenderItemCount/*(UINT)m_AllRitems.size()*/,
 			1, (int)m_Materials.size()));
 	}
 }

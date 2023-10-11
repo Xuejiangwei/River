@@ -111,7 +111,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Source\Mesh.cpp">
+    <ClCompile Include="Renderer\Mesh\Source\Mesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12RenderItem.cpp">
@@ -201,6 +201,9 @@
     <ClCompile Include="Renderer\Source\RawPolyhedron.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -284,7 +287,7 @@
     <ClInclude Include="Renderer\Header\ShaderDataType.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\MathStruct.h">
+    <ClInclude Include="Header\MathStruct.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\MathHelper.h">
@@ -326,7 +329,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\Waves.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\Mesh.h">
+    <ClInclude Include="Renderer\Mesh\Header\Mesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12RenderItem.h">
@@ -420,6 +423,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Header\RawPolyhedron.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

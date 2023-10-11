@@ -164,11 +164,12 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp" />
     <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
     <ClCompile Include="Renderer\Source\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Material.cpp" />
-    <ClCompile Include="Renderer\Source\Mesh.cpp" />
+    <ClCompile Include="Renderer\Mesh\Source\Mesh.cpp" />
     <ClCompile Include="Renderer\Source\PipelineState.cpp" />
     <ClCompile Include="Renderer\Source\RawPolyhedron.cpp" />
     <ClCompile Include="Renderer\Source\RenderItem.cpp" />
@@ -247,7 +248,7 @@
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
     <ClInclude Include="Renderer\Header\Material.h" />
-    <ClInclude Include="Renderer\Header\Mesh.h" />
+    <ClInclude Include="Renderer\Mesh\Header\Mesh.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
     <ClInclude Include="Renderer\Header\RawPolyhedron.h" />
     <ClInclude Include="Renderer\Header\RendererUtil.h" />
@@ -258,8 +259,9 @@
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />
     <ClInclude Include="Renderer\Header\Texture.h" />
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
-    <ClInclude Include="Renderer\Header\MathStruct.h" />
+    <ClInclude Include="Header\MathStruct.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
+    <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h" />
     <ClInclude Include="Renderer\Parse\Header\ParseObj.h" />
     <ClInclude Include="RiverUI\Header\Button.h" />
     <ClInclude Include="RiverUI\Header\Image.h" />

@@ -42,6 +42,7 @@ DX12IndexBuffer::DX12IndexBuffer(ID3D12Device* device, ID3D12GraphicsCommandList
 {
 	auto indiceDataSize = ShaderDataTypeSize(indiceDataType);
 
+	//此处创建的为default堆，若需要能更新数据的话需要upload堆
 	m_IndexBuffer = CreateDefaultBuffer(device, commandList, indices, count * indiceDataSize, m_UploaderBuffer);
 
 	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
@@ -57,8 +58,10 @@ void DX12IndexBuffer::UpdateData(void* context, void* cmdList, void* indices, ui
 {
 	m_Count = count;
 
+	D3D12_HEAP_PROPERTIES prop;
+	m_IndexBuffer->GetHeapProperties(&prop, nullptr);
 	auto indiceDataSize = ShaderDataTypeSize(m_IndiceDataType);
-	if (GetBufferSize() < count * indiceDataSize)
+	if (GetBufferSize() < count * indiceDataSize || prop.Type != D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD)
 	{
 		auto size = (count + additionalCount) * indiceDataSize;
 		auto device = static_cast<ID3D12Device*>(context);

@@ -1,4 +1,5 @@
 #pragma once
+#include "RiverTime.h"
 
 class Object;
 
@@ -9,6 +10,8 @@ public:
 	World();
 
 	~World();
+
+	void OnUpdate(const RiverTime& time);
 
 private:
 	void AddObject(Share<Object>& object);

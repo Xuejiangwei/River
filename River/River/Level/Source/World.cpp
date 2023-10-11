@@ -10,6 +10,14 @@ World::~World()
 {
 }
 
+void World::OnUpdate(const RiverTime& time)
+{
+	for (auto& obj : m_ObjectList)
+	{
+		obj->Tick(time.DeltaTime());
+	}
+}
+
 void World::AddObject(Share<Object>& object)
 {
 	m_ObjectList.push_back(object);

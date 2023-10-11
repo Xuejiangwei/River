@@ -23,7 +23,7 @@ struct UIVertex
 
 	River::Float3 Pos;
 	River::Float2 TexC;
-	uint8_t Color[4];
+	uint8 Color[4];
 };
 
 struct Vertex
@@ -36,17 +36,18 @@ struct Vertex
 
 	River::Float3 Pos;
 	River::Float3 Normal;
+	River::Float3 TangentU;
 	River::Float2 TexC;
 };
 
 class Mesh
 {
 public:
-	Mesh(V_Array<Vertex>& vertices, V_Array<uint32_t>& indices);
+	Mesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices);
 
 	~Mesh();
 
 private:
 	V_Array<Vertex> m_Vertices;
-	V_Array<uint32_t> m_Indices;
+	V_Array<uint32> m_Indices;
 };
