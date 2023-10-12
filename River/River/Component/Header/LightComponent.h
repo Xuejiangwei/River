@@ -9,7 +9,7 @@ public:
 
 	virtual ~LightComponent() override;
 
-	virtual void Tick(float deltaTime);
+	virtual void Tick(float deltaTime) override;
 
 
 

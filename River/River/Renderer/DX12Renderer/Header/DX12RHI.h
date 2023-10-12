@@ -38,6 +38,7 @@ class DX12RHI : public RHI
 {
 public:
 	DX12RHI();
+	
 	virtual ~DX12RHI() override;
 
 	virtual void Initialize(const RHIInitializeParam& param) override;
@@ -46,7 +47,7 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) override;
 
-	virtual void UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices) override;
+	virtual void UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices) override;
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
 

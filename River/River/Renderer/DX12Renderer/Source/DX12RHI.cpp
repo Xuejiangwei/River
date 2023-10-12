@@ -187,20 +187,20 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 	UpdateSsaoCBs(time);
 }
 
-void DX12RHI::UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices)
+void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices)
 {
 	auto& geo = m_Geometries["scene"];
 	UINT verticesMore = (UINT)vertices.size() + 100;
 	UINT indicesMore = (UINT)indices.size() + 300;
 	if (geo == nullptr)
 	{
-		const UINT vbByteSize = verticesMore * sizeof(Vertex);
+		const UINT vbByteSize = verticesMore * sizeof(RawVertex);
 		const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
 
 		auto geo = MakeUnique<MeshGeometry>();
 		geo->m_Name = "shapeGeo";
 		//geo->CopyCPUData(vertices, indices);
-		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(Vertex), &m_InputLayers["default"]),
+		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
 			CreateIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 		m_Geometries["scene"] = std::move(geo);
@@ -270,13 +270,10 @@ void DX12RHI::Render()
 {
 	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished execution on the GPU.
+	//重复使用与命令录制相关的内存。只有当关联的命令列表在GPU上完成执行时，我们才能重置
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the command queue via ExecuteCommandList.
-	// Reusing the command list reuses memory.
-	//ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
+	// 命令列表可以在通过ExecuteCommandList添加到命令队列后重置，重复使用命令列表会重复使用内存。
 	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), m_PSOs["opaque"]->GetPSO()));
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_SrvDescriptorHeap.Get() };
@@ -296,57 +293,34 @@ void DX12RHI::Render()
 	// Bind null SRV for shadow map pass.
 	m_CommandList->SetGraphicsRootDescriptorTable(4, mNullSrv);
 
-	// Bind all the textures used in this scene.  Observe
-	// that we only have to specify the first descriptor in the table.  
-	// The root signature knows how many descriptors are expected in the table.
+	//绑定纹理贴图，只需要提供起始位置，根签名能自动知道所需数据大小
 	m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	DrawSceneToShadowMap();
 
-	//
-	// Normal/depth pass.
-	//
-
 	DrawNormalsAndDepth();
-
-	//
-	//
-	// 
 
 	m_CommandList->SetGraphicsRootSignature(m_RootSignatures["ssao"]->GetRootSignature());
 	m_Ssao->ComputeSsao(m_CommandList.Get(), m_CurrFrameResource, 2);
 
-	//
-	// Main rendering pass.
-	//
-
 	m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 
-	// Rebind state whenever graphics root signature changes.
-
-	// Bind all the materials used in this scene.  For structured buffers, we can bypass the heap and 
-	// set as a root descriptor.
+	//绑定材质缓冲数据
 	matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
 	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());
-
 
 	m_CommandList->RSSetViewports(1, &m_ScreenViewport);
 	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	// Indicate a state transition on the resource usage.
 	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// Clear the back buffer and depth buffer.
+	//清除后台缓冲与深度缓冲
 	m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 	m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	// Specify the buffers we are going to render to.
 	m_CommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-	// Bind all the textures used in this scene.  Observe
-	// that we only have to specify the first descriptor in the table.  
-	// The root signature knows how many descriptors are expected in the table.
 	m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
@@ -361,11 +335,11 @@ void DX12RHI::Render()
 	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), m_CbvSrvUavDescriptorSize);
 	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
 
-	//mCommandList->SetPipelineState(mPSOs["opaque"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Opaque]);
 
 	{
+		m_CommandList->SetPipelineState(m_PSOs["opaqueRaw"]->GetPSO());
 		auto& geo = m_Geometries["scene"];
 		if (geo)
 		{
@@ -380,14 +354,8 @@ void DX12RHI::Render()
 			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
 			m_CommandList->DrawIndexedInstanced(32, 1, 0, 0, 0);
-		
-			m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
-			m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
-			m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
-			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
-			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + 3 * objCBByteSize;
+			objCBAddress = objectCB->GetGPUVirtualAddress() + 10 * objCBByteSize;
 
 			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
@@ -864,6 +832,9 @@ void DX12RHI::InitBaseShaders()
 	m_Shaders["skinnedVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, skinnedDefines, "VS", "vs_5_1");
 	m_Shaders["opaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, nullptr, "PS", "ps_5_1");
 
+	m_Shaders["rawVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "VS", "vs_5_1");
+	m_Shaders["rawPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "PS", "ps_5_1");
+
 	m_Shaders["shadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "VS", "vs_5_1");
 	m_Shaders["skinnedShadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, skinnedDefines, "VS", "vs_5_1");
 	m_Shaders["shadowOpaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "PS", "ps_5_1");
@@ -894,6 +865,13 @@ void DX12RHI::InitBaseShaders()
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	m_InputLayers["defaultRaw"] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	m_InputLayers["skinnedDefault"] =
@@ -1054,6 +1032,9 @@ void DX12RHI::InitBasePSOs()
 	opaquePsoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	opaquePsoDesc.DSVFormat = m_DepthStencilFormat;
 	m_PSOs["opaque"] = CreatePSO(opaquePsoDesc, &m_InputLayers["default"], m_Shaders["standardVS"].get(), m_Shaders["opaquePS"].get());
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueRawPsoDesc = opaquePsoDesc;
+	m_PSOs["opaqueRaw"] = CreatePSO(opaqueRawPsoDesc, &m_InputLayers["defaultRaw"], m_Shaders["rawVS"].get(), m_Shaders["rawPS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedOpaquePsoDesc = opaquePsoDesc;
 	m_PSOs["skinnedOpaque"] = CreatePSO(skinnedOpaquePsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedVS"].get(), m_Shaders["opaquePS"].get());

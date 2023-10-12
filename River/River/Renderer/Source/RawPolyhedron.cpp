@@ -6,15 +6,15 @@ RawPolyhedronData RawPolyhedron::GetRawBox()
 	RawPolyhedronData data;
 	data.Vertices.resize(8);
 
-	data.Vertices[0].Pos = { +0.5f, +0.5f, -0.5f };
-	data.Vertices[1].Pos = { +0.5f, +0.5f, +0.5f };
-	data.Vertices[2].Pos = { +0.5f, -0.5f, +0.5f };
-	data.Vertices[3].Pos = { +0.5f, -0.5f, -0.5f };
+	data.Vertices[0] = { +0.5f, +0.5f, -0.5f, 0.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[1] = { +0.5f, +0.5f, +0.5f, 1.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[2] = { +0.5f, -0.5f, +0.5f, 0.0f, 1.0f, 255, 0, 0, 255 };
+	data.Vertices[3] = { +0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 255, 0, 0, 255 };
 
-	data.Vertices[4].Pos = { -0.5f, +0.5f, -0.5f };
-	data.Vertices[5].Pos = { -0.5f, +0.5f, +0.5f };
-	data.Vertices[6].Pos = { -0.5f, -0.5f, +0.5f };
-	data.Vertices[7].Pos = { -0.5f, -0.5f, -0.5f };
+	data.Vertices[4] = { -0.5f, +0.5f, -0.5f, 0.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[5] = { -0.5f, +0.5f, +0.5f, 1.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[6] = { -0.5f, -0.5f, +0.5f, 0.0f, 1.0f, 255, 0, 0, 255 };
+	data.Vertices[7] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 255, 0, 0, 255 };
 
 	data.Indices.resize(36);
 

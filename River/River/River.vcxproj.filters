@@ -138,7 +138,7 @@
     <ClCompile Include="Object\Source\Object.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Component\Header\Component.cpp">
+    <ClCompile Include="Component\Source\Component.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RiverUI\Source\Widget.cpp">
@@ -202,6 +202,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Source\RenderMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -426,6 +429,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\RenderMeshComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

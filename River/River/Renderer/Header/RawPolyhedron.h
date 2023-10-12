@@ -4,7 +4,7 @@
 
 struct RawPolyhedronData
 {
-	V_Array<Vertex> Vertices;
+	V_Array<RawVertex> Vertices;
 	V_Array<uint16> Indices;
 };
 

@@ -54,7 +54,7 @@ public:
 
 	virtual void OnUpdate(const RiverTime& time) = 0;
 
-	virtual void UpdateSceneData(const V_Array<Vertex>& vertices, const V_Array<uint16_t> indices) = 0;
+	virtual void UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices) = 0;
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) = 0;
 

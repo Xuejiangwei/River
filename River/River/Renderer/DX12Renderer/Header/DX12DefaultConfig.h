@@ -10,6 +10,7 @@
 #define DEFAULT_SHADER_PATH_6 "F:\\GitHub\\River\\River\\Shaders\\DrawNormals.hlsl"
 #define DEFAULT_SHADER_PATH_7 "F:\\GitHub\\River\\River\\Shaders\\SsaoBlur.hlsl"
 #define DEFAULT_SHADER_PATH_UI "F:\\GitHub\\River\\River\\Shaders\\UI.hlsl"
+#define DEFAULT_SHADER_PATH_DEFAULT_RAW "F:\\GitHub\\River\\River\\Shaders\\DefaultRaw.hlsl"
 
 #define DEFAULT_TEXTURE_PATH   "F:\\GitHub\\River\\River\\Textures\\"
 #define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"

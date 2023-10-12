@@ -133,10 +133,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
     <ClCompile Include="Object\Source\Object.cpp" />
-    <ClCompile Include="Component\Header\Component.cpp" />
+    <ClCompile Include="Component\Source\Component.cpp" />
     <ClCompile Include="Component\Source\LightComponent.cpp" />
     <ClCompile Include="Component\Source\MeshComponent.cpp" />
     <ClCompile Include="Component\Source\SkinMeshComponent.cpp" />
@@ -200,6 +201,7 @@
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Component\Header\RenderMeshComponent.h" />
     <ClInclude Include="Header\GameInstance.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />

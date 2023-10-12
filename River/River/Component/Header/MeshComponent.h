@@ -10,7 +10,7 @@ public:
 
 	virtual ~MeshComponent() override;
 
-	virtual void Tick(float deltaTime);
+	virtual void Tick(float deltaTime) override;
 
 	void SetStaticMesh(StaticMesh* staticMesh);
 
