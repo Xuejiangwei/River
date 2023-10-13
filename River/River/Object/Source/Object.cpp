@@ -1,6 +1,10 @@
 #include "RiverPch.h"
 #include "Object/Header/Object.h"
-#include "Component/Header/Component.h"
+#include "Component/Header/RenderMeshComponent.h"
+#include "Component/Header/MeshComponent.h"
+#include "Component/Header/SkinMeshComponent.h"
+#include "Renderer/Header/RenderProxy.h"
+
 
 Object::Object()
 {
@@ -20,10 +24,38 @@ void Object::Tick(float deltaTime)
 
 void Object::SetPosition(const FLOAT_3& position)
 {
-	m_Position = position;
+	m_Transform.Position = position;
+}
+
+RenderProxy* Object::GetRenderProxy()
+{
+	if (!m_RenderProxy)
+	{
+		bool createProxy = false;
+		if (GetComponent<RenderMeshComponent>())
+		{
+			createProxy = true;
+		}
+		else if (GetComponent<MeshComponent>())
+		{
+			createProxy = true;
+		}
+		else if (GetComponent<SkinMeshComponent>())
+		{
+			createProxy = true;
+		}
+
+		if (createProxy)
+		{
+			m_RenderProxy = MakeUnique<RenderProxy>(this);
+		}
+	}
+
+	return m_RenderProxy.get();
 }
 
 void Object::AddComponent(Share<Component> component)
 {
 	m_Components.push_back(component);
+	GetRenderProxy();
 }

@@ -12,7 +12,6 @@ RenderMeshComponent::~RenderMeshComponent()
 
 void RenderMeshComponent::Tick(float deltaTime)
 {
-	RHI::Get()->UpdateSceneData(m_Vertices, m_Indices);
 }
 
 void RenderMeshComponent::SetMeshData(const RawPolyhedronData& data)

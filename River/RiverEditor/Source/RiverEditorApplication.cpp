@@ -19,17 +19,18 @@ RiverEditorApplication::~RiverEditorApplication()
 
 void RiverEditorApplication::Initialize()
 {
-	//生成Object
 	Application::Get().GetGameInstance()->SetGameWorld("");
+
+	//生成Object
 	auto obj = ProduceObject();
+	obj->SetPosition({ 1.0f, 3.0f, 1.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox());
-	obj->SetPosition({ 0.0f, 0.0f, 1.0f });
+	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
 
 	obj = ProduceObject();
+	obj->SetPosition({ 1.0f, 1.0f, 3.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox());
-	obj->SetPosition({ 0.0f, 0.0f, 3.0f });
+	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
 }
 
 Application* CreateApplication()

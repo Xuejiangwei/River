@@ -13,4 +13,7 @@ class RawPolyhedron
 public:
 	static RawPolyhedronData GetRawBox();
 
+	static RawPolyhedronData GetRawPlane();
+
+	static RawPolyhedronData GetRawSphere();
 };

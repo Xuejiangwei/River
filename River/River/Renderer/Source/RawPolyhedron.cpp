@@ -5,6 +5,7 @@ RawPolyhedronData RawPolyhedron::GetRawBox()
 {
 	RawPolyhedronData data;
 	data.Vertices.resize(8);
+	data.Indices.resize(36);
 
 	data.Vertices[0] = { +0.5f, +0.5f, -0.5f, 0.0f, 0.0f, 255, 0, 0, 255 };
 	data.Vertices[1] = { +0.5f, +0.5f, +0.5f, 1.0f, 0.0f, 255, 0, 0, 255 };
@@ -16,7 +17,6 @@ RawPolyhedronData RawPolyhedron::GetRawBox()
 	data.Vertices[6] = { -0.5f, -0.5f, +0.5f, 0.0f, 1.0f, 255, 0, 0, 255 };
 	data.Vertices[7] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 255, 0, 0, 255 };
 
-	data.Indices.resize(36);
 
 	data.Indices[0] = 0;
 	data.Indices[1] = 1;
@@ -67,4 +67,31 @@ RawPolyhedronData RawPolyhedron::GetRawBox()
 	data.Indices[35] = 7;
 
 	return data;
+}
+
+RawPolyhedronData RawPolyhedron::GetRawPlane()
+{
+	RawPolyhedronData data;
+	data.Vertices.resize(4);
+	data.Indices.resize(6);
+
+	data.Vertices[0] = { -0.5f, +0.5f, -0.5f, 0.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[1] = { +0.5f, +0.5f, -0.5f, 0.0f, 0.0f, 255, 0, 0, 255 };
+	data.Vertices[2] = { +0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 255, 0, 0, 255 };
+	data.Vertices[3] = { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 255, 0, 0, 255 };
+
+	data.Indices[0] = 0;
+	data.Indices[1] = 1;
+	data.Indices[2] = 2;
+
+	data.Indices[3] = 0;
+	data.Indices[4] = 2;
+	data.Indices[5] = 3;
+
+	return data;
+}
+
+RawPolyhedronData RawPolyhedron::GetRawSphere()
+{
+	return RawPolyhedronData();
 }

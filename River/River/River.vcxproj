@@ -174,7 +174,9 @@
     <ClCompile Include="Renderer\Source\PipelineState.cpp" />
     <ClCompile Include="Renderer\Source\RawPolyhedron.cpp" />
     <ClCompile Include="Renderer\Source\RenderItem.cpp" />
+    <ClCompile Include="Renderer\Source\RenderProxy.cpp" />
     <ClCompile Include="Renderer\Source\RHI.cpp" />
+    <ClCompile Include="Renderer\Source\RenderScene.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
     <ClCompile Include="Renderer\Source\Texture.cpp" />
     <ClCompile Include="Renderer\Source\UniformBuffer.cpp" />
@@ -250,6 +252,8 @@
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
     <ClInclude Include="Renderer\Header\Material.h" />
+    <ClInclude Include="Renderer\Header\RenderProxy.h" />
+    <ClInclude Include="Renderer\Header\RenderScene.h" />
     <ClInclude Include="Renderer\Mesh\Header\Mesh.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
     <ClInclude Include="Renderer\Header\RawPolyhedron.h" />

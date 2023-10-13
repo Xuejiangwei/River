@@ -8,6 +8,8 @@
 #include "RHI.h"
 #include "Camera.h"
 
+#include "Renderer/Header/RenderScene.h"
+
 Application* Application::s_Instance = nullptr;
 
 Application::Application()
@@ -20,10 +22,13 @@ Application::Application()
 	WindowParam param = { 720, 720 };
 	m_Window->Init(param);
 
+	m_RenderScene = MakeUnique<RenderScene>();
+
 	RHIInitializeParam rhiParam =
 	{
 		720, 720, m_Window->GetWindowHandle()
 	};
+
 	RHI::Get()->Initialize(rhiParam);
 
 	AddLayer(MakeShare<UILayer>());
@@ -47,9 +52,12 @@ void Application::Run()
 		}
 
 		m_Window->OnUpdate();
-		RHI::Get()->OnUpdate(m_Time);
+		
+		m_RenderScene->OnUpdate();
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
+
+		RHI::Get()->OnUpdate(m_Time);
 
 		for (auto& layer : m_Layers)
 		{

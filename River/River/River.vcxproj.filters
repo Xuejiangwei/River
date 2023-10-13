@@ -207,6 +207,12 @@
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\RenderScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Source\RenderProxy.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -432,6 +438,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Component\Header\RenderMeshComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\RenderScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\RenderProxy.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

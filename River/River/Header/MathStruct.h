@@ -135,8 +135,6 @@ namespace River
 		{}
 	};
 
-
-
 	//Matrix
 	struct Matrix4x4
 	{
@@ -173,6 +171,52 @@ namespace River
 		float operator() (size_t Row, size_t Column) const noexcept { return m[Row][Column]; }
 		float& operator() (size_t Row, size_t Column) noexcept { return m[Row][Column]; }
 
+		static Matrix4x4 Multiply(const Matrix4x4& M1, const Matrix4x4& M2) 
+		{
+			Matrix4x4 mResult;
+			// Cache the invariants in registers
+			float x = M1.m[0][0];
+			float y = M1.m[0][1];
+			float z = M1.m[0][2];
+			float w = M1.m[0][3];
+			// Perform the operation on the first row
+			mResult.m[0][0] = (M2.m[0][0] * x) + (M2.m[1][0] * y) + (M2.m[2][0] * z) + (M2.m[3][0] * w);
+			mResult.m[0][1] = (M2.m[0][1] * x) + (M2.m[1][1] * y) + (M2.m[2][1] * z) + (M2.m[3][1] * w);
+			mResult.m[0][2] = (M2.m[0][2] * x) + (M2.m[1][2] * y) + (M2.m[2][2] * z) + (M2.m[3][2] * w);
+			mResult.m[0][3] = (M2.m[0][3] * x) + (M2.m[1][3] * y) + (M2.m[2][3] * z) + (M2.m[3][3] * w);
+			// Repeat for all the other rows
+			x = M1.m[1][0];
+			y = M1.m[1][1];
+			z = M1.m[1][2];
+			w = M1.m[1][3];
+			mResult.m[1][0] = (M2.m[0][0] * x) + (M2.m[1][0] * y) + (M2.m[2][0] * z) + (M2.m[3][0] * w);
+			mResult.m[1][1] = (M2.m[0][1] * x) + (M2.m[1][1] * y) + (M2.m[2][1] * z) + (M2.m[3][1] * w);
+			mResult.m[1][2] = (M2.m[0][2] * x) + (M2.m[1][2] * y) + (M2.m[2][2] * z) + (M2.m[3][2] * w);
+			mResult.m[1][3] = (M2.m[0][3] * x) + (M2.m[1][3] * y) + (M2.m[2][3] * z) + (M2.m[3][3] * w);
+			x = M1.m[2][0];
+			y = M1.m[2][1];
+			z = M1.m[2][2];
+			w = M1.m[2][3];
+			mResult.m[2][0] = (M2.m[0][0] * x) + (M2.m[1][0] * y) + (M2.m[2][0] * z) + (M2.m[3][0] * w);
+			mResult.m[2][1] = (M2.m[0][1] * x) + (M2.m[1][1] * y) + (M2.m[2][1] * z) + (M2.m[3][1] * w);
+			mResult.m[2][2] = (M2.m[0][2] * x) + (M2.m[1][2] * y) + (M2.m[2][2] * z) + (M2.m[3][2] * w);
+			mResult.m[2][3] = (M2.m[0][3] * x) + (M2.m[1][3] * y) + (M2.m[2][3] * z) + (M2.m[3][3] * w);
+			x = M1.m[3][0];
+			y = M1.m[3][1];
+			z = M1.m[3][2];
+			w = M1.m[3][3];
+			mResult.m[3][0] = (M2.m[0][0] * x) + (M2.m[1][0] * y) + (M2.m[2][0] * z) + (M2.m[3][0] * w);
+			mResult.m[3][1] = (M2.m[0][1] * x) + (M2.m[1][1] * y) + (M2.m[2][1] * z) + (M2.m[3][1] * w);
+			mResult.m[3][2] = (M2.m[0][2] * x) + (M2.m[1][2] * y) + (M2.m[2][2] * z) + (M2.m[3][2] * w);
+			mResult.m[3][3] = (M2.m[0][3] * x) + (M2.m[1][3] * y) + (M2.m[2][3] * z) + (M2.m[3][3] * w);
+			return mResult;
+		}
+
+		Matrix4x4 operator*(const Matrix4x4& M) const noexcept
+		{
+			return Multiply(*this, M);
+		}
+
 		static Matrix4x4 UnitMatrix()
 		{
 			return {
@@ -203,9 +247,29 @@ namespace River
 			};
 		}
 	};
+
+	//Transform
+	struct Transform
+	{
+		Float3 Position;
+		Float4 Rotation;	//ËÄÔªÊý
+		Float3 Scale;
+
+		Transform()
+			: Position(0.f, 0.f, 0.f), Rotation(0.f, 0.f, 0.f, 0.f), Scale(1.f, 1.f, 1.f)
+		{}
+
+		operator Matrix4x4() const
+		{
+			return Matrix4x4::TranslationMatrix(Position.x, Position.y, Position.z) * Matrix4x4::ScaleMatrix(Scale.x, Scale.y, Scale.z);
+		}
+	};
 }
 
 using UINT8_4 = River::RGBA32;
 using FLOAT_2 = River::Float2;
 using FLOAT_3 = River::Float3;
 using FLOAT_4 = River::Float4;
+
+using Matrix_4_4 = River::Matrix4x4;
+using Transform = River::Transform;

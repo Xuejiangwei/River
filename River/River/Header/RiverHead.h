@@ -12,7 +12,6 @@
 	#define RIVER_API __declspec(dllimport)
 #endif // RIVER_API
 
-
 template<typename T>
 using Share = std::shared_ptr<T>;
 
@@ -38,6 +37,9 @@ using V_Array = std::vector<T>;
 
 template<class _Kty, class _Ty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>>
 using HashMap = std::unordered_map<_Kty, _Ty, _Hasher, _Keyeq>;
+
+template<class _Kty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>>
+using HashSet = std::unordered_set<_Kty, _Hasher, _Keyeq>;
 
 template <class _Kty, class _Ty, class _Pr = std::less<_Kty>>
 using LessRBTreeMap = std::map<_Kty, _Ty, _Pr>;

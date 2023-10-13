@@ -4,6 +4,7 @@
 #include "MathStruct.h"
 
 class Component;
+class RenderProxy;
 
 class Object
 {
@@ -16,8 +17,13 @@ public:
 
 	void AddComponent(Share<Component> component);
 
+	const Transform& GetTransform() const { return m_Transform; }
+
 	void SetPosition(const FLOAT_3& position);
 
+	RenderProxy* GetRenderProxy();
+
+public:
 	template<typename T>
 	T* GetComponent(bool mustHave = true)
 	{
@@ -39,5 +45,8 @@ public:
 
 private:
 	V_Array<Share<Component>> m_Components;
-	FLOAT_3 m_Position;
+	
+	Transform m_Transform;
+
+	Unique<RenderProxy> m_RenderProxy;
 };

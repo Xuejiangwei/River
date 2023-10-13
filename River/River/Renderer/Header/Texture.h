@@ -13,6 +13,10 @@ public:
 
 	uint32 GetTextureId() const { return m_RendererId; }
 
+	static Texture* CreateTexture(const char* name, const char* filePath);
+
+	static Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
+
 private:
 	String m_Name;
 	String m_Path;

@@ -89,6 +89,20 @@ std::vector<M3DLoader::Subset> mSkinnedSubsets;
 std::vector<M3DLoader::M3dMaterial> mSkinnedMats;
 std::vector<std::string> mSkinnedTextureNames;
 
+static D3D12_PRIMITIVE_TOPOLOGY GetRenderItemPrimtiveType(PrimitiveType type)
+{
+	switch (type)
+	{
+	case PrimitiveType::TriangleList:
+		return D3D12_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	default:
+		break;
+	}
+
+	return D3D12_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+}
+
+
 DX12RHI::DX12RHI()
 	: m_CurrentFence(1), m_CurrFrameResourceIndex(0), m_CurrBackBufferIndex(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0),
 	m_PrespectiveCamera(CameraType::Perspective), m_OrthoGraphicCamera(CameraType::OrthoGraphic)
@@ -189,9 +203,31 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices)
 {
+	{
+		if (!m_CurrFrameResource)
+		{
+			return;
+		}
+		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
+		auto index = m_AllRitems.size();
+		for (size_t i = 0; i < m_RenderItems.size(); i++)
+		{
+			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].World));
+			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].TexTransform));
+
+			ObjectUniform objConstants;
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+			objConstants.MaterialIndex = i;
+
+			currObjectCB->CopyData(index++, objConstants);
+		}
+		
+	}
+
 	auto& geo = m_Geometries["scene"];
-	UINT verticesMore = (UINT)vertices.size() + 100;
-	UINT indicesMore = (UINT)indices.size() + 300;
+	UINT verticesMore = (UINT)vertices.size() + 1000;
+	UINT indicesMore = (UINT)indices.size() + 3000;
 	if (geo == nullptr)
 	{
 		const UINT vbByteSize = verticesMore * sizeof(RawVertex);
@@ -200,8 +236,8 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		auto geo = MakeUnique<MeshGeometry>();
 		geo->m_Name = "shapeGeo";
 		//geo->CopyCPUData(vertices, indices);
-		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
-			CreateIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+		geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
+			CreateUploadIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 		m_Geometries["scene"] = std::move(geo);
 	}
@@ -210,7 +246,6 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), vertices.size(), 1000);
 		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), indices.size(), 3000);
 	}
-
 }
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
@@ -226,8 +261,8 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 		auto geo = MakeUnique<MeshGeometry>();
 		geo->m_Name = "shapeGeo";
 		//geo->CopyCPUData(vertices, indices);
-		geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
-			CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+		geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
+			CreateUploadIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
 		m_Geometries["ui"] = std::move(geo);
 	}
@@ -343,23 +378,23 @@ void DX12RHI::Render()
 		auto& geo = m_Geometries["scene"];
 		if (geo)
 		{
-			m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
-			m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
-			m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+			auto index = m_AllRitems.size();
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
-			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + 1 * objCBByteSize;
 
-			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-			m_CommandList->DrawIndexedInstanced(32, 1, 0, 0, 0);
+			for (size_t i = 0; i < m_RenderItems.size(); i++)
+			{
+				m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
+				m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			objCBAddress = objectCB->GetGPUVirtualAddress() + 10 * objCBByteSize;
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index++ * objCBByteSize;
 
-			m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-			m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-			m_CommandList->DrawIndexedInstanced(32, 1, 0, 0, 0);
+				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+				m_CommandList->DrawIndexedInstanced(m_RenderItems[i].IndexCount, 	1, 
+					m_RenderItems[i].StartIndexLocation, m_RenderItems[i].BaseVertexLocation, 0);
+			}
 		}
 	}
 
@@ -1209,7 +1244,7 @@ void DX12RHI::Pick(int x, int y)
 		/*if (ri->Visible == false)
 			continue;*/
 
-		DirectX::XMMATRIX W = XMLoadFloat4x4(&ri->World);
+		DirectX::XMMATRIX W = XMLoadFloat4x4((const XMFLOAT4X4*)(&ri->World));
 		auto dw = XMMatrixDeterminant(W);
 		DirectX::XMMATRIX invWorld = XMMatrixInverse(&dw, W);
 
@@ -1366,8 +1401,8 @@ void DX12RHI::UpdateObjectCBs()
 	{
 		if (e->NumFramesDirty > 0)
 		{
-			DirectX::XMMATRIX world = XMLoadFloat4x4(&e->World);
-			DirectX::XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
+			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&e->World));
+			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&e->TexTransform));
 
 			ObjectUniform objConstants;
 			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
@@ -1682,12 +1717,12 @@ void DX12RHI::InitDescriptorHeaps()
 void DX12RHI::InitBaseRenderItems()
 {
 	auto skyRitem = std::make_unique<DX12RenderItem>();
-	XMStoreFloat4x4(&skyRitem->World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
-	skyRitem->TexTransform = Identity4x4();
+	XMStoreFloat4x4((XMFLOAT4X4*)(&skyRitem->World), XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
+	skyRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 	skyRitem->ObjCBIndex = 0;
 	skyRitem->Mat = m_Materials["sky"].get();
 	skyRitem->Geo = m_Geometries["shapeGeo"].get();
-	skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	skyRitem->IndexCount = skyRitem->Geo->DrawArgs["sphere"].IndexCount;
 	skyRitem->StartIndexLocation = skyRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 	skyRitem->BaseVertexLocation = skyRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
@@ -1696,12 +1731,12 @@ void DX12RHI::InitBaseRenderItems()
 	m_AllRitems.push_back(std::move(skyRitem));
 
 	auto quadRitem = std::make_unique<DX12RenderItem>();
-	quadRitem->World = Identity4x4();
-	quadRitem->TexTransform = Identity4x4();
+	quadRitem->World = Matrix_4_4::UnitMatrix();// Identity4x4();
+	quadRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 	quadRitem->ObjCBIndex = 1;
 	quadRitem->Mat = m_Materials["bricks0"].get();
 	quadRitem->Geo = m_Geometries["shapeGeo"].get();
-	quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	quadRitem->IndexCount = quadRitem->Geo->DrawArgs["quad"].IndexCount;
 	quadRitem->StartIndexLocation = quadRitem->Geo->DrawArgs["quad"].StartIndexLocation;
 	quadRitem->BaseVertexLocation = quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
@@ -1710,12 +1745,12 @@ void DX12RHI::InitBaseRenderItems()
 	m_AllRitems.push_back(std::move(quadRitem));
 
 	auto boxRitem = std::make_unique<DX12RenderItem>();
-	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 2.0f) * XMMatrixTranslation(1.0f, 0.5f, 1.0f));
-	XMStoreFloat4x4(&boxRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
+	XMStoreFloat4x4((XMFLOAT4X4*)(&boxRitem->World), XMMatrixScaling(2.0f, 1.0f, 2.0f) * XMMatrixTranslation(1.0f, 0.5f, 1.0f));
+	XMStoreFloat4x4((XMFLOAT4X4*)(&boxRitem->TexTransform), XMMatrixScaling(1.0f, 1.0f, 1.0f));
 	boxRitem->ObjCBIndex = 2;
 	boxRitem->Mat = m_Materials["bricks0"].get();
 	boxRitem->Geo = m_Geometries["shapeGeo"].get();
-	boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
 	boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
 	boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
@@ -1724,12 +1759,12 @@ void DX12RHI::InitBaseRenderItems()
 	m_AllRitems.push_back(std::move(boxRitem));
 
 	auto gridRitem = std::make_unique<DX12RenderItem>();
-	gridRitem->World = Identity4x4();
-	XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(8.0f, 8.0f, 1.0f));
+	gridRitem->World = Matrix_4_4::UnitMatrix();//Identity4x4();
+	XMStoreFloat4x4((XMFLOAT4X4*)(&gridRitem->TexTransform), XMMatrixScaling(8.0f, 8.0f, 1.0f));
 	gridRitem->ObjCBIndex = 3;
 	gridRitem->Mat = m_Materials["tile0"].get();
 	gridRitem->Geo = m_Geometries["shapeGeo"].get();
-	gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
 	gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
 	gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
@@ -1752,42 +1787,42 @@ void DX12RHI::InitBaseRenderItems()
 		XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 5.0f);
 		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 5.0f);
 
-		XMStoreFloat4x4(&leftCylRitem->World, rightCylWorld);
-		XMStoreFloat4x4(&leftCylRitem->TexTransform, brickTexTransform);
+		XMStoreFloat4x4((XMFLOAT4X4*)(&leftCylRitem->World), rightCylWorld);
+		XMStoreFloat4x4((XMFLOAT4X4*)(&leftCylRitem->TexTransform), brickTexTransform);
 		leftCylRitem->ObjCBIndex = objCBIndex++;
 		leftCylRitem->Mat = m_Materials["bricks0"].get();
 		leftCylRitem->Geo = m_Geometries["shapeGeo"].get();
-		leftCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//leftCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		leftCylRitem->IndexCount = leftCylRitem->Geo->DrawArgs["cylinder"].IndexCount;
 		leftCylRitem->StartIndexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
 		leftCylRitem->BaseVertexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&rightCylRitem->World, leftCylWorld);
-		XMStoreFloat4x4(&rightCylRitem->TexTransform, brickTexTransform);
+		XMStoreFloat4x4((XMFLOAT4X4*)(&rightCylRitem->World), leftCylWorld);
+		XMStoreFloat4x4((XMFLOAT4X4*)(&rightCylRitem->TexTransform), brickTexTransform);
 		rightCylRitem->ObjCBIndex = objCBIndex++;
 		rightCylRitem->Mat = m_Materials["bricks0"].get();
 		rightCylRitem->Geo = m_Geometries["shapeGeo"].get();
-		rightCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//rightCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		rightCylRitem->IndexCount = rightCylRitem->Geo->DrawArgs["cylinder"].IndexCount;
 		rightCylRitem->StartIndexLocation = rightCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
 		rightCylRitem->BaseVertexLocation = rightCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&leftSphereRitem->World, leftSphereWorld);
-		leftSphereRitem->TexTransform = Identity4x4();
+		XMStoreFloat4x4((XMFLOAT4X4*)(&leftSphereRitem->World), leftSphereWorld);
+		leftSphereRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 		leftSphereRitem->ObjCBIndex = objCBIndex++;
 		leftSphereRitem->Mat = m_Materials["mirror0"].get();
 		leftSphereRitem->Geo = m_Geometries["shapeGeo"].get();
-		leftSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//leftSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		leftSphereRitem->IndexCount = leftSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
 		leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 		leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&rightSphereRitem->World, rightSphereWorld);
-		rightSphereRitem->TexTransform = Identity4x4();
+		XMStoreFloat4x4((XMFLOAT4X4*)(&rightSphereRitem->World), rightSphereWorld);
+		rightSphereRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 		rightSphereRitem->ObjCBIndex = objCBIndex++;
 		rightSphereRitem->Mat = m_Materials["mirror0"].get();
 		rightSphereRitem->Geo = m_Geometries["shapeGeo"].get();
-		rightSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//rightSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		rightSphereRitem->IndexCount = rightSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
 		rightSphereRitem->StartIndexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 		rightSphereRitem->BaseVertexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
@@ -1813,13 +1848,13 @@ void DX12RHI::InitBaseRenderItems()
 		XMMATRIX modelScale = XMMatrixScaling(0.05f, 0.05f, -0.05f);
 		XMMATRIX modelRot = XMMatrixRotationY(PI);
 		XMMATRIX modelOffset = XMMatrixTranslation(0.0f, 0.0f, -5.0f);
-		XMStoreFloat4x4(&ritem->World, modelScale * modelRot * modelOffset);
+		XMStoreFloat4x4((XMFLOAT4X4*)(&ritem->World), modelScale * modelRot * modelOffset);
 
-		ritem->TexTransform = Identity4x4();
+		ritem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 		ritem->ObjCBIndex = objCBIndex++;
 		ritem->Mat = m_Materials[mSkinnedMats[i].m_Name].get();
 		ritem->Geo = m_Geometries["soldier"].get();
-		ritem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//ritem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		ritem->IndexCount = ritem->Geo->DrawArgs[submeshName].IndexCount;
 		ritem->StartIndexLocation = ritem->Geo->DrawArgs[submeshName].StartIndexLocation;
 		ritem->BaseVertexLocation = ritem->Geo->DrawArgs[submeshName].BaseVertexLocation;
@@ -1849,12 +1884,12 @@ void DX12RHI::InitBaseRenderItems()
 		mAllRitems.push_back(std::move(uiQuadRitem));*/
 
 		auto quadRitem = std::make_unique<DX12RenderItem>();
-		XMStoreFloat4x4(&quadRitem->World, XMMatrixScaling(1.0f, 1.0f, 2.0f)* XMMatrixTranslation(-0.5f, 0.5f, 0.0f));
-		quadRitem->TexTransform = Identity4x4();
+		XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(1.0f, 1.0f, 2.0f)* XMMatrixTranslation(-0.5f, 0.5f, 0.0f));
+		quadRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 		quadRitem->ObjCBIndex = objCBIndex++;
 		quadRitem->Mat = m_Materials["bricks0"].get();
 		quadRitem->Geo = m_Geometries["ui"].get();
-		quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		//quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		quadRitem->IndexCount = quadRitem->Geo->m_IndexBuffer->GetIndexCount();//quadRitem->Geo->DrawArgs["ui"].IndexCount;
 		quadRitem->StartIndexLocation = 0;//quadRitem->Geo->DrawArgs["ui"].StartIndexLocation;
 		quadRitem->BaseVertexLocation = 0;//quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
@@ -1889,7 +1924,7 @@ void DX12RHI::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<
 
 		cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
-		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+		cmdList->IASetPrimitiveTopology(GetRenderItemPrimtiveType(ri->PriType));
 
 		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
 

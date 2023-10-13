@@ -4,10 +4,8 @@
 #include "Renderer/Font/Header/FontAtlas.h"
 
 #ifdef _WIN32
-
-#include "Renderer/DX12Renderer/Header/DX12RHI.h"
-#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
-
+	#include "Renderer/DX12Renderer/Header/DX12RHI.h"
+	#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
 #endif // _WIN32
 
 APIMode RHI::s_APIMode = APIMode::DX12;
@@ -52,4 +50,14 @@ FontAtlas* RHI::GetFont(const char* name) const
 
 	auto iter = m_Fonts.find(name);
 	return iter->second.get();
+}
+
+void RHI::ClearRenderItem()
+{
+	m_RenderItems.clear();
+}
+
+void RHI::AddRenderItem(RenderItem* renderItem)
+{
+	m_RenderItems.push_back(*renderItem);
 }

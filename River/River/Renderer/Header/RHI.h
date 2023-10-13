@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "RenderItem.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 
 #include <vector>
@@ -41,12 +42,12 @@ class FontAtlas;
 
 class RHI
 {
+	friend class std::unique_ptr<RHI>;
+
 public:
 	RHI();
 
 	virtual ~RHI();
-
-	friend class std::unique_ptr<RHI>;
 
 	virtual void Initialize(const RHIInitializeParam& Param) = 0;
 
@@ -68,18 +69,25 @@ public:
 
 	virtual void Pick(int x, int y) = 0;
 
-	static Unique<RHI>& Get();
+	void ClearRenderItem();
 
+	void AddRenderItem(RenderItem* renderItem);
+	
 	APIMode GetAPIMode() const { return s_APIMode; }
 
 	FontAtlas* GetFont(const char* name = nullptr) const;
 	
+public:
+	static Unique<RHI>& Get();
+
 protected:
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
 	uint32 m_MaxRenderItemCount = 1000;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
+
+	V_Array<RenderItem> m_RenderItems;
 
 private:
 	static APIMode s_APIMode;

@@ -2,6 +2,7 @@
 
 class Layer;
 class Window;
+class RenderScene;
 class GameInstance;
 
 #include "Event.h"
@@ -30,6 +31,8 @@ public:
 
 	GameInstance* GetGameInstance() const { return m_CurrentGameInstance.get(); }
 
+	RenderScene* GetRenderScene() const { return m_RenderScene.get(); }
+
 	static Application& Get() { return *s_Instance; }
 
 private:
@@ -41,7 +44,7 @@ private:
 	
 	Unique<GameInstance> m_CurrentGameInstance;
 	Unique<Window> m_Window;
-
+	Unique<RenderScene> m_RenderScene;
 
 	static Application* s_Instance;
 };
