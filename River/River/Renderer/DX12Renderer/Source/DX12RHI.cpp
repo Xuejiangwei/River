@@ -218,7 +218,7 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 			ObjectUniform objConstants;
 			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			objConstants.MaterialIndex = i;
+			objConstants.MaterialIndex = 2;
 
 			currObjectCB->CopyData(index++, objConstants);
 		}
@@ -263,7 +263,7 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 
 			ObjectUniform objConstants;
 			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-			objConstants.MaterialIndex = i;
+			objConstants.MaterialIndex = 2;//m_Materials["bricks0"]->MatCBIndex;
 
 			currObjectCB->CopyData(index++, objConstants);
 		}

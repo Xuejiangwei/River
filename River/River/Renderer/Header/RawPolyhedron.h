@@ -11,7 +11,9 @@ struct RawPolyhedronData
 class RawPolyhedron
 {
 public:
-	static RawPolyhedronData GetRawBox();
+	static RawPolyhedronData GetRawBox_8_Points();
+
+	static RawPolyhedronData GetRawBox_24_Points();
 
 	static RawPolyhedronData GetRawPlane();
 

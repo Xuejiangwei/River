@@ -9,6 +9,7 @@ class DX12Shader : public Shader
 {
 public:
 	DX12Shader(const String& filePath, const D3D_SHADER_MACRO* defines, const char* name, const char* target);
+
 	virtual ~DX12Shader() override;
 
 	friend class DX12PipelineState;

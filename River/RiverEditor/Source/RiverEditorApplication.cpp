@@ -31,6 +31,11 @@ void RiverEditorApplication::Initialize()
 	obj->SetPosition({ 1.0f, 1.0f, 3.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
 	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
+
+	obj = ProduceObject();
+	obj->SetPosition({ 1.0f, 3.0f, 3.0f });
+	obj->AddComponent(MakeShare<RenderMeshComponent>());
+	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox());
 }
 
 Application* CreateApplication()
