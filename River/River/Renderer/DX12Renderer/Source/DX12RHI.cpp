@@ -250,6 +250,26 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
 {
+	{
+		if (!m_CurrFrameResource)
+		{
+			return;
+		}
+		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
+		auto index = m_AllRitems.size() + 2;
+		for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+		{
+			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_UIRenderItems[i].World));
+
+			ObjectUniform objConstants;
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			objConstants.MaterialIndex = i;
+
+			currObjectCB->CopyData(index++, objConstants);
+		}
+
+	}
+
 	auto& geo = m_Geometries["ui"];
 	UINT verticesMore = (UINT)vertices.size() + 1000;
 	UINT indicesMore = (UINT)indices.size() + 3000;
@@ -398,15 +418,38 @@ void DX12RHI::Render()
 		}
 	}
 
+	{
+		m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
+		auto& geo = m_Geometries["ui"];
+		if (geo)
+		{
+			auto index = 29;//m_AllRitems.size() + 2;
+			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+
+			for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+			{
+				m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
+				m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index * objCBByteSize;
+
+				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+				m_CommandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
+					m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
+			}
+		}
+	}
+
 	//mCommandList->SetPipelineState(mPSOs["skinnedOpaque"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["skinnedOpaque"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
-	//mCommandList->SetPipelineState(mPSOs["debug"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Debug]);
 
-	//mCommandList->SetPipelineState(mPSOs["sky"].Get());
 	m_CommandList->SetPipelineState(m_PSOs["sky"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Sky]);
 
@@ -1090,6 +1133,23 @@ void DX12RHI::InitBasePSOs()
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
 	debugPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
+	
+	{
+		D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
+		transparencyBlendDesc.BlendEnable = true;
+		transparencyBlendDesc.LogicOpEnable = false;
+		transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+		transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+		transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+			debugPsoDesc.BlendState.RenderTarget[i] = transparencyBlendDesc;
+	}
+
 	m_PSOs["debug"] = CreatePSO(debugPsoDesc, &m_InputLayers["ui"], m_Shaders["uiVS"].get(), m_Shaders["uiPS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawNormalsPsoDesc = opaquePsoDesc;
@@ -1884,7 +1944,8 @@ void DX12RHI::InitBaseRenderItems()
 		mAllRitems.push_back(std::move(uiQuadRitem));*/
 
 		auto quadRitem = std::make_unique<DX12RenderItem>();
-		XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(1.0f, 1.0f, 2.0f)* XMMatrixTranslation(-0.5f, 0.5f, 0.0f));
+		//XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(2.f, 2.f, 1.0f)* XMMatrixTranslation(-0.0f, 0.0f, 0.0f));
+		XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(2.f, 2.f, 1.0f)* XMMatrixTranslation(-1.0f, 1.0f, 0.0f));
 		quadRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
 		quadRitem->ObjCBIndex = objCBIndex++;
 		quadRitem->Mat = m_Materials["bricks0"].get();

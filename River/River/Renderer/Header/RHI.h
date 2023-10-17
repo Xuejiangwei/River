@@ -71,16 +71,26 @@ public:
 
 	void ClearRenderItem();
 
+	void ClearUIRenderItem();
+
 	void AddRenderItem(RenderItem* renderItem);
 	
+	void AddUIRenderItem(UIRenderItem& renderItem);
+
 	APIMode GetAPIMode() const { return s_APIMode; }
 
 	FontAtlas* GetFont(const char* name = nullptr) const;
 	
+	bool IsShowUIDebugOutline() const { return m_ShowUIDebugOutline; }
+
+	void SetShowUIDebugOutline(bool showOutline) { m_ShowUIDebugOutline = showOutline; }
+
 public:
 	static Unique<RHI>& Get();
 
 protected:
+	bool m_ShowUIDebugOutline = false;
+
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
 	uint32 m_MaxRenderItemCount = 1000;
@@ -88,6 +98,7 @@ protected:
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
 	V_Array<RenderItem> m_RenderItems;
+	V_Array<UIRenderItem> m_UIRenderItems;
 
 private:
 	static APIMode s_APIMode;

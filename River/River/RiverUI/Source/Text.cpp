@@ -1,5 +1,7 @@
 #include "RiverPch.h"
 #include "RiverUI/Header/Text.h"
+#include "Application.h"
+#include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Font/Header/FontAtlas.h"
 #include "Renderer/Font/Header/Font.h"
@@ -15,17 +17,27 @@ Text::~Text()
 
 void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
-	Widget::OnRender(vertices, indices);
+	//Widget::OnRender(vertices, indices);
+
+    UIRenderItem renderItem;
+    renderItem.BaseVertexLocation = vertices.size();
+    renderItem.StartIndexLocation = indices.size();
 
 	//0x2eec
 	auto font = RHI::Get()->GetFont();
 
 	auto textSize = font->m_Font->CalcTextSize(m_Text, m_FontSize);
-    float scale = 1;
-    float x = m_Position.x;
-    float y = m_Position.y;
+
+    auto [width, height] = Application::Get().GetWindow()->GetWindowSize();
+    FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
+    float ndcStartX = startPos.x / width;
+    float ndcStartY = -startPos.y / height;
+
+    float x = ndcStartX;//startPos.x / width;//m_Position.x;
+    float y = ndcStartY;//-startPos.y / height; //m_Position.y;
+    float spaceHeight = m_FontSize / 720;
    
-    scale = m_FontSize / 720 / font->m_Font->GetPixelSize();
+    float scale = spaceHeight / font->m_Font->GetPixelSize();
     auto s = m_Text.begin();
     while (s != m_Text.end())
     {
@@ -106,19 +118,16 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                     }
                 }*/
 
-                // Support for untinted glyphs
-                uint32 glyph_col = River::RGBA32(255, 0, 0, 255); //glyph->Colored ? col_untinted : col;
-
                 // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                 {
                     auto vs = (uint16)vertices.size();
 
-                    //1 2
-                    //0 3
-                    vertices.push_back(UIVertex(x1, m_Position.y, 0.0f, u1, v2, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x1, m_Position.y + h, 0.0f, u1, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x2, m_Position.y + h, 0.0f, u2, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x2, m_Position.y, 0.0f, u2, v2, 255, 0, 0, 255));
+                    //0 1
+                    //3 2
+                    vertices.push_back(UIVertex(x1, y + h - spaceHeight, 0.0f, u1, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, y + h - spaceHeight, 0.0f, u2, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, y - spaceHeight, 0.0f, u2, v2, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x1, y - spaceHeight, 0.0f, u1, v2, 255, 0, 0, 255));
 
                     indices.push_back(vs);
                     indices.push_back(vs + 1);
@@ -126,11 +135,15 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                     indices.push_back(vs);
                     indices.push_back(vs + 2);
                     indices.push_back(vs + 3);
+                
+                    renderItem.IndexCount += 6;
                 }
             }
         }
         x += char_width;
     }
+
+    RHI::Get()->AddUIRenderItem(renderItem);
 }
 
 void Text::SetText(const char* text)

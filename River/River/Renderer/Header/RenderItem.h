@@ -29,3 +29,18 @@ struct RenderItem
 		World(Matrix_4_4::UnitMatrix()), TexTransform(Matrix_4_4::UnitMatrix())
 	{}
 };
+
+struct UIRenderItem
+{
+	Matrix_4_4 World;
+
+	int Level;
+	int IndexCount;
+	int StartIndexLocation;
+	int BaseVertexLocation;
+
+	UIRenderItem()
+		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0),
+		World(Matrix_4_4::UnitMatrix())
+	{}
+};

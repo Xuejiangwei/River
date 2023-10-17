@@ -57,7 +57,17 @@ void RHI::ClearRenderItem()
 	m_RenderItems.clear();
 }
 
+void RHI::ClearUIRenderItem()
+{
+	m_UIRenderItems.clear();
+}
+
 void RHI::AddRenderItem(RenderItem* renderItem)
 {
 	m_RenderItems.push_back(*renderItem);
+}
+
+void RHI::AddUIRenderItem(UIRenderItem& renderItem)
+{
+	m_UIRenderItems.push_back(renderItem);
 }

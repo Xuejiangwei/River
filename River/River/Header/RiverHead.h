@@ -47,7 +47,8 @@ using LessRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 template <class _Kty, class _Ty, class _Pr = std::greater<_Kty>>
 using GreaterRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 
-using BitArray = std::vector<bool>;
+template<class Ty1, class Ty2>
+using Pair = std::pair<Ty1, Ty2>;
 
 namespace River
 {
@@ -66,6 +67,8 @@ namespace River
 		return static_cast<remove_reference_t<_Ty>&&>(_Arg);
 	}
 }
+
+using BitArray = std::vector<bool>;
 
 using int8 = char;
 using uint8 = unsigned char;

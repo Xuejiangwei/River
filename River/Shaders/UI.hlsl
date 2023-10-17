@@ -31,7 +31,7 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-    return gTextureMaps[6].Sample(gsamLinearWrap, pin.TexC);
-    //return pin.Color;
+    float3 color = gTextureMaps[6].Sample(gsamLinearWrap, pin.TexC).rgb;
+    return gTextureMaps[6].Sample(gsamLinearWrap, pin.TexC); //float4(color, pin.Color.a);
     //return float4(gSsaoMap.Sample(gsamLinearWrap, pin.TexC).rrr, 1.0f);
 }

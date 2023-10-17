@@ -41,7 +41,7 @@ const uint8* FontAtlas::GetTextureDataRGBA32()
 				m_PixelRGBA32[i].r = *alphaPixels++;
 				m_PixelRGBA32[i].g = 0;
 				m_PixelRGBA32[i].b = 0;
-				m_PixelRGBA32[i].a = 255;
+				m_PixelRGBA32[i].a = m_PixelRGBA32[i].r;
 
 				/*line = i / 4096;
 				if (line < 1024 && i % 1024 < 512)

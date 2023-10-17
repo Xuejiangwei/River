@@ -159,9 +159,6 @@
     <ClCompile Include="RiverUI\Source\UIWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RiverUI\Source\UIRenderItem.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\Font\Source\Font.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -387,9 +384,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RiverUI\Header\UIWindow.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="RiverUI\Header\UIRenderItem.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Font\Header\Font.h">

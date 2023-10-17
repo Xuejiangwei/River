@@ -185,7 +185,6 @@
     <ClCompile Include="RiverUI\Source\Image.cpp" />
     <ClCompile Include="RiverUI\Source\Panel.cpp" />
     <ClCompile Include="RiverUI\Source\Text.cpp" />
-    <ClCompile Include="RiverUI\Source\UIRenderItem.cpp" />
     <ClCompile Include="RiverUI\Source\UIWindow.cpp" />
     <ClCompile Include="RiverUI\Source\Widget.cpp" />
     <ClCompile Include="Source\Application.cpp" />
@@ -273,7 +272,6 @@
     <ClInclude Include="RiverUI\Header\Image.h" />
     <ClInclude Include="RiverUI\Header\Panel.h" />
     <ClInclude Include="RiverUI\Header\Text.h" />
-    <ClInclude Include="RiverUI\Header\UIRenderItem.h" />
     <ClInclude Include="RiverUI\Header\UIWindow.h" />
     <ClInclude Include="RiverUI\Header\Widget.h" />
     <ClInclude Include="Utils\Header\FileUtils.h" />

@@ -19,15 +19,24 @@ RiverEditorLayer::~RiverEditorLayer()
 void RiverEditorLayer::OnAttach()
 {
 	//initialize
+	RHI::Get()->SetShowUIDebugOutline(true);
+
 	auto rootPanel = MakeUnique<Panel>();
-	rootPanel->SetSize(1, 1);
-	rootPanel->SetPosition(0.3f, 0.3f);
+	rootPanel->SetSize(720 / 2, 720 / 2);
+	rootPanel->SetPosition(0.0f, 0.0f);
 	{
 		auto text = MakeShare<Text>();
 		text->SetSize(1, 1);
-		text->SetFontSize(100.0f);
+		text->SetFontSize(30.0f);
+		text->SetPosition(100, 200);
 		text->SetText(u8"齐鸟 This.aabbaabbaabb哈哈哈");
 		(*rootPanel)[text];
+
+		auto img = MakeShare<Image>();
+		img->SetSize(100, 100);
+		img->SetPosition(100, 100);
+
+		(*rootPanel)[img];
 	}
 
 	m_UIWindows[0] = MakeUnique<UIWindow>(rootPanel);
@@ -52,6 +61,8 @@ void RiverEditorLayer::OnRender()
 {
 	m_RenderVertices.clear();
 	m_RenderIndices.clear();
+	RHI::Get()->ClearUIRenderItem();
+
 	for (auto& window : m_UIWindows)
 	{
 		window.second->OnRender(m_RenderVertices, m_RenderIndices);

@@ -11,5 +11,8 @@ RenderProxy::RenderProxy(Object* object)
 
 RenderProxy::~RenderProxy()
 {
-	Application::Get().GetRenderScene()->RemoveObjectProxyFromScene(this);
+	/*if (Application::Get().GetRenderScene())
+	{
+		Application::Get().GetRenderScene()->RemoveObjectProxyFromScene(this);
+	}*/
 }

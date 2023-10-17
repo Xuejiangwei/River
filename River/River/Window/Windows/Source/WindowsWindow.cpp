@@ -180,13 +180,14 @@ WindowsWindow::~WindowsWindow()
 {
 }
 
-void WindowsWindow::Init(const WindowParam& Param)
+void WindowsWindow::Init(const WindowParam& param)
 {
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+	m_Param = param;
 	HINSTANCE hInstance = ::GetModuleHandle(nullptr);
 
 	WNDCLASSEX wc = {};
@@ -202,10 +203,10 @@ void WindowsWindow::Init(const WindowParam& Param)
 	RegisterClassEx(&wc);
 
 	DWORD dwWndStyle = WS_OVERLAPPED | WS_SYSMENU;
-	RECT rtWnd = { 0, 0, Param.WindowWidth, Param.WindowHeight };
+	RECT rtWnd = { 0, 0, param.WindowWidth, param.WindowHeight };
 	AdjustWindowRect(&rtWnd, dwWndStyle, FALSE);
 
-	RECT R = { 0, 0, Param.WindowWidth, Param.WindowHeight };
+	RECT R = { 0, 0, param.WindowWidth, param.WindowHeight };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
