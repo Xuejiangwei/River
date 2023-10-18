@@ -35,7 +35,7 @@ void RiverEditorApplication::Initialize()
 	obj = ProduceObject();
 	obj->SetPosition({ 1.0f, 3.0f, 3.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox());
+	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox_24_Points());
 }
 
 Application* CreateApplication()
