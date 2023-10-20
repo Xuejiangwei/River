@@ -18,6 +18,7 @@ enum class TTF_HeadType
 	post,		//PostScript信息，所有图元的PostScript   FontInfo目录项和PostScript名
 };
 
+#pragma pack(1)
 struct TTF_Table_Directory
 {
 	uint32 Version;
@@ -26,7 +27,9 @@ struct TTF_Table_Directory
 	uint16 EntrySelector;
 	uint16 RangeShift;
 };
+#pragma pack()
 
+#pragma pack(1)
 struct TTF_Table
 {
 	uint32 Tag;
@@ -34,7 +37,9 @@ struct TTF_Table
 	uint32 Offset;
 	uint32 Length;
 };
+#pragma pack()
 
+#pragma pack(1)
 struct TTF_Head
 {
 	uint32_t					m_Version;
@@ -54,7 +59,8 @@ struct TTF_Head
 	int16_t					m_fondDirectionHint;
 	int16_t					m_indexToLocFormat;
 	int16_t					m_glyphDataFormat;
-};
+}; 
+#pragma pack()
 
 struct TTF_EncodingRecord
 {
