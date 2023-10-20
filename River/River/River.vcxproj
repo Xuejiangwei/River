@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -271,6 +271,7 @@
     <ClInclude Include="RiverUI\Header\Button.h" />
     <ClInclude Include="RiverUI\Header\Image.h" />
     <ClInclude Include="RiverUI\Header\Panel.h" />
+    <ClInclude Include="RiverUI\Header\RiverUI.h" />
     <ClInclude Include="RiverUI\Header\Text.h" />
     <ClInclude Include="RiverUI\Header\UIWindow.h" />
     <ClInclude Include="RiverUI\Header\Widget.h" />
