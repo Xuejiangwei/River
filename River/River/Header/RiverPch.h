@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <vector>
 #include <array>
+#include <functional>
 
 #include "Event.h"
 #include "RiverHead.h"

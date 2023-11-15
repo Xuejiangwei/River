@@ -17,9 +17,9 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     Widget::OnRender(vertices, indices);
 
     UIRenderItem renderItem;
-    renderItem.BaseVertexLocation = vertices.size();
+    renderItem.BaseVertexLocation = (int)vertices.size();
     renderItem.IndexCount = 6;
-    renderItem.StartIndexLocation = indices.size();
+    renderItem.StartIndexLocation = (int)indices.size();
 
     auto [width, height] = Application::Get().GetWindow()->GetWindowSize();
     FLOAT_2 startPos = GetAbsoluteLeftTopPosition();

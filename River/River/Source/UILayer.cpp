@@ -29,5 +29,13 @@ void UILayer::OnUpdate(float deltaTime)
 
 bool UILayer::OnEvent(const Event& e)
 {
+	for (auto& it : m_UIWindows)
+	{
+		if (it.second->OnEvent(e))
+		{
+			return true;
+		}
+
+	}
 	return false;
 }

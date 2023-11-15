@@ -5,7 +5,7 @@
 #include "Renderer/Header/RHI.h"
 
 #define OUTLINE_COLOR 0, 255, 0, 255
-#define OUTLINE_THICJKNESS 0.001
+#define OUTLINE_THICJKNESS 0.001f
 
 Widget::Widget()
     : m_WidgetAlign(WidgetAnchors::LeftTop), m_Alignment(0.0f, 0.0f)
@@ -30,9 +30,9 @@ void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
         FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
 
         UIRenderItem renderItem;
-        renderItem.BaseVertexLocation = vertices.size();
+        renderItem.BaseVertexLocation = (int)vertices.size();
         renderItem.IndexCount = 6 * 4;
-        renderItem.StartIndexLocation = indices.size();
+        renderItem.StartIndexLocation = (int)indices.size();
 
         float ndcStartX = startPos.x / width;
         float ndcStartY = -startPos.y / height;

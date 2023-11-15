@@ -20,8 +20,8 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 	//Widget::OnRender(vertices, indices);
 
     UIRenderItem renderItem;
-    renderItem.BaseVertexLocation = vertices.size();
-    renderItem.StartIndexLocation = indices.size();
+    renderItem.BaseVertexLocation =  (int)vertices.size();
+    renderItem.StartIndexLocation =  (int)indices.size();
 
 	//0x2eec
 	auto font = RHI::Get()->GetFont();

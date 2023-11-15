@@ -440,6 +440,9 @@
     <ClInclude Include="Renderer\Header\RenderProxy.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RiverUI\Header\RiverUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

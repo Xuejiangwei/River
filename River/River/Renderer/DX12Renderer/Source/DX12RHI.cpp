@@ -209,7 +209,7 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 			return;
 		}
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-		auto index = m_AllRitems.size();
+		int index = (int)m_AllRitems.size();
 		for (size_t i = 0; i < m_RenderItems.size(); i++)
 		{
 			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].World));
@@ -243,8 +243,8 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 	}
 	else
 	{
-		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), vertices.size(), 1000);
-		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), indices.size(), 3000);
+		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
+		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
 	}
 }
 
@@ -256,7 +256,7 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 			return;
 		}
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-		auto index = m_AllRitems.size() + 2;
+		auto index = (int)m_AllRitems.size() + 2;
 		for (size_t i = 0; i < m_UIRenderItems.size(); i++)
 		{
 			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_UIRenderItems[i].World));
@@ -288,8 +288,8 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 	}
 	else
 	{
-		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), vertices.data(), vertices.size(), 1000);
-		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), indices.data(), indices.size(), 3000);
+		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), vertices.data(), (uint32)vertices.size(), 1000);
+		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), indices.data(), (uint32)indices.size(), 3000);
 	}
 
 	m_UIRenderItem->IndexCount = (int)indices.size();

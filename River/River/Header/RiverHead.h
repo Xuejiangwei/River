@@ -50,6 +50,9 @@ using GreaterRBTreeMap = std::map<_Kty, _Ty, _Pr>;
 template<class Ty1, class Ty2>
 using Pair = std::pair<Ty1, Ty2>;
 
+template<typename T>
+using Func = std::function<T>;
+
 namespace River
 {
 	template <class _Ty>

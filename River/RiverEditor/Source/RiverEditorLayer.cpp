@@ -54,6 +54,14 @@ void RiverEditorLayer::OnUpdate(float deltaTime)
 
 bool RiverEditorLayer::OnEvent(const Event& e)
 {
+	for (auto& it : m_UIWindows)
+	{
+		if (it.second->OnEvent(e))
+		{
+			return true;
+		}
+
+	}
 	return false;
 }
 

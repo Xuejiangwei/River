@@ -96,7 +96,10 @@ void Application::OnEvent(Event& e)
 {
 	for (auto& layer : m_Layers)
 	{
-		layer->OnEvent(e);
+		if (layer->OnEvent(e))
+		{
+			return;
+		}
 	}
 
 	EventDispatcher dispatcher(e);

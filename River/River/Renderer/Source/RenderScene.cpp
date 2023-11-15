@@ -32,9 +32,9 @@ void RenderScene::OnUpdate()
 
 			auto obj = p->m_RenderObject;
 			renderItem.World = obj->GetTransform();
-			renderItem.BaseVertexLocation = vertices.size();
-			renderItem.IndexCount = compIndices.size();
-			renderItem.StartIndexLocation = indices.size();
+			renderItem.BaseVertexLocation = (int)vertices.size();
+			renderItem.IndexCount = (int)compIndices.size();
+			renderItem.StartIndexLocation = (int)indices.size();
 			RHI::Get()->AddRenderItem(&renderItem);
 
 			/*for (size_t i = 0; i < compIndices.size(); i++)
