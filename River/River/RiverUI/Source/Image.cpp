@@ -43,6 +43,16 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     RHI::Get()->AddUIRenderItem(renderItem);
 }
 
+bool Image::OnMouseButtonDown(const Event& e)
+{
+    return false;
+}
+
+bool Image::OnMouseButtonRelease(const Event& e)
+{
+    return false;
+}
+
 void Image::SetTexture(const char* texturePath)
 {
 	m_Texture = texturePath;

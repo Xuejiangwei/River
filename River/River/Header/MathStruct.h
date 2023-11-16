@@ -1,6 +1,5 @@
 #pragma once
 
-
 namespace River
 {
 	struct RGBA32
@@ -37,6 +36,13 @@ namespace River
 		Float2 operator*(Float2 other)
 		{
 			return Float2(x * other.x, y * other.y);
+		}
+
+		Float2& operator+=(const Float2& other)
+		{
+			x += other.x;
+			y += other.y;
+			return *this;
 		}
 	};
 

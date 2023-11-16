@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MathStruct.h"
+#include "RiverUI.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 #include "Renderer/Header/RenderItem.h"
 
@@ -18,8 +19,10 @@ enum class WidgetAnchors : uint8
 	RightBottom
 };
 
+
 class Widget
 {
+	friend class Panel;
 public:
 	Widget();
 
@@ -43,10 +46,14 @@ public:
 
 	FLOAT_2 GetAbsoluteLeftTopPosition();
 
+	FLOAT_2 GetWindowPosition();
+
 protected:
 	WidgetAnchors m_WidgetAlign;
 	FLOAT_2 m_Alignment;
 	FLOAT_2 m_Size;
 	FLOAT_2 m_Position;
+
+	Widget* m_Parent;
 };
 

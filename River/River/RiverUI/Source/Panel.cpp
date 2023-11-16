@@ -1,5 +1,7 @@
 #include "RiverPch.h"
+#include "MathHelper.h"
 #include "RiverUI/Header/Panel.h"
+#include "RiverUI/Header/Image.h"
 #include "RiverUI/Header/Button.h"
 
 Panel::Panel()
@@ -29,7 +31,7 @@ bool Panel::OnMouseButtonDown(const Event& e)
 		{
 			if (MouseInWidget(widget, mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
 			{
-				if (((Button*)widget.get())->OnMouseButtonDown(e))
+				if (((UIMouseEvent*)widget)->OnMouseButtonDown(e))
 				{
 					return true;
 				}
@@ -45,12 +47,24 @@ bool Panel::OnMouseButtonRelease(const Event& e)
 	return false;
 }
 
-bool Panel::MouseIsInPanel(int x, int y)
+void Panel::AddMouseButtonDownDetector(Widget* widget)
 {
-	return false;
+	if (dynamic_cast<Image*>(widget) || dynamic_cast<Button*>(widget))
+	{
+		m_MouseButtonDownDetector.push_front(widget);
+	}
 }
 
-bool Panel::MouseInWidget(Share<Widget>& widget, int x, int y)
+bool Panel::MouseIsInPanel(int x, int y)
 {
-	return false;
+	FLOAT_2 pos = GetWindowPosition();
+	FLOAT_2 size = GetSize();
+	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
+}
+
+bool Panel::MouseInWidget(Widget* widget, int x, int y)
+{
+	FLOAT_2 pos = widget->GetWindowPosition();
+	FLOAT_2 size = widget->GetSize();
+	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
 }

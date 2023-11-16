@@ -19,18 +19,23 @@ public:
 
 	Panel& operator[](Share<Widget> widget)
 	{
+		widget.get()->m_Parent = this;
 		m_Children.push_back(widget);
+		AddMouseButtonDownDetector(widget.get());
+
 		return *this;
 	}
 
 private:
+	void AddMouseButtonDownDetector(Widget* widget);
+
 	bool MouseIsInPanel(int x, int y);
 
-	bool MouseInWidget(Share<Widget>& widget, int x, int y);
+	bool MouseInWidget(Widget* widget, int x, int y);
 
 private:
 	V_Array<Share<Widget>> m_Children;
 
 	//每次添加时需要排序，检测层级高的在前
-	V_Array<Share<Widget>> m_MouseButtonDownDetector; 
+	List<Widget*> m_MouseButtonDownDetector; 
 };

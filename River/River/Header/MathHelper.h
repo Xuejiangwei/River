@@ -46,3 +46,8 @@ static T Max(const T& a, const T& b)
 {
 	return a > b ? a : b;
 }
+
+inline bool InRectangle(float pointX, float pointY, float posX, float posY, float sizeX, float sizeY)
+{
+	return posX <= pointX && pointX <= posX + sizeX && posY <= pointY && pointY <= posY + sizeY;
+}

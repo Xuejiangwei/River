@@ -4,7 +4,7 @@
 #include "RiverUI.h"
 #include "Widget.h"
 
-class Button : public Widget
+class Button : public Widget, UIMouseEvent
 {
 public:
 	Button();
@@ -13,8 +13,18 @@ public:
 
 	void BindClickFunction(ClickCall func);
 
-	virtual bool OnMouseButtonDown(const class Event& e);
+	virtual void OnUpdate(float deltaTime) override;
+
+	virtual bool OnMouseButtonDown(const class Event& e) override;
+
+	virtual bool OnMouseButtonRelease(const class Event& e) override;
+
+	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override;
 
 private:
 	ClickCall m_ClickCall;
+	bool m_IsMouseButtonDown;
+	float m_MouseButtonClickTimer;
+	float m_MouseButtonClickDetectTime;
+	
 };

@@ -138,3 +138,13 @@ FLOAT_2 Widget::GetAbsoluteLeftTopPosition()
 
     return { 0.0f, 0.0f };
 }
+
+FLOAT_2 Widget::GetWindowPosition()
+{
+    FLOAT_2 pos = GetAbsoluteLeftTopPosition();
+    if (m_Parent)
+    {
+        pos += m_Parent->GetWindowPosition();
+    }
+    return pos;
+}
