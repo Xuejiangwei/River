@@ -3,6 +3,8 @@
 #include "RiverHead.h"
 #include "Widget.h"
 
+
+//最基本的拥有点击事件的控件
 class Image : public Widget, UIMouseEvent
 {
 public:

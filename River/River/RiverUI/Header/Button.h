@@ -2,9 +2,9 @@
 
 #include "RiverHead.h"
 #include "RiverUI.h"
-#include "Widget.h"
+#include "Image.h"
 
-class Button : public Widget, UIMouseEvent
+class Button : public Image
 {
 public:
 	Button();

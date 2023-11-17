@@ -37,6 +37,12 @@ void RiverEditorLayer::OnAttach()
 		img->SetPosition(100, 100);
 
 		(*rootPanel)[img];
+
+		auto img1 = MakeShare<Image>();
+		img1->SetSize(100, 100);
+		img1->SetPosition(300, 300);
+
+		(*rootPanel)[img1];
 	}
 
 	m_UIWindows[0] = MakeUnique<UIWindow>(rootPanel);

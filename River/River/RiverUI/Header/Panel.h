@@ -3,6 +3,8 @@
 #include "RiverHead.h"
 #include "Widget.h"
 
+class Image;
+
 // 目前Panel里面没有层级概念，只靠添加顺序，越靠后检测层级越高
 class Panel : public Widget
 {
@@ -37,5 +39,5 @@ private:
 	V_Array<Share<Widget>> m_Children;
 
 	//每次添加时需要排序，检测层级高的在前
-	List<Widget*> m_MouseButtonDownDetector; 
+	List<Image*> m_MouseButtonDownDetector; 
 };

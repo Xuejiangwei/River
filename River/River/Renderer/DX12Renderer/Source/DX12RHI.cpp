@@ -308,6 +308,32 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 	return ret;
 }
 
+void DX12RHI::AddDescriptor(DX12Texture* texture)
+{
+	/*CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);*/
+
+	auto nullSrv = GetCpuSrv(mNullTexSrvIndex2);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	//D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	//srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	//srvDesc.Texture2D.MostDetailedMip = 0;
+	//srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	//srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	//srvDesc.Format = texture->GetResource()->GetDesc().Format;
+	//srvDesc.Texture2D.MipLevels = texture->GetResource()->GetDesc().MipLevels;
+	//m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, nullSrv);
+	//m_Device->CopyDescriptorsSimple(1, hDescriptor, m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
 DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
 {
 	DX12Texture* ret = nullptr;
@@ -319,6 +345,15 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, con
 	}
 
 	return ret;
+}
+
+void DX12RHI::RemoveTexture(const String& name)
+{
+	auto iter = m_Textures.find(name);
+	if (iter != m_Textures.end())
+	{
+		m_Textures.erase(iter);
+	}
 }
 
 void DX12RHI::Render()

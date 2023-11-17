@@ -4,6 +4,10 @@
 #include "RiverUI/Header/Image.h"
 #include "RiverUI/Header/Button.h"
 
+#include "Renderer/DX12Renderer/Header/DX12RHI.h"
+
+#include "Renderer/Header/Texture.h"
+
 Panel::Panel()
 {
 }
@@ -27,11 +31,11 @@ bool Panel::OnMouseButtonDown(const Event& e)
 	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
 	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
 	{
-		for (auto& widget : m_MouseButtonDownDetector)
+		for (auto widget : m_MouseButtonDownDetector)
 		{
 			if (MouseInWidget(widget, mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
 			{
-				if (((UIMouseEvent*)widget)->OnMouseButtonDown(e))
+				if (widget->OnMouseButtonDown(e))
 				{
 					return true;
 				}
@@ -49,9 +53,10 @@ bool Panel::OnMouseButtonRelease(const Event& e)
 
 void Panel::AddMouseButtonDownDetector(Widget* widget)
 {
-	if (dynamic_cast<Image*>(widget) || dynamic_cast<Button*>(widget))
+	auto image = dynamic_cast<Image*>(widget);
+	if (image)
 	{
-		m_MouseButtonDownDetector.push_front(widget);
+		m_MouseButtonDownDetector.push_front(image);
 	}
 }
 

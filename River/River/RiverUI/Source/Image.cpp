@@ -4,6 +4,10 @@
 #include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"
 
+#include "Renderer/DX12Renderer/Header/DX12RHI.h"
+
+#include "Renderer/Header/Texture.h"
+
 Image::Image()
 {
 }
@@ -45,12 +49,17 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
 bool Image::OnMouseButtonDown(const Event& e)
 {
-    return false;
+    /*auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
+    ((DX12RHI*)RHI::Get().get())->AddDescriptor(/*(DX12Texture*)texture);*/
+    return true;
 }
 
 bool Image::OnMouseButtonRelease(const Event& e)
 {
-    return false;
+    auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
+
+    ((DX12RHI*)RHI::Get().get())->AddDescriptor((DX12Texture*)texture);
+    return true;
 }
 
 void Image::SetTexture(const char* texturePath)

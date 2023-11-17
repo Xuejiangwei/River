@@ -11,6 +11,7 @@
 #else
 	#define RIVER_API __declspec(dllimport)
 #endif // RIVER_API
+  
 
 template<typename T>
 using Share = std::shared_ptr<T>;
