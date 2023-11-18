@@ -46,13 +46,17 @@ void Application::Run()
 	{
 		m_Time.Tick();
 
+		m_Window->OnUpdate();
+		if (!m_Running)
+		{
+			break;
+		}
+
 		for (auto& layer : m_Layers)
 		{
 			layer->OnUpdate(m_Time.DeltaTime());
 		}
 
-		m_Window->OnUpdate();
-		
 		m_RenderScene->OnUpdate();
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
@@ -71,6 +75,7 @@ void Application::Run()
 void Application::Close()
 {
 	m_Running = false;
+	RHI::Get()->Exit();
 }
 
 void Application::AddLayer(Share<Layer> layer)

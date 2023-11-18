@@ -17,6 +17,8 @@ public:
 
 	static Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
 
+	static Texture* CreateImmediatelyTexture(const char* name, const char* filePath);
+
 private:
 	String m_Name;
 	String m_Path;

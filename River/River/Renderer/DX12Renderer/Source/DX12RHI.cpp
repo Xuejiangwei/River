@@ -17,6 +17,7 @@
 #include "Renderer/DX12Renderer/Header/Waves.h"
 #include "Renderer/DX12Renderer/Header/DX12LoadM3d.h"
 #include "Renderer/DX12Renderer/Header/DDSTextureLoader.h"
+#include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 
 #include "DirectXMath.h"
 #include "DirectXCollision.h"
@@ -163,6 +164,11 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	FlushCommandQueue();
 }
 
+void DX12RHI::Exit()
+{
+	DX12DescriptorAllocator::DestroyAllDescriptorHeap();
+}
+
 void DX12RHI::OnUpdate(const RiverTime& time)
 {
 	m_PrespectiveCamera.OnUpdate();
@@ -181,15 +187,7 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
-	if (m_CurrFrameResource->m_FenceValue != 0 && m_Fence->GetCompletedValue() < m_CurrFrameResource->m_FenceValue)
-	{
-		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-
-		ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrFrameResource->m_FenceValue, eventHandle));
-
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
-	}
+	WaitFence();
 
 	AnimationMaterials(time);
 	UpdateObjectCBs();
@@ -305,14 +303,16 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 		m_Textures[name] = std::move(texture);
 	}
 
+	if (m_Textures.find(name) != std::end(m_Textures))
+	{
+		ret = m_Textures[name].get();
+	}
+
 	return ret;
 }
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
 {
-	/*CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);*/
-
 	auto nullSrv = GetCpuSrv(mNullTexSrvIndex2);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -321,17 +321,9 @@ void DX12RHI::AddDescriptor(DX12Texture* texture)
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	//D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	//srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	//srvDesc.Texture2D.MostDetailedMip = 0;
-	//srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	//srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	//srvDesc.Format = texture->GetResource()->GetDesc().Format;
-	//srvDesc.Texture2D.MipLevels = texture->GetResource()->GetDesc().MipLevels;
-	//m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, nullSrv);
-	//m_Device->CopyDescriptorsSimple(1, hDescriptor, m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	srvDesc.Format = texture->GetResource()->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = texture->GetResource()->GetDesc().MipLevels;
+	m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, nullSrv);
 }
 
 DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
@@ -366,7 +358,7 @@ void DX12RHI::Render()
 	// 命令列表可以在通过ExecuteCommandList添加到命令队列后重置，重复使用命令列表会重复使用内存。
 	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), m_PSOs["opaque"]->GetPSO()));
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_SrvDescriptorHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_SrvDescriptorHeap };
 	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
@@ -1407,6 +1399,60 @@ void DX12RHI::Pick(int x, int y)
 	}
 }
 
+void DX12RHI::WaitFence()
+{
+	if (m_CurrFrameResource->m_FenceValue != 0 && m_Fence->GetCompletedValue() < m_CurrFrameResource->m_FenceValue)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+
+		ThrowIfFailed(m_Fence->SetEventOnCompletion(m_CurrFrameResource->m_FenceValue, eventHandle));
+
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
+}
+
+void DX12RHI::ResetCmdListAlloc()
+{
+	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
+	ThrowIfFailed(cmdListAlloc->Reset());
+	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), nullptr));
+}
+
+void DX12RHI::ExecuteCmdList(bool isSwapChain)
+{
+
+	/*ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+	m_CurrFrameResource->m_FenceValue = ++m_CurrentFence;
+	m_CommandQueue->Signal(m_Fence.Get(), m_CurrentFence);*/
+
+
+
+	// Done recording commands.
+	ThrowIfFailed(m_CommandList->Close());
+
+	// Add the command list to the queue for execution.
+	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	if (isSwapChain)
+	{
+		// Swap the back and front buffers
+		ThrowIfFailed(m_SwapChain->Present(0, 0));
+		m_CurrBackBufferIndex = (m_CurrBackBufferIndex + 1) % s_SwapChainBufferCount;
+	}
+
+	
+	// Advance the fence value to mark commands up to this fence point.
+	m_CurrFrameResource->m_FenceValue = ++m_CurrentFence;
+
+	// Add an instruction to the command queue to set a new fence point. 
+	// Because we are on the GPU timeline, the new fence point won't be 
+	// set until the GPU finishes processing all the commands prior to this Signal().
+	m_CommandQueue->Signal(m_Fence.Get(), m_CurrentFence);
+}
+
 void DX12RHI::CreateRtvAndDsvHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC stRTVHeapDesc = {};
@@ -1705,11 +1751,13 @@ void DX12RHI::InitDescriptorHeaps()
 	//
 	// Create the SRV heap.
 	//
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	/*D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = 64;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));*/
+
+	m_SrvDescriptorHeap = DX12DescriptorAllocator::NewDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//
 	// Fill out the heap with actual descriptors.

@@ -73,3 +73,36 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 
 	return ret;
 }
+
+Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath)
+{
+	DX12Texture* ret = nullptr;
+
+	switch (RHI::Get()->GetAPIMode())
+	{
+	case APIMode::DX12:
+	{
+		if (name)
+		{
+			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
+			if (dx12Rhi->m_Textures.find(name) == dx12Rhi->m_Textures.end())
+			{
+				dx12Rhi->WaitFence();
+				dx12Rhi->ResetCmdListAlloc();
+				dx12Rhi->AddDescriptor(dx12Rhi->CreateTexture(name, filePath));
+				dx12Rhi->ExecuteCmdList(false);
+				dx12Rhi->WaitFence();
+			}
+		}
+	}
+	break;
+	case APIMode::Vulkan:
+	{
+	}
+	break;
+	default:
+		break;
+	}
+
+	return ret;
+}

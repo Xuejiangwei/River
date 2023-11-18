@@ -36,12 +36,15 @@ using namespace DirectX;
 
 class DX12RHI : public RHI
 {
+	friend static Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath);
 public:
 	DX12RHI();
 	
 	virtual ~DX12RHI() override;
 
 	virtual void Initialize(const RHIInitializeParam& param) override;
+
+	virtual void Exit() override;
 
 	virtual void Render() override;
 
@@ -50,6 +53,8 @@ public:
 	virtual void UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices) override;
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
+
+	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
@@ -75,6 +80,12 @@ public:
 	virtual Camera* GetMainCamera() override;
 
 	virtual void Pick(int x, int y) override;
+
+	void WaitFence();
+
+	void ResetCmdListAlloc();
+
+	void ExecuteCmdList(bool isSwapChain = true);
 
 private:
 	void InitializeBase(const RHIInitializeParam& param);
@@ -201,7 +212,8 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DsvHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+	//Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+	ID3D12DescriptorHeap* m_SrvDescriptorHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_SwapChainBuffer[s_SwapChainBufferCount];

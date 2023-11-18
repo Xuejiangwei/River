@@ -49,16 +49,19 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
 bool Image::OnMouseButtonDown(const Event& e)
 {
-    /*auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
-    ((DX12RHI*)RHI::Get().get())->AddDescriptor(/*(DX12Texture*)texture);*/
+    //https://cn.bing.com/search?q=imgui%e5%8a%a0%e8%bd%bd%e5%9b%be%e7%89%87&qs=SC&pq=imgui+%e5%8a%a0%e8%bd%bd&sc=8-8&cvid=B6A3C4F14FBD44F6BBC9E6FEB895B97B&FORM=QBRE&sp=1&lq=0
+    //https://blog.csdn.net/zzy1448331580/article/details/104998941
+    //https://blog.csdn.net/csdnyonghu123/article/details/102793869
+
+    auto texture = Texture::CreateImmediatelyTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
     return true;
 }
 
 bool Image::OnMouseButtonRelease(const Event& e)
 {
-    auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
+    /*auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
 
-    ((DX12RHI*)RHI::Get().get())->AddDescriptor((DX12Texture*)texture);
+    ((DX12RHI*)RHI::Get().get())->AddDescriptor((DX12Texture*)texture);*/
     return true;
 }
 

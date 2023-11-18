@@ -90,7 +90,7 @@ void DX12VertexBuffer::UpdateData(void* context, void* cmdList, void* vertices, 
 
 		memcpy(pVertexDataBegin, vertices, size);
 
-		m_VertexBuffer->Unmap(0, &stReadRange);
+		//m_VertexBuffer->Unmap(0, &stReadRange);
 
 		m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
 		m_VertexBufferView.SizeInBytes = (uint32)size;

@@ -6,6 +6,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "RenderItem.h"
+#include "Texture.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 
 #include <vector>
@@ -50,6 +51,8 @@ public:
 	virtual ~RHI();
 
 	virtual void Initialize(const RHIInitializeParam& Param) = 0;
+
+	virtual void Exit() = 0;
 
 	virtual void Render() = 0;
 
