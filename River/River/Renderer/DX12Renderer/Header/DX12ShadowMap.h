@@ -20,7 +20,7 @@ public:
 	
 	ID3D12Resource* Resource() { return m_ShadowMap.Get(); }
 	
-	CD3DX12_GPU_DESCRIPTOR_HANDLE Srv() const { return m_HandleGpuSrv; }
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE Srv() const { return m_HandleGpuSrv; }
 	
 	CD3DX12_CPU_DESCRIPTOR_HANDLE Dsv() const { return m_HandleCpuDsv; }
 
@@ -48,7 +48,7 @@ private:
 	DXGI_FORMAT m_Format;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_HandleCpuSrv;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE m_HandleGpuSrv;
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE m_HandleGpuSrv;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE m_HandleCpuDsv;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_ShadowMap;

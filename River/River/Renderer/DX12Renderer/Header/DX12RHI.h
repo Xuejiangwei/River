@@ -159,34 +159,6 @@ private:
 
 	void CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* textureRes, D3D12_SHADER_RESOURCE_VIEW_DESC& desc, uint32_t handleOffset = 0);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuSrv(int index) const
-	{
-		auto srv = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		srv.Offset(index, m_CbvSrvUavDescriptorSize);
-		return srv;
-	}
-
-	CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrv(int index) const
-	{
-		auto srv = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		srv.Offset(index, m_CbvSrvUavDescriptorSize);
-		return srv;
-	}
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GetRtv(int index)const
-	{
-		auto rtv = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		rtv.Offset(index, m_RtvDescriptorSize);
-		return rtv;
-	}
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE GetDsv(int index) const
-	{
-		auto dsv = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_DsvHeap->GetCPUDescriptorHandleForHeapStart());
-		dsv.Offset(index, m_DsvDescriptorSize);
-		return dsv;
-	}
-
 public:
 	static const int s_SwapChainBufferCount = 2;
 	static const int s_FrameBufferCount = 3;
@@ -204,17 +176,12 @@ private:
 	int m_CurrFrameResourceIndex;
 	int m_CurrBackBufferIndex;
 
-	uint32 m_RtvDescriptorSize;
-	uint32 m_DsvDescriptorSize;
-	uint32 m_CbvSrvUavDescriptorSize;
-
 	Microsoft::WRL::ComPtr<IDXGISwapChain> m_SwapChain;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DsvHeap;
-	//Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SrvDescriptorHeap;
+	ID3D12DescriptorHeap* m_RtvDescriptorHeap;
+	ID3D12DescriptorHeap* m_DsvHeap;
 	ID3D12DescriptorHeap* m_SrvDescriptorHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
+	//Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_CbvHeap;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_SwapChainBuffer[s_SwapChainBufferCount];
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;

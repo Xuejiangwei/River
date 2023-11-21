@@ -18,7 +18,7 @@ void ShadowMap::BuildDescriptors(CD3DX12_CPU_DESCRIPTOR_HANDLE hCpuSrv, CD3DX12_
 {
 	// Save references to the descriptors. 
 	m_HandleCpuSrv = hCpuSrv;
-	m_HandleGpuSrv = hGpuSrv;
+	//m_HandleGpuSrv = hGpuSrv;
 	m_HandleCpuDsv = hCpuDsv;
 
 	//  Create the descriptors

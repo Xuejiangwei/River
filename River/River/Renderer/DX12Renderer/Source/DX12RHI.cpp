@@ -105,7 +105,7 @@ static D3D12_PRIMITIVE_TOPOLOGY GetRenderItemPrimtiveType(PrimitiveType type)
 
 
 DX12RHI::DX12RHI()
-	: m_CurrentFence(1), m_CurrFrameResourceIndex(0), m_CurrBackBufferIndex(0), m_RtvDescriptorSize(0), m_DsvDescriptorSize(0), m_CbvSrvUavDescriptorSize(0),
+	: m_CurrentFence(1), m_CurrFrameResourceIndex(0), m_CurrBackBufferIndex(0),
 	m_PrespectiveCamera(CameraType::Perspective), m_OrthoGraphicCamera(CameraType::OrthoGraphic)
 {
 }
@@ -313,7 +313,7 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
 {
-	auto nullSrv = GetCpuSrv(mNullTexSrvIndex2);
+	auto nullSrv = DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mNullTexSrvIndex2);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -414,7 +414,7 @@ void DX12RHI::Render()
 	// index into an array of cube maps.
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), m_CbvSrvUavDescriptorSize);
+	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)); //m_CbvSrvUavDescriptorSize);
 	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
 
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
@@ -571,7 +571,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 	{
 		ThrowIfFailed(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_SwapChainBuffer[i])));
 		m_Device->CreateRenderTargetView(m_SwapChainBuffer[i].Get(), nullptr, rtvHeapHandle);
-		rtvHeapHandle.Offset(1, m_RtvDescriptorSize);
+		rtvHeapHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));//m_RtvDescriptorSize);
 	}
 
 	D3D12_RESOURCE_DESC depthStencilDesc;
@@ -647,10 +647,6 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 	EnumAdaptersAndCreateDevice();
 
 	CreateFence();
-
-	m_RtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_DsvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	m_CbvSrvUavDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	CheckQualityLevel();
 
@@ -1455,19 +1451,8 @@ void DX12RHI::ExecuteCmdList(bool isSwapChain)
 
 void DX12RHI::CreateRtvAndDsvHeaps()
 {
-	D3D12_DESCRIPTOR_HEAP_DESC stRTVHeapDesc = {};
-	stRTVHeapDesc.NumDescriptors = s_SwapChainBufferCount + 3;
-	stRTVHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	stRTVHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	stRTVHeapDesc.NodeMask = 0;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&stRTVHeapDesc, IID_PPV_ARGS(m_RtvDescriptorHeap.GetAddressOf())));
-
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-	dsvHeapDesc.NumDescriptors = 2;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	dsvHeapDesc.NodeMask = 0;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_DsvHeap.GetAddressOf())));
+	m_RtvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, s_SwapChainBufferCount + 3);
+	m_DsvHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
 }
 
 void DX12RHI::CreateFence()
@@ -1743,7 +1728,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		m_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_CurrBackBufferIndex,
-		m_RtvDescriptorSize);
+		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));//m_RtvDescriptorSize);
 }
 
 void DX12RHI::InitDescriptorHeaps()
@@ -1757,12 +1742,12 @@ void DX12RHI::InitDescriptorHeaps()
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));*/
 
-	m_SrvDescriptorHeap = DX12DescriptorAllocator::NewDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	//
 	// Fill out the heap with actual descriptors.
 	//
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	
 
 	std::vector<DX12Texture*> tex2DList =
 	{
@@ -1789,7 +1774,8 @@ void DX12RHI::InitDescriptorHeaps()
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, (uint32)tex2DList.size() + 1));
 	for (uint32 i = 0; i < (uint32)tex2DList.size(); ++i)
 	{
 		tex2DList[i]->SetTextureId(i);
@@ -1798,7 +1784,7 @@ void DX12RHI::InitDescriptorHeaps()
 		m_Device->CreateShaderResourceView(tex2DList[i]->GetResource().Get(), &srvDesc, hDescriptor);
 
 		// next descriptor
-		hDescriptor.Offset(1, m_CbvSrvUavDescriptorSize);
+		hDescriptor.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	}
 
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -1816,11 +1802,11 @@ void DX12RHI::InitDescriptorHeaps()
 	mNullTexSrvIndex1 = mNullCubeSrvIndex + 1;
 	mNullTexSrvIndex2 = mNullTexSrvIndex1 + 1;
 
-	auto nullSrv = GetCpuSrv(mNullCubeSrvIndex);
-	mNullSrv = GetGpuSrv(mNullCubeSrvIndex);
+	auto nullSrv = DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mNullCubeSrvIndex);
+	mNullSrv = DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mNullCubeSrvIndex);
 
 	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
-	nullSrv.Offset(1, m_CbvSrvUavDescriptorSize);
+	nullSrv.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1829,18 +1815,23 @@ void DX12RHI::InitDescriptorHeaps()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
 
-	nullSrv.Offset(1, m_CbvSrvUavDescriptorSize);
+	nullSrv.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
 
-	m_ShadowMap->BuildDescriptors(GetCpuSrv(mShadowMapHeapIndex), GetGpuSrv(mShadowMapHeapIndex), GetDsv(1));
+	//m_ShadowMap->BuildDescriptors(GetCpuSrv(mShadowMapHeapIndex), GetGpuSrv(mShadowMapHeapIndex), GetDsv(1));
+	m_ShadowMap->BuildDescriptors(DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mShadowMapHeapIndex),
+		DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mShadowMapHeapIndex),
+		DX12DescriptorAllocator::CpuOffset(m_DsvHeap, 1));
 
 	m_Ssao->BuildDescriptors(
 		m_DepthStencilBuffer.Get(),
-		GetCpuSrv(mSsaoHeapIndexStart),
-		GetGpuSrv(mSsaoHeapIndexStart),
-		GetRtv(s_SwapChainBufferCount),
-		m_CbvSrvUavDescriptorSize,
-		m_RtvDescriptorSize);
+		//GetCpuSrv(mSsaoHeapIndexStart),
+		DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mSsaoHeapIndexStart),
+		//GetGpuSrv(mSsaoHeapIndexStart),
+		DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mSsaoHeapIndexStart),
+		DX12DescriptorAllocator::CpuOffset(m_RtvDescriptorHeap, s_SwapChainBufferCount),
+		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), //m_CbvSrvUavDescriptorSize,
+		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));// m_RtvDescriptorSize);
 
 	/*nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
 	auto mFontTextureView = mNullTexSrvIndex2 + 1;
@@ -2169,7 +2160,7 @@ void DX12RHI::CreateSRV(CD3DX12_CPU_DESCRIPTOR_HANDLE& handle, ID3D12Resource* t
 {
 	if (handleOffset > 0)
 	{
-		handle.Offset(handleOffset, m_CbvSrvUavDescriptorSize);
+		handle.Offset(handleOffset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	}
 
 	return m_Device->CreateShaderResourceView(textureRes, &desc, handle);
