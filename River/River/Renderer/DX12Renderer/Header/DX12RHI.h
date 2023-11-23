@@ -23,6 +23,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+class DX12DynamicDescriptorHeap;
 class ShadowMap;
 class DX12VertexBuffer;
 class DX12IndexBuffer;
@@ -161,7 +162,7 @@ private:
 
 public:
 	static const int s_SwapChainBufferCount = 2;
-	static const int s_FrameBufferCount = 3;
+	static const int s_FrameBufferCount = 2;
 	static const int s_MaxRenderItem = 100;
 
 private:
@@ -172,7 +173,12 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocator;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandList;
-	
+
+	/** 在每帧渲染时将每个RenderItem的Texture资源（每个Texture中含有描述符handle，handle中有texture在内存中的指针）的handle复制到其中
+		使其可以在Shader代码中根据描述符的texture槽取texture资源时中可以连续并从头（即第0个）访问。
+	**/
+	Unique<DX12DynamicDescriptorHeap> m_DynamicDescriptorHeaps[s_FrameBufferCount];
+
 	int m_CurrFrameResourceIndex;
 	int m_CurrBackBufferIndex;
 

@@ -146,6 +146,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12DescriptorAllocator.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12DynamicDescriptorHeap.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12LoadM3d.cpp" />
@@ -227,6 +228,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DefaultConfig.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DescriptorAllocator.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12DynamicDescriptorHeap.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12FrameBuffer.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12IndexBuffer.h" />

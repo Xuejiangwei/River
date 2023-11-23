@@ -5,6 +5,7 @@
 #include "Renderer/Font/Header/Font.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
+#include "Renderer/DX12Renderer/Header/DX12DynamicDescriptorHeap.h"
 #include "Renderer/DX12Renderer/Header/DX12RootSignature.h"
 #include "Renderer/DX12Renderer/Header/DX12PipelineState.h"
 #include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
@@ -414,7 +415,7 @@ void DX12RHI::Render()
 	// index into an array of cube maps.
 
 	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)); //m_CbvSrvUavDescriptorSize);
+	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
 
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
@@ -450,6 +451,9 @@ void DX12RHI::Render()
 		auto& geo = m_Geometries["ui"];
 		if (geo)
 		{
+			/*CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			texDescriptor.Offset(26, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);*/
 			auto index = 29;//m_AllRitems.size() + 2;
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
@@ -467,6 +471,8 @@ void DX12RHI::Render()
 				m_CommandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
 					m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
 			}
+
+			//m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		}
 	}
 
@@ -649,6 +655,11 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 	CreateFence();
 
 	CheckQualityLevel();
+
+	for (int i = 0; i < _countof(m_DynamicDescriptorHeaps); i++)
+	{
+		m_DynamicDescriptorHeaps[i] = MakeUnique<DX12DynamicDescriptorHeap>();
+	}
 
 	CreateCommandQueue();
 
