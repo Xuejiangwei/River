@@ -167,6 +167,7 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\Source\AssetManager.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp" />
     <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
     <ClInclude Include="Header\MathStruct.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
+    <ClInclude Include="Renderer\Header\AssetManager.h" />
     <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h" />
     <ClInclude Include="Renderer\Parse\Header\ParseObj.h" />
     <ClInclude Include="RiverUI\Header\Button.h" />

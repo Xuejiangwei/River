@@ -19,13 +19,13 @@ public:
 
 	static Texture* CreateImmediatelyTexture(const char* name, const char* filePath);
 
-private:
+protected:
 	String m_Name;
 	String m_Path;
 
 	union
 	{
-		uint32 m_RendererIndex;
+		uint64 m_DescriptorHandle;
 		uint32 m_RendererId;
 	};
 };

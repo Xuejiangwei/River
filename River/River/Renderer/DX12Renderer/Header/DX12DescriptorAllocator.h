@@ -16,7 +16,7 @@ public:
 
 	static void DestroyAllDescriptorHeap();
 
-	static D3D12_CPU_DESCRIPTOR_HANDLE Allocate(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count);
+	static D3D12_CPU_DESCRIPTOR_HANDLE Allocate(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count = 1);
 
 	static CD3DX12_CPU_DESCRIPTOR_HANDLE CpuOffset(ID3D12DescriptorHeap* heap, int index);
 

@@ -143,11 +143,14 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
 		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
-		//DX12GeometryGenerator::Get()->Initialize();
+		DX12GeometryGenerator::Get()->Initialize();
+
+		m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 		LoadSkinnedModel();
 		LoadTextures();
-		InitBaseRootSignatures();
 		InitDescriptorHeaps();
+		InitBaseRootSignatures();
 		InitBaseShaders();
 		BuildShapeGeometry();
 		InitBaseMaterials();
@@ -1753,7 +1756,7 @@ void DX12RHI::InitDescriptorHeaps()
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));*/
 
-	m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	
 
 	//
 	// Fill out the heap with actual descriptors.

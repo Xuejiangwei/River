@@ -216,6 +216,9 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12DynamicDescriptorHeap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\AssetManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -453,6 +456,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DynamicDescriptorHeap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\AssetManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

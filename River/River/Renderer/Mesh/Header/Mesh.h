@@ -69,4 +69,5 @@ public:
 private:
 	V_Array<Vertex> m_Vertices;
 	V_Array<uint32> m_Indices;
+	V_Array<class Material*> m_Materials;
 };
