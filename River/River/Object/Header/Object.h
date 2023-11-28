@@ -25,7 +25,7 @@ public:
 
 public:
 	template<typename T>
-	T* GetComponent(bool mustHave = true)
+	T* GetComponent(bool mustHave = false)
 	{
 		T* component = nullptr;
 		for (auto& it : m_Components)

@@ -71,7 +71,7 @@ namespace River
 	template <class _Ty>
 	constexpr remove_reference_t<_Ty>&& Move(_Ty&& _Arg) noexcept
 	{
-		return static_cast<remove_reference_t<_Ty>&&>(_Arg);
+		return std::move(std::forward<_Ty&&>(_Arg));// static_cast<remove_reference_t<_Ty>&&>(_Arg);
 	}
 }
 

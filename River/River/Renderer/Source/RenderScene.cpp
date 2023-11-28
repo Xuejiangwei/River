@@ -4,6 +4,10 @@
 #include "Renderer/Header/RHI.h"
 #include "Object/Header/Object.h"
 #include "Component/Header/RenderMeshComponent.h"
+#include "Component/Header/MeshComponent.h"
+
+#include "Renderer/Mesh/Header/StaticMesh.h"
+extern Unique<StaticMesh> TestStaticMesh;
 
 RenderScene::RenderScene()
 {
@@ -27,25 +31,45 @@ void RenderScene::OnUpdate()
 		if (p && p->m_RenderObject)
 		{
 			auto renderMeshComp = p->m_RenderObject->GetComponent<RenderMeshComponent>();
-			auto& compVertices = renderMeshComp->GetRawVertices();
-			auto& compIndices = renderMeshComp->GetRawIndices();
-
-			auto obj = p->m_RenderObject;
-			renderItem.World = obj->GetTransform();
-			renderItem.BaseVertexLocation = (int)vertices.size();
-			renderItem.IndexCount = (int)compIndices.size();
-			renderItem.StartIndexLocation = (int)indices.size();
-			RHI::Get()->AddRenderItem(&renderItem);
-
-			/*for (size_t i = 0; i < compIndices.size(); i++)
+			if (renderMeshComp)
 			{
-				indices.push_back(compIndices[i] + vertices.size());
-			}*/
 
-			vertices.insert(vertices.end(), compVertices.begin(), compVertices.end());
-			indices.insert(indices.end(), compIndices.begin(), compIndices.end());
+				auto& compVertices = renderMeshComp->GetRawVertices();
+				auto& compIndices = renderMeshComp->GetRawIndices();
 
-			iter++;
+				auto obj = p->m_RenderObject;
+				renderItem.World = obj->GetTransform();
+				renderItem.BaseVertexLocation = (int)vertices.size();
+				renderItem.IndexCount = (int)compIndices.size();
+				renderItem.StartIndexLocation = (int)indices.size();
+				RHI::Get()->AddRenderItem(&renderItem);
+
+				/*for (size_t i = 0; i < compIndices.size(); i++)
+				{
+					indices.push_back(compIndices[i] + vertices.size());
+				}*/
+
+				vertices.insert(vertices.end(), compVertices.begin(), compVertices.end());
+				indices.insert(indices.end(), compIndices.begin(), compIndices.end());
+
+				iter++;
+			}
+			
+			auto staticMeshComp = p->m_RenderObject->GetComponent<MeshComponent>();
+			if (staticMeshComp)
+			{
+				auto obj = p->m_RenderObject;
+				renderItem.World = obj->GetTransform();
+				renderItem.BaseVertexLocation = 0;
+				renderItem.IndexCount = (int)TestStaticMesh->GetIndices().size();
+				renderItem.StartIndexLocation = 0;
+				renderItem.ObjCBIndex = 1;
+
+				renderItem.MaterialIndex = 0;
+				RHI::Get()->AddRenderItem(&renderItem);
+
+				iter++;
+			}
 		}
 		else
 		{

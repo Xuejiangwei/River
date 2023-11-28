@@ -171,6 +171,7 @@
     <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp" />
     <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
     <ClCompile Include="Renderer\Source\FrameBuffer.cpp" />
+    <ClCompile Include="Renderer\Source\GeometryGenerator.cpp" />
     <ClCompile Include="Renderer\Source\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Source\Material.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\Mesh.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="Renderer\Header\Camera.h" />
     <ClInclude Include="Renderer\Font\Header\Font.h" />
     <ClInclude Include="Renderer\Header\FrameBuffer.h" />
+    <ClInclude Include="Renderer\Header\GeometryGenerator.h" />
     <ClInclude Include="Renderer\Header\IndexBuffer.h" />
     <ClInclude Include="Renderer\Header\Material.h" />
     <ClInclude Include="Renderer\Header\RenderProxy.h" />

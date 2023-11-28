@@ -10,6 +10,11 @@ public:
 	
 	~MeshAssetManager();
 
+	void LoadAsset(const char* path);
+
+	void AddProduceMeshAsset(const char* path, Unique<Mesh>& mesh);
+
+public:
 	static MeshAssetManager& GetAssetManager();
 
 private:

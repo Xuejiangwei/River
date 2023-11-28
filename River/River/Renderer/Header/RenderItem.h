@@ -17,6 +17,7 @@ struct RenderItem
 	int IndexCount;
 	int StartIndexLocation;
 	int BaseVertexLocation;
+	int MaterialIndex;
 	
 	PrimitiveType PriType;
 
@@ -25,7 +26,7 @@ struct RenderItem
 
 	RenderItem()
 		: NumFramesDirty(3), InstanceCount(1), IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), 
-		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1),
+		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1), MaterialIndex(-1),
 		World(Matrix_4_4::UnitMatrix()), TexTransform(Matrix_4_4::UnitMatrix())
 	{}
 };

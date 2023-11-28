@@ -219,6 +219,9 @@
     <ClCompile Include="Renderer\Source\AssetManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Source\GeometryGenerator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -459,6 +462,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Header\AssetManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Header\GeometryGenerator.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -139,7 +139,21 @@ namespace River
 		Float4(float x, float y, float z, float w)
 			: x(x), y(y), z(z), w(w)
 		{}
+	
+		Float4& operator+(const Float4& v) noexcept
+		{
+			this->x += v.x;
+			this->y += v.y;
+			this->z += v.z;
+			this->w += v.w;
+			return *this;
+		}
 	};
+
+	inline Float4 operator*(float other, Float4 v) noexcept
+	{
+		return Float4(v.x * other, v.y * other, v.z * other, v.w * other);
+	}
 
 	//Matrix
 	struct Matrix4x4
@@ -279,3 +293,57 @@ using FLOAT_4 = River::Float4;
 
 using Matrix_4_4 = River::Matrix4x4;
 using Transform = River::Transform;
+
+inline FLOAT_4 GetFloat3(const FLOAT_3& v)
+{
+	return FLOAT_4(v.x, v.y, v.z, 0.f);
+}
+
+inline FLOAT_4 GetFloat2(const FLOAT_2& v)
+{
+	return FLOAT_4(v.x, v.y, 0.f, 0.f);
+}
+
+inline FLOAT_4 VectorDot(FLOAT_4 v1, FLOAT_4 v2)
+{
+	float fValue = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+	return FLOAT_4(fValue, fValue, fValue, fValue);
+}
+
+inline FLOAT_4 VectorSqrt(FLOAT_4 v)
+{
+	return FLOAT_4(sqrtf(v.x), sqrtf(v.y), sqrtf(v.z), sqrtf(v.z));
+}
+
+inline FLOAT_4 VectorLengthSqrt(FLOAT_4 v)
+{
+	return VectorDot(v, v);
+}
+
+inline FLOAT_4 VectorLength(const FLOAT_4& v)
+{
+	FLOAT_4 Result;
+	Result = VectorLengthSqrt(v);
+	Result = VectorSqrt(Result);
+	return Result;
+}
+
+inline FLOAT_4 VectorNormalize(FLOAT_4 v)
+{
+	float fLength;
+	FLOAT_4 vResult;
+
+	vResult = VectorLength(v);
+	fLength = vResult.x;
+
+	if (fLength > 0) 
+	{
+		fLength = 1.0f / fLength;
+	}
+
+	vResult.x = v.x * fLength;
+	vResult.y = v.y * fLength;
+	vResult.z = v.z * fLength;
+	vResult.w = v.w * fLength;
+	return vResult;
+}

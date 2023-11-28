@@ -13,13 +13,14 @@ MeshComponent::~MeshComponent()
 
 void MeshComponent::Tick(float deltaTime)
 {
-	/*if (m_StaticMesh)
-	{
-		RHI::Get()->UpdateSceneData(m_StaticMesh->GetVertices(), m_StaticMesh->GetIndices());
-	}*/
 }
 
 void MeshComponent::SetStaticMesh(StaticMesh* staticMesh)
 {
 	m_StaticMesh = staticMesh;
+}
+
+void MeshComponent::SetStaticMeshMaterials(V_Array<Material*> materials)
+{
+	m_StaticMesh->SetMeshMaterials(materials);
 }

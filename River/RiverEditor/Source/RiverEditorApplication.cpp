@@ -5,7 +5,12 @@
 #include "GameInstance.h"
 #include "Object/Header/ObjectUtils.h"
 #include "Component/Header/RenderMeshComponent.h"
+#include "Component/Header/MeshComponent.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Renderer/Header/Material.h"
+#include "Renderer/Header/RHI.h"
+
+extern Unique<StaticMesh> TestStaticMesh;
 
 RiverEditorApplication::RiverEditorApplication()
 	: Application()
@@ -29,8 +34,13 @@ void RiverEditorApplication::Initialize()
 
 	obj = ProduceObject();
 	obj->SetPosition({ 1.0f, 1.0f, 3.0f });
-	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
+	obj->AddComponent(MakeShare<MeshComponent>());
+	obj->GetComponent<MeshComponent>()->SetStaticMesh(TestStaticMesh.get());
+
+	auto mat = new Material();
+	auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
+	mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 0, texture, nullptr);
+	obj->GetComponent<MeshComponent>()->SetStaticMeshMaterials({ mat });
 
 	obj = ProduceObject();
 	obj->SetPosition({ 1.0f, 3.0f, 3.0f });

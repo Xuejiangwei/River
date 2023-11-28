@@ -2,18 +2,10 @@
 #include "RiverHead.h"
 #include "Mesh.h"
 
-class StaticMesh
+class StaticMesh : public Mesh
 {
 public:
-	StaticMesh();
+	StaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials);
 
 	~StaticMesh();
-
-	const V_Array<Vertex>& GetVertices() const { return m_Vertices; }
-
-	const V_Array<uint16>& GetIndices() const { return m_Indices; }
-
-private:
-	V_Array<Vertex> m_Vertices;
-	V_Array<uint16> m_Indices;
 };

@@ -55,9 +55,15 @@ public:
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
 
+	virtual void SetUpStaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices) override;
+
+	virtual void SetUpMaterial(Material* material) override;
+
 	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
+
+	virtual Texture* GetTexture(const char* name) override;
 
 	//≤‚ ‘
 	void AddDescriptor(DX12Texture* texture);

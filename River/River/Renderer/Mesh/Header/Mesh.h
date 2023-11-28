@@ -49,24 +49,37 @@ struct Vertex
 {
 	Vertex() = default;
 
-	Vertex(float x, float y, float z, float nx, float ny, float nz, float u, float v)
-		: Pos(x, y, z), Normal(nx, ny, nz), TexC(u, v)
+	Vertex(float x, float y, float z, float nx, float ny, float nz, float tx, float ty, float tz, float u, float v)
+		: Pos(x, y, z), Normal(nx, ny, nz), TangentU(tx, ty, tz), TexC(u, v)
+	{}
+
+	Vertex(FLOAT_3 pos, FLOAT_3 normal, FLOAT_3 tangent, FLOAT_2 tex)
+		: Pos(pos), Normal(normal), TangentU(tangent), TexC(tex)
 	{}
 
 	FLOAT_3 Pos;
 	FLOAT_3 Normal;
 	FLOAT_3 TangentU;
 	FLOAT_2 TexC;
+
 };
+
+class StaticMesh;
 
 class Mesh
 {
 public:
-	Mesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices);
+	Mesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials);
 
 	~Mesh();
 
-private:
+	const V_Array<Vertex>& GetVertices() const { return m_Vertices; }
+
+	const V_Array<uint32>& GetIndices() const { return m_Indices; }
+
+	void SetMeshMaterials(V_Array<class Material*> materials) { m_Materials = materials; }
+
+protected:
 	V_Array<Vertex> m_Vertices;
 	V_Array<uint32> m_Indices;
 	V_Array<class Material*> m_Materials;

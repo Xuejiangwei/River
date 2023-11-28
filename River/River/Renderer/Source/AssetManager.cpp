@@ -12,6 +12,15 @@ MeshAssetManager::~MeshAssetManager()
 {
 }
 
+void MeshAssetManager::LoadAsset(const char* path)
+{
+}
+
+void MeshAssetManager::AddProduceMeshAsset(const char* path, Unique<Mesh>& mesh)
+{
+	m_CacheMeshes[path] = std::move(mesh);
+}
+
 MeshAssetManager& MeshAssetManager::GetAssetManager()
 {
 	return *s_AssetManager.get();

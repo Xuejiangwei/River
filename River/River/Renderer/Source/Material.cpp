@@ -1,9 +1,11 @@
 #include "RiverPch.h"
 #include "Material.h"
+#include "RHI.h"
 
 Material::Material()
 	: Material("")
 {
+	RHI::Get()->SetUpMaterial(this);
 }
 
 Material::Material(String& name)

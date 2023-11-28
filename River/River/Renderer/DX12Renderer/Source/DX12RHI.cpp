@@ -20,6 +20,9 @@
 #include "Renderer/DX12Renderer/Header/DDSTextureLoader.h"
 #include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 
+#include "Renderer/Header/GeometryGenerator.h"
+#include "Renderer/Header/Material.h"
+
 #include "DirectXMath.h"
 #include "DirectXCollision.h"
 #include <d3dcompiler.h>
@@ -34,6 +37,11 @@
 #endif
 
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
+
+Material* TestMaterial;
+Unique<StaticMesh> TestStaticMesh;
+Unique<DX12VertexBuffer> TestVertexBuffer;
+Unique<DX12IndexBuffer> TestIndexBuffer;
 
 using Microsoft::WRL::ComPtr;
 
@@ -144,6 +152,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
 		DX12GeometryGenerator::Get()->Initialize();
+		TestStaticMesh = GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
 
 		m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -297,6 +306,20 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 	m_UIRenderItem->IndexCount = (int)indices.size();
 }
 
+void DX12RHI::SetUpStaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices)
+{
+	const uint64 vbByteSize = vertices.size() * sizeof(Vertex);
+	const uint64 ibByteSize = indices.size() * sizeof(uint32);
+
+	TestVertexBuffer = CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]);
+	TestIndexBuffer = CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Int);
+}
+
+void DX12RHI::SetUpMaterial(Material* material)
+{
+	TestMaterial = material;
+}
+
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 {
 	DX12Texture* ret = nullptr;
@@ -313,6 +336,17 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 	}
 
 	return ret;
+}
+
+Texture* DX12RHI::GetTexture(const char* name)
+{
+	auto iter = m_Textures.find(name);
+	if (iter != m_Textures.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
 }
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
@@ -435,8 +469,17 @@ void DX12RHI::Render()
 
 			for (size_t i = 0; i < m_RenderItems.size(); i++)
 			{
-				m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
-				m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+				if (i == 1)
+				{
+					m_CommandList->IASetVertexBuffers(0, 1, &TestVertexBuffer->GetView());
+					m_CommandList->IASetIndexBuffer(&TestIndexBuffer->GetView());
+
+				}
+				else
+				{
+					m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
+					m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+				}
 				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index++ * objCBByteSize;
