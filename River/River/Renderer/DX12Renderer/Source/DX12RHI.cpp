@@ -229,6 +229,8 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 		for (size_t i = 0; i < m_RenderItems.size(); i++)
 		{
+			m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
+			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();
 			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].World));
 			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].TexTransform));
 
@@ -237,32 +239,32 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 			objConstants.MaterialIndex = 2;
 
-			//currObjectCB->CopyData(index++, objConstants);
+			currObjectCB->CopyData(i, objConstants);
 		}
 		
 	}
 
-	auto& geo = m_Geometries["scene"];
-	UINT verticesMore = (UINT)vertices.size() + 1000;
-	UINT indicesMore = (UINT)indices.size() + 3000;
-	if (geo == nullptr)
-	{
-		const UINT vbByteSize = verticesMore * sizeof(RawVertex);
-		const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
+	//auto& geo = m_Geometries["scene"];
+	//UINT verticesMore = (UINT)vertices.size() + 1000;
+	//UINT indicesMore = (UINT)indices.size() + 3000;
+	//if (geo == nullptr)
+	//{
+	//	const UINT vbByteSize = verticesMore * sizeof(RawVertex);
+	//	const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
 
-		auto geo = MakeUnique<MeshGeometry>();
-		geo->m_Name = "shapeGeo";
-		//geo->CopyCPUData(vertices, indices);
-		geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
-			CreateUploadIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+	//	auto geo = MakeUnique<MeshGeometry>();
+	//	geo->m_Name = "shapeGeo";
+	//	//geo->CopyCPUData(vertices, indices);
+	//	geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
+	//		CreateUploadIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
-		m_Geometries["scene"] = std::move(geo);
-	}
-	else
-	{
-		geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
-		geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
-	}
+	//	m_Geometries["scene"] = std::move(geo);
+	//}
+	//else
+	//{
+	//	geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
+	//	geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
+	//}
 }
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
@@ -449,9 +451,9 @@ void DX12RHI::Render()
 	// If we wanted to use "local" cube maps, we would have to change them per-object, or dynamically
 	// index into an array of cube maps.
 
-	CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	/*CD3DX12_GPU_DESCRIPTOR_HANDLE skyTexDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	skyTexDescriptor.Offset(m_Textures["skyCubeMap"]->GetTextureId(), DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);
+	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);*/
 
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Opaque]);
@@ -459,7 +461,7 @@ void DX12RHI::Render()
 	{
 		m_CommandList->SetPipelineState(m_PSOs["opaqueRaw"]->GetPSO());
 		auto& geo = m_Geometries["scene"];
-		if (geo)
+		//if (geo)
 		{
 			auto index = 0;
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
@@ -467,10 +469,10 @@ void DX12RHI::Render()
 
 			for (size_t i = 0; i < m_RenderItems.size(); i++)
 			{
-				if (i == 1)
+				if (i == 0)
 				{
-					m_CommandList->IASetVertexBuffers(0, 1, &TestVertexBuffer->GetView());
-					m_CommandList->IASetIndexBuffer(&TestIndexBuffer->GetView());
+					m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)m_RenderItems[i].VertexBufferView)->GetView());
+					m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)m_RenderItems[i].IndexBufferView)->GetView());
 
 				}
 				else
@@ -493,22 +495,21 @@ void DX12RHI::Render()
 	{
 		m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
 		auto& geo = m_Geometries["ui"];
-		if (geo)
+		//if (geo)
 		{
-			/*CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-			texDescriptor.Offset(26, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-			m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);*/
-			auto index = 29;
+			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			//texDescriptor.Offset(0, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 
 			for (size_t i = 0; i < m_UIRenderItems.size(); i++)
 			{
-				m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
-				m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
+				m_CommandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
+				m_CommandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
 				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index * objCBByteSize;
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
 
 				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
@@ -521,14 +522,14 @@ void DX12RHI::Render()
 	}
 
 	//mCommandList->SetPipelineState(mPSOs["skinnedOpaque"].Get());
-	m_CommandList->SetPipelineState(m_PSOs["skinnedOpaque"]->GetPSO());
+	/*m_CommandList->SetPipelineState(m_PSOs["skinnedOpaque"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::SkinnedOpaque]);
 
 	m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
 	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Debug]);
 
 	m_CommandList->SetPipelineState(m_PSOs["sky"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Sky]);
+	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Sky]);*/
 
 	/*mCommandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
 	DrawUI();*/
@@ -2093,6 +2094,9 @@ void DX12RHI::InitFrameBuffer()
 		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, m_MaxRenderItemCount/*(UINT)m_AllRitems.size()*/,
 			1, m_MaxMaterialCount));
 	}
+
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
+	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 }
 
 void DX12RHI::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& ritems)

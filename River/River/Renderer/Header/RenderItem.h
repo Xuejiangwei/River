@@ -12,6 +12,9 @@ struct RenderItem
 	Matrix_4_4 World;
 	Matrix_4_4 TexTransform;
 
+
+	void* VertexBufferView;
+	void* IndexBufferView;
 	int NumFramesDirty;
 	int InstanceCount;
 	int IndexCount;

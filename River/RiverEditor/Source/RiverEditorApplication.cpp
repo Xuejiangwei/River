@@ -28,11 +28,11 @@ void RiverEditorApplication::Initialize()
 
 	//Éú³ÉObject
 	auto obj = ProduceObject();
-	obj->SetPosition({ 1.0f, 3.0f, 1.0f });
+	/*obj->SetPosition({ 1.0f, 3.0f, 1.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
 	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
 
-	obj = ProduceObject();
+	obj = ProduceObject();*/
 	obj->SetPosition({ 1.0f, 1.0f, 3.0f });
 	obj->AddComponent(MakeShare<MeshComponent>());
 	obj->GetComponent<MeshComponent>()->SetStaticMesh(TestStaticMesh.get());
@@ -43,10 +43,10 @@ void RiverEditorApplication::Initialize()
 	mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 	obj->GetComponent<MeshComponent>()->SetStaticMeshMaterials({ mat });
 
-	obj = ProduceObject();
+	/*obj = ProduceObject();
 	obj->SetPosition({ 1.0f, 3.0f, 3.0f });
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox_24_Points());
+	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox_24_Points());*/
 }
 
 Application* CreateApplication()

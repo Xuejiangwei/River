@@ -57,10 +57,9 @@ void Application::Run()
 			layer->OnUpdate(m_Time.DeltaTime());
 		}
 
-		m_RenderScene->OnUpdate();
-
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
+		m_RenderScene->OnUpdate();
 		RHI::Get()->OnUpdate(m_Time);
 
 		for (auto& layer : m_Layers)
