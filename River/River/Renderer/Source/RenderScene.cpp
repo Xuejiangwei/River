@@ -64,8 +64,8 @@ void RenderScene::OnUpdate()
 				renderItem.IndexCount = (int)TestStaticMesh->GetIndices().size();
 				renderItem.StartIndexLocation = 0;
 				renderItem.ObjCBIndex = 1;
+				renderItem.MaterialIndex = 10;
 
-				renderItem.MaterialIndex = 0;
 				RHI::Get()->AddRenderItem(&renderItem);
 
 				iter++;

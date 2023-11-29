@@ -8,13 +8,13 @@ class Texture;
 class Material
 {
 public:
-	Material();
-
 	Material(String& name);
 
 	Material(const char* name);
 
 	~Material();
+
+	static Material* CreateMaterial(const char* name);
 
 	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, 
 		Texture* diffuseSrvIndex, Texture* normalSrvIndex);

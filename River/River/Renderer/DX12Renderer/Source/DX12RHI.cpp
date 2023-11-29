@@ -320,6 +320,18 @@ void DX12RHI::SetUpMaterial(Material* material)
 	TestMaterial = material;
 }
 
+Material* DX12RHI::CreateMaterial(const char* name)
+{
+	auto iter = m_Materials.find(name);
+	if (iter != m_Materials.end())
+	{
+		return iter->second.get();
+	}
+
+	m_Materials[name] = MakeUnique<Material>(name);
+	return m_Materials[name].get();
+}
+
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 {
 	DX12Texture* ret = nullptr;
@@ -2097,7 +2109,7 @@ void DX12RHI::InitFrameBuffer()
 	for (int i = 0; i < s_FrameBufferCount; ++i)
 	{
 		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, m_MaxRenderItemCount/*(UINT)m_AllRitems.size()*/,
-			1, (int)m_Materials.size()));
+			1, m_MaxMaterialCount));
 	}
 }
 

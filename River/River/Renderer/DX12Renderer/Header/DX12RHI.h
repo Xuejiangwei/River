@@ -61,6 +61,8 @@ public:
 
 	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
+	virtual Material* CreateMaterial(const char* name) override;
+
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
 	virtual Texture* GetTexture(const char* name) override;

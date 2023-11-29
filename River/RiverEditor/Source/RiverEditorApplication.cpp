@@ -37,9 +37,10 @@ void RiverEditorApplication::Initialize()
 	obj->AddComponent(MakeShare<MeshComponent>());
 	obj->GetComponent<MeshComponent>()->SetStaticMesh(TestStaticMesh.get());
 
-	auto mat = new Material();
-	auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
-	mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 0, texture, nullptr);
+	auto mat = Material::CreateMaterial("MyMat");
+	auto texture = RHI::Get()->GetTexture("tileDiffuseMap");
+	auto normalTexture = RHI::Get()->GetTexture("tileNormalMap");
+	mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 	obj->GetComponent<MeshComponent>()->SetStaticMeshMaterials({ mat });
 
 	obj = ProduceObject();

@@ -74,6 +74,8 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
+	virtual Material* CreateMaterial(const char* name) = 0;
+
 	virtual Texture* GetTexture(const char* name) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;
@@ -105,6 +107,7 @@ protected:
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
 	uint32 m_MaxRenderItemCount = 1000;
+	uint32 m_MaxMaterialCount = 1000;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
