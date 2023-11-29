@@ -35,13 +35,14 @@ struct UIRenderItem
 {
 	Matrix_4_4 World;
 
-	int Level;
 	int IndexCount;
 	int StartIndexLocation;
 	int BaseVertexLocation;
+	int ObjCBIndex;
+	int MaterialIndex;
 
 	UIRenderItem()
-		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0),
+		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1), MaterialIndex(-1),
 		World(Matrix_4_4::UnitMatrix())
 	{}
 };

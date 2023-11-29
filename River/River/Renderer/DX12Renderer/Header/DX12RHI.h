@@ -99,7 +99,7 @@ public:
 private:
 	void InitializeBase(const RHIInitializeParam& param);
 
-	void LoadSkinnedModel();
+	//void LoadSkinnedModel();
 
 	void BuildShapeGeometry();
 
@@ -124,8 +124,6 @@ private:
 	void CreateFence();
 
 	void CheckQualityLevel();
-
-	void AnimationMaterials(const RiverTime& time);
 
 	void UpdateShadowTransform(const RiverTime& time);
 
@@ -154,7 +152,7 @@ private:
 
 	void InitDescriptorHeaps();
 
-	void InitBaseRenderItems();
+	//void InitBaseRenderItems();
 
 	void InitFrameBuffer();
 
@@ -221,19 +219,19 @@ private:
 	HashMap<String, Unique<DX12RootSignature>> m_RootSignatures;
 	HashMap<String, Unique<DX12Texture>> m_Textures;
 	HashMap<String, std::unique_ptr<Material>> m_Materials;
-	V_Array<Unique<DX12RenderItem>> m_AllRitems;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	V_Array<DX12RenderItem*> m_RitemLayer[(int)RenderLayer::LayerCount];
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
 	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
 	HashMap<String, Unique<MeshGeometry>> m_Geometries;
 
-	DX12RenderItem* m_UIRenderItem;
+	RenderItem m_UIRenderItem;
 
 	Unique<ShadowMap> m_ShadowMap;
 	std::unique_ptr<Ssao> m_Ssao;
 	PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
 
-
+	Unique<DX12VertexBuffer> m_UIVertexBuffer;
+	Unique<DX12IndexBuffer> m_UIIndexBuffer;
 };
