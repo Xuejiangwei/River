@@ -55,17 +55,19 @@ public:
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
 
-	virtual void SetUpStaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices) override;
+	virtual void SetUpStaticMesh(StaticMesh* mesh) override;
 
 	virtual void SetUpMaterial(Material* material) override;
 
-	ID3D12Device* GetDevice() { return m_Device.Get(); }
+	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) override;
 
 	virtual Material* CreateMaterial(const char* name) override;
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
 	virtual Texture* GetTexture(const char* name) override;
+
+	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
 	//≤‚ ‘
 	void AddDescriptor(DX12Texture* texture);
@@ -223,7 +225,7 @@ private:
 	V_Array<DX12RenderItem*> m_RitemLayer[(int)RenderLayer::LayerCount];
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;
 	HashMap<String, V_Array<D3D12_INPUT_ELEMENT_DESC>> m_InputLayers;
-	HashMap<String, Unique<MeshGeometry>> m_Geometries;
+	HashMap<String, Pair<Unique<DX12VertexBuffer>, Unique<DX12IndexBuffer>>> m_MeshBuffer;
 
 	RenderItem m_UIRenderItem;
 
@@ -232,6 +234,8 @@ private:
 	PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
 
+	Unique<DX12VertexBuffer> m_RawMeshVertexBuffer;
+	Unique<DX12IndexBuffer> m_RawMeshIndexBuffer;
 	Unique<DX12VertexBuffer> m_UIVertexBuffer;
 	Unique<DX12IndexBuffer> m_UIIndexBuffer;
 };

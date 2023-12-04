@@ -39,6 +39,7 @@ enum class RenderLayer
 	LayerCount
 };
 
+class StaticMesh;
 class Texture;
 class Material;
 class FontAtlas;
@@ -64,9 +65,11 @@ public:
 
 	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) = 0;
 
-	virtual void SetUpStaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices) = 0;
+	virtual void SetUpStaticMesh(StaticMesh* mesh) = 0;
 
 	virtual void SetUpMaterial(Material* material) = 0;
+
+	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) = 0;
 
 	//virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
 

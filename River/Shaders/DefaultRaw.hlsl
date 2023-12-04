@@ -11,9 +11,9 @@
     #define NUM_POINT_LIGHTS 0
 #endif
 
-#ifndef NUM_SPOT_LIGHTS
-    #define NUM_SPOT_LIGHTS 0
-#endif
+//#ifndef NUM_SPOT_LIGHTS
+//    #define NUM_SPOT_LIGHTS 0
+//#endif
 
 // Include common HLSL code.
 #include "Common.hlsl"
@@ -21,7 +21,7 @@
 struct VertexIn
 {
 	float3 PosL    : POSITION;
-    uint4 Color : COLOR;
+    uint4 Color    : COLOR;
 	float2 TexC    : TEXCOORD;
 };
 
@@ -44,14 +44,15 @@ VertexOut VS(VertexIn vin)
     vout.TexC = vin.TexC;
 	
     vout.Color = float4(vin.Color.r / 255.f, vin.Color.g / 255.f, vin.Color.b / 255.f, vin.Color.a / 255.f); //vin.Color / 255;
-    
+
     return vout;
 }
 
 float4 PS(VertexOut pin) : SV_Target
 {
-    float4 texColor = gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC);
-    return pin.Color;//texColor/* * pin.Color*/; //pin.Color; //gTextureMaps[6].Sample(gsamLinearWrap, pin.TexC);
+    //return float4(pin.TexC,0,1);
+    return gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC);
+    //return pin.Color;//texColor/* * pin.Color*/; //pin.Color; //gTextureMaps[6].Sample(gsamLinearWrap, pin.TexC);
 
 }
 

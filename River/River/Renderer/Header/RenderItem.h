@@ -13,8 +13,8 @@ struct RenderItem
 	Matrix_4_4 TexTransform;
 
 
-	void* VertexBufferView;
-	void* IndexBufferView;
+	void* VertexBuffer;
+	void* IndexBuffer;
 	int NumFramesDirty;
 	int InstanceCount;
 	int IndexCount;
@@ -29,7 +29,7 @@ struct RenderItem
 
 	RenderItem()
 		: NumFramesDirty(3), InstanceCount(1), IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), 
-		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1), MaterialIndex(-1),
+		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1), MaterialIndex(-1), VertexBuffer(nullptr), IndexBuffer(nullptr),
 		World(Matrix_4_4::UnitMatrix()), TexTransform(Matrix_4_4::UnitMatrix())
 	{}
 };

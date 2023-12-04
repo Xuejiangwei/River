@@ -69,9 +69,11 @@ class StaticMesh;
 class Mesh
 {
 public:
-	Mesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials);
+	Mesh(const char* name, V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials);
 
 	~Mesh();
+
+	const String& GetName() const { return m_Name; }
 
 	const V_Array<Vertex>& GetVertices() const { return m_Vertices; }
 
@@ -80,6 +82,7 @@ public:
 	void SetMeshMaterials(V_Array<class Material*> materials) { m_Materials = materials; }
 
 protected:
+	String m_Name;
 	V_Array<Vertex> m_Vertices;
 	V_Array<uint32> m_Indices;
 	V_Array<class Material*> m_Materials;

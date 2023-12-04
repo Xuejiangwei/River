@@ -38,10 +38,7 @@
 
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
 
-Material* TestMaterial;
-Unique<StaticMesh> TestStaticMesh;
-Unique<DX12VertexBuffer> TestVertexBuffer;
-Unique<DX12IndexBuffer> TestIndexBuffer;
+//Material* TestMaterial;
 
 using Microsoft::WRL::ComPtr;
 
@@ -151,14 +148,15 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
 		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
-		DX12GeometryGenerator::Get()->Initialize();
-		TestStaticMesh = GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
+		BuildShapeGeometry();
 
 		m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		auto handle = m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 		m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 		CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
+
+		CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
+		CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
 
 		//LoadSkinnedModel();
 		//LoadTextures();
@@ -166,10 +164,12 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitBaseRootSignatures();
 		InitBaseShaders();
 
+		m_RawMeshVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<float>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["defaultRaw"]);
+		m_RawMeshIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
+
 		m_UIVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<float>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["ui"]);
 		m_UIIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
 
-		//BuildShapeGeometry();
 		//InitBaseMaterials();
 		//InitBaseRenderItems();
 		InitFrameBuffer();
@@ -229,8 +229,8 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 		for (size_t i = 0; i < m_RenderItems.size(); i++)
 		{
-			m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
-			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();
+			/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
+			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
 			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].World));
 			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].TexTransform));
 
@@ -240,8 +240,24 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 			objConstants.MaterialIndex = 2;
 
 			currObjectCB->CopyData(i, objConstants);
+
+			if (!m_RenderItems[i].VertexBuffer)
+			{
+				m_RenderItems[i].VertexBuffer = m_RawMeshVertexBuffer.get();
+			}
+
+			if (!m_RenderItems[i].IndexBuffer)
+			{
+				m_RenderItems[i].IndexBuffer = m_RawMeshIndexBuffer.get();
+			}
 		}
 		
+	}
+
+	if (vertices.size() > 0 && indices.size() > 0)
+	{
+		m_RawMeshVertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
+		m_RawMeshIndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
 	}
 
 	//auto& geo = m_Geometries["scene"];
@@ -290,18 +306,34 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indice
 	m_UIRenderItem.IndexCount = (int)indices.size();
 }
 
-void DX12RHI::SetUpStaticMesh(V_Array<Vertex>& vertices, V_Array<uint32>& indices)
+void DX12RHI::SetUpStaticMesh(StaticMesh* mesh)
 {
-	const uint64 vbByteSize = vertices.size() * sizeof(Vertex);
-	const uint64 ibByteSize = indices.size() * sizeof(uint32);
+	const uint64 vbByteSize = mesh->GetVertices().size() * sizeof(Vertex);
+	const uint64 ibByteSize = mesh->GetIndices().size() * sizeof(uint32);
 
-	TestVertexBuffer = CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]);
-	TestIndexBuffer = CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Int);
+	if (m_MeshBuffer.find(mesh->GetName()) == m_MeshBuffer.end())
+	{
+		m_MeshBuffer[mesh->GetName()] = {
+			CreateVertexBuffer((float*)mesh->GetVertices().data(), vbByteSize, (uint32)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
+			CreateIndexBuffer((void*)mesh->GetIndices().data(), (uint32)mesh->GetIndices().size(), ShaderDataType::Int)
+		};
+	}
 }
 
 void DX12RHI::SetUpMaterial(Material* material)
 {
-	TestMaterial = material;
+	//TestMaterial = material;
+}
+
+Pair<void*, void*> DX12RHI::GetStaticMeshBuffer(const char* name)
+{
+	auto iter = m_MeshBuffer.find(name);
+	if (iter != m_MeshBuffer.end())
+	{
+		return { iter->second.first.get(), iter->second.second.get() };
+	}
+
+	return { nullptr, nullptr };
 }
 
 Material* DX12RHI::CreateMaterial(const char* name)
@@ -460,26 +492,20 @@ void DX12RHI::Render()
 
 	{
 		m_CommandList->SetPipelineState(m_PSOs["opaqueRaw"]->GetPSO());
-		auto& geo = m_Geometries["scene"];
+		//auto& geo = m_Geometries["scene"];
 		//if (geo)
 		{
 			auto index = 0;
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
 			for (size_t i = 0; i < m_RenderItems.size(); i++)
 			{
-				if (i == 0)
-				{
-					m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)m_RenderItems[i].VertexBufferView)->GetView());
-					m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)m_RenderItems[i].IndexBufferView)->GetView());
-
-				}
-				else
-				{
-					m_CommandList->IASetVertexBuffers(0, 1, &geo->VertexBufferView());
-					m_CommandList->IASetIndexBuffer(&geo->IndexBufferView());
-				}
+				
+				m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)m_RenderItems[i].VertexBuffer)->GetView());
+				m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)m_RenderItems[i].IndexBuffer)->GetView());
 				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index++ * objCBByteSize;
@@ -494,7 +520,7 @@ void DX12RHI::Render()
 
 	{
 		m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
-		auto& geo = m_Geometries["ui"];
+		//auto& geo = m_Geometries["ui"];
 		//if (geo)
 		{
 			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -756,157 +782,160 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 
 void DX12RHI::BuildShapeGeometry()
 {
-	DX12GeometryGenerator geoGen;
-	DX12GeometryGenerator::MeshData box = geoGen.CreateBox1(1.0f, 1.0f, 1.0f, 3);
-	DX12GeometryGenerator::MeshData grid = geoGen.CreateGrid1(20.0f, 30.0f, 60, 40);
-	DX12GeometryGenerator::MeshData sphere = geoGen.CreateSphere1(0.5f, 20, 20);
-	DX12GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder1(0.5f, 0.3f, 3.0f, 20, 20);
-	DX12GeometryGenerator::MeshData quad = geoGen.CreateQuad1(0.f, 0.f, 1.0f, 1.0f, 0.0f);
-	DX12GeometryGenerator::MeshData uiQuad = geoGen.CreateBox1(5.0f, 5.0f, 1.0f, 3);
+	GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
 
-	UINT boxVertexOffset = 0;
-	UINT gridVertexOffset = (UINT)box.Vertices.size();
-	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
-	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
-	UINT quadVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
-	UINT uiQuadVertexOffset = quadVertexOffset + (UINT)quad.Vertices.size();
 
-	UINT boxIndexOffset = 0;
-	UINT gridIndexOffset = (UINT)box.Indices32.size();
-	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
-	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
-	UINT quadIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
-	UINT uiQuadIndexOffset = quadIndexOffset + (UINT)quad.Indices32.size();
+	//DX12GeometryGenerator geoGen;
+	//DX12GeometryGenerator::MeshData box = geoGen.CreateBox1(1.0f, 1.0f, 1.0f, 3);
+	//DX12GeometryGenerator::MeshData grid = geoGen.CreateGrid1(20.0f, 30.0f, 60, 40);
+	//DX12GeometryGenerator::MeshData sphere = geoGen.CreateSphere1(0.5f, 20, 20);
+	//DX12GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder1(0.5f, 0.3f, 3.0f, 20, 20);
+	//DX12GeometryGenerator::MeshData quad = geoGen.CreateQuad1(0.f, 0.f, 1.0f, 1.0f, 0.0f);
+	//DX12GeometryGenerator::MeshData uiQuad = geoGen.CreateBox1(5.0f, 5.0f, 1.0f, 3);
 
-	SubmeshGeometry boxSubmesh;
-	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
-	boxSubmesh.StartIndexLocation = boxIndexOffset;
-	boxSubmesh.BaseVertexLocation = boxVertexOffset;
+	//UINT boxVertexOffset = 0;
+	//UINT gridVertexOffset = (UINT)box.Vertices.size();
+	//UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
+	//UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
+	//UINT quadVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
+	//UINT uiQuadVertexOffset = quadVertexOffset + (UINT)quad.Vertices.size();
 
-	SubmeshGeometry gridSubmesh;
-	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
-	gridSubmesh.StartIndexLocation = gridIndexOffset;
-	gridSubmesh.BaseVertexLocation = gridVertexOffset;
+	//UINT boxIndexOffset = 0;
+	//UINT gridIndexOffset = (UINT)box.Indices32.size();
+	//UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+	//UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
+	//UINT quadIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
+	//UINT uiQuadIndexOffset = quadIndexOffset + (UINT)quad.Indices32.size();
 
-	SubmeshGeometry sphereSubmesh;
-	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
-	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
-	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
+	//SubmeshGeometry boxSubmesh;
+	//boxSubmesh.IndexCount = (UINT)box.Indices32.size();
+	//boxSubmesh.StartIndexLocation = boxIndexOffset;
+	//boxSubmesh.BaseVertexLocation = boxVertexOffset;
 
-	SubmeshGeometry cylinderSubmesh;
-	cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
-	cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
-	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
+	//SubmeshGeometry gridSubmesh;
+	//gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
+	//gridSubmesh.StartIndexLocation = gridIndexOffset;
+	//gridSubmesh.BaseVertexLocation = gridVertexOffset;
 
-	SubmeshGeometry quadSubmesh;
-	quadSubmesh.IndexCount = (UINT)quad.Indices32.size();
-	quadSubmesh.StartIndexLocation = quadIndexOffset;
-	quadSubmesh.BaseVertexLocation = quadVertexOffset;
+	//SubmeshGeometry sphereSubmesh;
+	//sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
+	//sphereSubmesh.StartIndexLocation = sphereIndexOffset;
+	//sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
 
-	SubmeshGeometry uiQuadSubmesh;
-	uiQuadSubmesh.IndexCount = (UINT)uiQuad.Indices32.size();
-	uiQuadSubmesh.StartIndexLocation = uiQuadVertexOffset;
-	uiQuadSubmesh.BaseVertexLocation = uiQuadIndexOffset;
+	//SubmeshGeometry cylinderSubmesh;
+	//cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
+	//cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
+	//cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
-	auto totalVertexCount =
-		box.Vertices.size() +
-		grid.Vertices.size() +
-		sphere.Vertices.size() +
-		cylinder.Vertices.size() +
-		quad.Vertices.size() + 
-		uiQuad.Vertices.size();
+	//SubmeshGeometry quadSubmesh;
+	//quadSubmesh.IndexCount = (UINT)quad.Indices32.size();
+	//quadSubmesh.StartIndexLocation = quadIndexOffset;
+	//quadSubmesh.BaseVertexLocation = quadVertexOffset;
 
-	std::vector<DX12Vertex> vertices(totalVertexCount);
+	//SubmeshGeometry uiQuadSubmesh;
+	//uiQuadSubmesh.IndexCount = (UINT)uiQuad.Indices32.size();
+	//uiQuadSubmesh.StartIndexLocation = uiQuadVertexOffset;
+	//uiQuadSubmesh.BaseVertexLocation = uiQuadIndexOffset;
 
-	UINT k = 0;
-	for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = box.Vertices[i].Position;
-		vertices[k].Normal = box.Vertices[i].Normal;
-		vertices[k].TexC = box.Vertices[i].TexC;
-		vertices[k].TangentU = box.Vertices[i].TangentU;
-	}
+	//auto totalVertexCount =
+	//	box.Vertices.size() +
+	//	grid.Vertices.size() +
+	//	sphere.Vertices.size() +
+	//	cylinder.Vertices.size() +
+	//	quad.Vertices.size() + 
+	//	uiQuad.Vertices.size();
 
-	for (size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = grid.Vertices[i].Position;
-		vertices[k].Normal = grid.Vertices[i].Normal;
-		vertices[k].TexC = grid.Vertices[i].TexC;
-		vertices[k].TangentU = grid.Vertices[i].TangentU;
-	}
+	//std::vector<DX12Vertex> vertices(totalVertexCount);
 
-	for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = sphere.Vertices[i].Position;
-		vertices[k].Normal = sphere.Vertices[i].Normal;
-		vertices[k].TexC = sphere.Vertices[i].TexC;
-		vertices[k].TangentU = sphere.Vertices[i].TangentU;
-	}
+	//UINT k = 0;
+	//for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = box.Vertices[i].Position;
+	//	vertices[k].Normal = box.Vertices[i].Normal;
+	//	vertices[k].TexC = box.Vertices[i].TexC;
+	//	vertices[k].TangentU = box.Vertices[i].TangentU;
+	//}
 
-	for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = cylinder.Vertices[i].Position;
-		vertices[k].Normal = cylinder.Vertices[i].Normal;
-		vertices[k].TexC = cylinder.Vertices[i].TexC;
-		vertices[k].TangentU = cylinder.Vertices[i].TangentU;
-	}
+	//for (size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = grid.Vertices[i].Position;
+	//	vertices[k].Normal = grid.Vertices[i].Normal;
+	//	vertices[k].TexC = grid.Vertices[i].TexC;
+	//	vertices[k].TangentU = grid.Vertices[i].TangentU;
+	//}
 
-	for (int i = 0; i < quad.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = quad.Vertices[i].Position;
-		vertices[k].Normal = quad.Vertices[i].Normal;
-		vertices[k].TexC = quad.Vertices[i].TexC;
-		vertices[k].TangentU = quad.Vertices[i].TangentU;
-	}
+	//for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = sphere.Vertices[i].Position;
+	//	vertices[k].Normal = sphere.Vertices[i].Normal;
+	//	vertices[k].TexC = sphere.Vertices[i].TexC;
+	//	vertices[k].TangentU = sphere.Vertices[i].TangentU;
+	//}
 
-	for (int i = 0; i < uiQuad.Vertices.size(); ++i, ++k)
-	{
-		vertices[k].Pos = uiQuad.Vertices[i].Position;
-		vertices[k].Normal = uiQuad.Vertices[i].Normal;
-		vertices[k].TexC = uiQuad.Vertices[i].TexC;
-		vertices[k].TangentU = uiQuad.Vertices[i].TangentU;
-	}
+	//for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = cylinder.Vertices[i].Position;
+	//	vertices[k].Normal = cylinder.Vertices[i].Normal;
+	//	vertices[k].TexC = cylinder.Vertices[i].TexC;
+	//	vertices[k].TangentU = cylinder.Vertices[i].TangentU;
+	//}
 
-	std::vector<std::uint16_t> indices;
-	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
-	indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
-	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
-	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
-	indices.insert(indices.end(), std::begin(quad.GetIndices16()), std::end(quad.GetIndices16()));
-	indices.insert(indices.end(), std::begin(uiQuad.GetIndices16()), std::end(uiQuad.GetIndices16()));
+	//for (int i = 0; i < quad.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = quad.Vertices[i].Position;
+	//	vertices[k].Normal = quad.Vertices[i].Normal;
+	//	vertices[k].TexC = quad.Vertices[i].TexC;
+	//	vertices[k].TangentU = quad.Vertices[i].TangentU;
+	//}
 
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(DX12Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+	//for (int i = 0; i < uiQuad.Vertices.size(); ++i, ++k)
+	//{
+	//	vertices[k].Pos = uiQuad.Vertices[i].Position;
+	//	vertices[k].Normal = uiQuad.Vertices[i].Normal;
+	//	vertices[k].TexC = uiQuad.Vertices[i].TexC;
+	//	vertices[k].TangentU = uiQuad.Vertices[i].TangentU;
+	//}
 
-	auto geo = std::make_unique<MeshGeometry>();
-	geo->m_Name = "shapeGeo";
-	geo->CopyCPUData(vertices, indices);
-	geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
-		CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+	//std::vector<std::uint16_t> indices;
+	//indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
+	//indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
+	//indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
+	//indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
+	//indices.insert(indices.end(), std::begin(quad.GetIndices16()), std::end(quad.GetIndices16()));
+	//indices.insert(indices.end(), std::begin(uiQuad.GetIndices16()), std::end(uiQuad.GetIndices16()));
 
-	geo->DrawArgs["box"] = boxSubmesh;
-	geo->DrawArgs["grid"] = gridSubmesh;
-	geo->DrawArgs["sphere"] = sphereSubmesh;
-	geo->DrawArgs["cylinder"] = cylinderSubmesh;
-	geo->DrawArgs["quad"] = quadSubmesh;
-	geo->DrawArgs["uiQuad"] = uiQuadSubmesh;
+	//const UINT vbByteSize = (UINT)vertices.size() * sizeof(DX12Vertex);
+	//const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-	m_Geometries[geo->m_Name] = std::move(geo);
+	//auto geo = std::make_unique<MeshGeometry>();
+	//geo->m_Name = "shapeGeo";
+	//geo->CopyCPUData(vertices, indices);
+	//geo->SetVertexBufferAndIndexBuffer(CreateVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
+	//	CreateIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
 
-	{
-		auto geo = MakeUnique<MeshGeometry>();
-		geo->m_Name = "ui";
-		std::vector<UIVertex> vertices(50);
-		std::vector<std::uint16_t> indices(100);
-		//geo->CopyCPUData(vertices, indices);
+	//geo->DrawArgs["box"] = boxSubmesh;
+	//geo->DrawArgs["grid"] = gridSubmesh;
+	//geo->DrawArgs["sphere"] = sphereSubmesh;
+	//geo->DrawArgs["cylinder"] = cylinderSubmesh;
+	//geo->DrawArgs["quad"] = quadSubmesh;
+	//geo->DrawArgs["uiQuad"] = uiQuadSubmesh;
 
-		const UINT vbByteSize = (UINT)vertices.size() * sizeof(UIVertex);
-		const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+	//m_Geometries[geo->m_Name] = std::move(geo);
 
-		geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
-			CreateUploadIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
-		m_Geometries["ui"] = std::move(geo);
-	}
+	//{
+	//	auto geo = MakeUnique<MeshGeometry>();
+	//	geo->m_Name = "ui";
+	//	std::vector<UIVertex> vertices(50);
+	//	std::vector<std::uint16_t> indices(100);
+	//	//geo->CopyCPUData(vertices, indices);
+
+	//	const UINT vbByteSize = (UINT)vertices.size() * sizeof(UIVertex);
+	//	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+	//	geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(UIVertex), &m_InputLayers["ui"]),
+	//		CreateUploadIndexBuffer(indices.data(), (UINT)indices.size(), ShaderDataType::Short));
+	//	m_Geometries["ui"] = std::move(geo);
+	//}
 }
 
 void DX12RHI::LoadTextures()

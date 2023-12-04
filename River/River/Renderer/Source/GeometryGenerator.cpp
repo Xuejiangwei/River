@@ -2,7 +2,7 @@
 #include "Renderer/Header/GeometryGenerator.h"
 #include "Renderer/Header/AssetManager.h"
 
-Unique<StaticMesh> GeometryGenerator::CreateBoxStaticMesh(float width, float height, float depth, uint32 numSubdivisions)
+StaticMesh* GeometryGenerator::CreateBoxStaticMesh(float width, float height, float depth, uint32 numSubdivisions)
 {
 	V_Array<Vertex> vertices;
 	V_Array<uint32> indices;
@@ -87,7 +87,7 @@ Unique<StaticMesh> GeometryGenerator::CreateBoxStaticMesh(float width, float hei
 		Subdivide(vertices, indices);
 	}
 
-	return MakeUnique<StaticMesh>(vertices, indices, V_Array<class Material*>());
+	return MeshAssetManager::Get().AddStaticMesh(MakeUnique<StaticMesh>("DefaultBox", vertices, indices, V_Array<class Material*>()));
 }
 
 void GeometryGenerator::Subdivide(V_Array<Vertex>& vertices, V_Array<uint32>& indices)

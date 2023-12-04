@@ -3,24 +3,24 @@
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
 
-MeshComponent::MeshComponent()
+StaticMeshComponent::StaticMeshComponent()
 {
 }
 
-MeshComponent::~MeshComponent()
+StaticMeshComponent::~StaticMeshComponent()
 {
 }
 
-void MeshComponent::Tick(float deltaTime)
+void StaticMeshComponent::Tick(float deltaTime)
 {
 }
 
-void MeshComponent::SetStaticMesh(StaticMesh* staticMesh)
+void StaticMeshComponent::SetStaticMesh(StaticMesh* staticMesh)
 {
 	m_StaticMesh = staticMesh;
 }
 
-void MeshComponent::SetStaticMeshMaterials(V_Array<Material*> materials)
+void StaticMeshComponent::SetStaticMeshMaterials(V_Array<Material*> materials)
 {
 	m_StaticMesh->SetMeshMaterials(materials);
 }

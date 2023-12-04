@@ -4,14 +4,16 @@
 class Material;
 class StaticMesh;
 
-class MeshComponent : public Component
+class StaticMeshComponent : public Component
 {
 public:
-	MeshComponent();
+	StaticMeshComponent();
 
-	virtual ~MeshComponent() override;
+	virtual ~StaticMeshComponent() override;
 
 	virtual void Tick(float deltaTime) override;
+
+	StaticMesh* GetStaticMesh() { return m_StaticMesh; }
 
 	void SetStaticMesh(StaticMesh* staticMesh);
 

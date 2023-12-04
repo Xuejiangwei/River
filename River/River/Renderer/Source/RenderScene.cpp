@@ -7,7 +7,6 @@
 #include "Component/Header/MeshComponent.h"
 
 #include "Renderer/Mesh/Header/StaticMesh.h"
-extern Unique<StaticMesh> TestStaticMesh;
 
 RenderScene::RenderScene()
 {
@@ -55,16 +54,20 @@ void RenderScene::OnUpdate()
 				iter++;
 			}
 			
-			auto staticMeshComp = p->m_RenderObject->GetComponent<MeshComponent>();
+			auto staticMeshComp = p->m_RenderObject->GetComponent<StaticMeshComponent>();
 			if (staticMeshComp)
 			{
 				auto obj = p->m_RenderObject;
 				renderItem.World = obj->GetTransform();
 				renderItem.BaseVertexLocation = 0;
-				renderItem.IndexCount = (int)TestStaticMesh->GetIndices().size();
+				renderItem.IndexCount = (int)staticMeshComp->GetStaticMesh()->GetIndices().size();
 				renderItem.StartIndexLocation = 0;
 				renderItem.ObjCBIndex = 1;
 				renderItem.MaterialIndex = 10;
+
+				auto buffer = RHI::Get()->GetStaticMeshBuffer(staticMeshComp->GetStaticMesh()->GetName().c_str());
+				renderItem.VertexBuffer = buffer.first;
+				renderItem.IndexBuffer = buffer.second;
 
 				RHI::Get()->AddRenderItem(&renderItem);
 

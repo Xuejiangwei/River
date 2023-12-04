@@ -2,6 +2,7 @@
 #include "RiverHead.h"
 
 class Mesh;
+class StaticMesh;
 
 class MeshAssetManager
 {
@@ -12,13 +13,18 @@ public:
 
 	void LoadAsset(const char* path);
 
-	void AddProduceMeshAsset(const char* path, Unique<Mesh>& mesh);
+	Mesh* AddProduceMeshAsset(Unique<Mesh>& mesh);
+
+	StaticMesh* AddStaticMesh(Unique<StaticMesh>& mesh);
+
+	StaticMesh* GetStaticMesh(const char* name);
 
 public:
-	static MeshAssetManager& GetAssetManager();
+	static MeshAssetManager& Get();
 
 private:
 	static Unique<MeshAssetManager> s_AssetManager;
 
 	HashMap<String, Unique<Mesh>> m_CacheMeshes;
+	HashMap<String, Unique<StaticMesh>> m_CacheStaticMeshes;
 };

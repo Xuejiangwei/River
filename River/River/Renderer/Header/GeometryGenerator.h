@@ -7,7 +7,7 @@ class StaticMesh;
 class GeometryGenerator
 {
 public:
-	static Unique<StaticMesh> CreateBoxStaticMesh(float width, float height, float depth, uint32 numSubdivisions);
+	static StaticMesh* CreateBoxStaticMesh(float width, float height, float depth, uint32 numSubdivisions);
 
 
 private:

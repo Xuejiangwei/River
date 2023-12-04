@@ -36,7 +36,7 @@ RenderProxy* Object::GetRenderProxy()
 		{
 			createProxy = true;
 		}
-		else if (GetComponent<MeshComponent>())
+		else if (GetComponent<StaticMeshComponent>())
 		{
 			createProxy = true;
 		}
