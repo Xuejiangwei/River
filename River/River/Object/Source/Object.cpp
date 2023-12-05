@@ -27,6 +27,16 @@ void Object::SetPosition(const FLOAT_3& position)
 	m_Transform.Position = position;
 }
 
+void Object::SetRotation(const FLOAT_4& rotation)
+{
+	m_Transform.Rotation = rotation;
+}
+
+void Object::SetScale(const FLOAT_3& scale)
+{
+	m_Transform.Scale = scale;
+}
+
 RenderProxy* Object::GetRenderProxy()
 {
 	if (!m_RenderProxy)

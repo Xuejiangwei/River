@@ -5,7 +5,7 @@
 #include "Object/Header/Object.h"
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/MeshComponent.h"
-
+#include "Renderer/Header/Material.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
 
 RenderScene::RenderScene()
@@ -62,14 +62,25 @@ void RenderScene::OnUpdate()
 				renderItem.BaseVertexLocation = 0;
 				renderItem.IndexCount = (int)staticMeshComp->GetStaticMesh()->GetIndices().size();
 				renderItem.StartIndexLocation = 0;
-				renderItem.ObjCBIndex = 1;
-				renderItem.MaterialIndex = 10;
+				if (staticMeshComp->GetStaticMesh()->GetMeshMaterials().size() > 0)
+				{
+					renderItem.Material = staticMeshComp->GetStaticMesh()->GetMeshMaterials()[0];
+				}
 
 				auto buffer = RHI::Get()->GetStaticMeshBuffer(staticMeshComp->GetStaticMesh()->GetName().c_str());
 				renderItem.VertexBuffer = buffer.first;
 				renderItem.IndexBuffer = buffer.second;
 
-				RHI::Get()->AddRenderItem(&renderItem);
+				if (renderItem.Material->m_Name == "MySkyMat")
+				{
+					RHI::Get()->AddRenderItem(&renderItem, "sky");
+
+				}
+				else
+				{
+					RHI::Get()->AddRenderItem(&renderItem);
+				}
+
 
 				iter++;
 			}

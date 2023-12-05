@@ -148,15 +148,19 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
 		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 
-		BuildShapeGeometry();
+		GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
+		GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
 
 		m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 		CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
 
+		CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
+		CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
 		CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
 		CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
+		CreateTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 
 		//LoadSkinnedModel();
 		//LoadTextures();
@@ -171,11 +175,10 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_UIIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
 
 		//InitBaseMaterials();
-		//InitBaseRenderItems();
 		InitFrameBuffer();
 		InitBasePSOs();
 
-		m_Ssao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
+		//m_Ssao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
 	}
 
 	ThrowIfFailed(m_CommandList->Close());
@@ -226,32 +229,37 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		{
 			return;
 		}
+
+		int index = 0;
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-		for (size_t i = 0; i < m_RenderItems.size(); i++)
+		for (auto& it : m_RenderItems)
 		{
-			/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
-			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
-			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].World));
-			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_RenderItems[i].TexTransform));
-
-			ObjectUniform objConstants;
-			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			objConstants.MaterialIndex = 2;
-
-			currObjectCB->CopyData(i, objConstants);
-
-			if (!m_RenderItems[i].VertexBuffer)
+			for (int i = 0; i < it.second.size(); i++)
 			{
-				m_RenderItems[i].VertexBuffer = m_RawMeshVertexBuffer.get();
-			}
+				/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
+				m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
+				DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.second[i].World));
+				DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.second[i].TexTransform));
 
-			if (!m_RenderItems[i].IndexBuffer)
-			{
-				m_RenderItems[i].IndexBuffer = m_RawMeshIndexBuffer.get();
+				ObjectUniform objConstants;
+				XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+				XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+				objConstants.MaterialIndex = 2;
+				it.second[i].ObjCBIndex = index++;
+
+				currObjectCB->CopyData(it.second[i].ObjCBIndex, objConstants);
+
+				if (!it.second[i].VertexBuffer)
+				{
+					it.second[i].VertexBuffer = m_RawMeshVertexBuffer.get();
+				}
+
+				if (!it.second[i].IndexBuffer)
+				{
+					it.second[i].IndexBuffer = m_RawMeshIndexBuffer.get();
+				}
 			}
 		}
-		
 	}
 
 	if (vertices.size() > 0 && indices.size() > 0)
@@ -281,6 +289,7 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 	//	geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
 	//	geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
 	//}
+
 }
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
@@ -314,7 +323,7 @@ void DX12RHI::SetUpStaticMesh(StaticMesh* mesh)
 	if (m_MeshBuffer.find(mesh->GetName()) == m_MeshBuffer.end())
 	{
 		m_MeshBuffer[mesh->GetName()] = {
-			CreateVertexBuffer((float*)mesh->GetVertices().data(), vbByteSize, (uint32)sizeof(DX12Vertex), &m_InputLayers["skinnedDefault"]),
+			CreateVertexBuffer((float*)mesh->GetVertices().data(), (uint32)vbByteSize, (uint32)sizeof(DX12Vertex), &m_InputLayers["default"]),
 			CreateIndexBuffer((void*)mesh->GetIndices().data(), (uint32)mesh->GetIndices().size(), ShaderDataType::Int)
 		};
 	}
@@ -488,38 +497,73 @@ void DX12RHI::Render()
 	m_CommandList->SetGraphicsRootDescriptorTable(4, skyTexDescriptor);*/
 
 	m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
-	DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Opaque]);
+	//DrawRenderItems(m_CommandList.Get(), m_RitemLayer[(int)RenderLayer::Opaque]);
 
 	{
-		m_CommandList->SetPipelineState(m_PSOs["opaqueRaw"]->GetPSO());
+		//m_CommandList->SetPipelineState(m_PSOs["opaqueRaw"]->GetPSO());
 		//auto& geo = m_Geometries["scene"];
 		//if (geo)
 		{
-			auto index = 0;
+			auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
-			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-			m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+			
 
-			for (size_t i = 0; i < m_RenderItems.size(); i++)
+			uint32 offset = 0;
+			CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+			for (auto it : m_RenderItems)
 			{
-				
-				m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)m_RenderItems[i].VertexBuffer)->GetView());
-				m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)m_RenderItems[i].IndexBuffer)->GetView());
-				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				auto items = it.second;
+				m_CommandList->SetPipelineState(m_PSOs[it.first]->GetPSO());
+				if (it.first == "sky")
+				{
+					texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+				}
+				for (size_t i = 0; i < items.size(); i++)
+				{
+					texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
-				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + index++ * objCBByteSize;
+					if (items[i].Material)
+					{
+						auto mat = items[i].Material;
+						if (mat->m_DiffuseTexture)
+						{
+							m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+								D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-				m_CommandList->DrawIndexedInstanced(m_RenderItems[i].IndexCount, 	1, 
-					m_RenderItems[i].StartIndexLocation, m_RenderItems[i].BaseVertexLocation, 0);
+							dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+							offset++;
+						}
+						if (mat->m_NormalTexture)
+						{
+							m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+								D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+							dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+							offset++;
+						}
+					}
+
+					m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)items[i].VertexBuffer)->GetView());
+					m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)items[i].IndexBuffer)->GetView());
+					m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+					D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + items[i].ObjCBIndex * objCBByteSize;
+
+					m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+					m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+					m_CommandList->DrawIndexedInstanced(items[i].IndexCount, 1,
+						items[i].StartIndexLocation, items[i].BaseVertexLocation, 0);
+				}
 			}
 		}
 	}
 
 	{
-		m_CommandList->SetPipelineState(m_PSOs["debug"]->GetPSO());
+		m_CommandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
 		//auto& geo = m_Geometries["ui"];
 		//if (geo)
 		{
@@ -782,9 +826,6 @@ void DX12RHI::InitializeBase(const RHIInitializeParam& param)
 
 void DX12RHI::BuildShapeGeometry()
 {
-	GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
-
-
 	//DX12GeometryGenerator geoGen;
 	//DX12GeometryGenerator::MeshData box = geoGen.CreateBox1(1.0f, 1.0f, 1.0f, 3);
 	//DX12GeometryGenerator::MeshData grid = geoGen.CreateGrid1(20.0f, 30.0f, 60, 40);
@@ -1014,14 +1055,14 @@ void DX12RHI::InitBaseShaders()
 		NULL, NULL
 	};
 
-	m_Shaders["standardVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, nullptr, "VS", "vs_5_1");
-	m_Shaders["skinnedVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, skinnedDefines, "VS", "vs_5_1");
-	m_Shaders["opaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, nullptr, "PS", "ps_5_1");
+	m_Shaders["standardVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, nullptr, "VS", "vs_5_1");
+	//m_Shaders["skinnedVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, skinnedDefines, "VS", "vs_5_1");
+	m_Shaders["opaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, nullptr, "PS", "ps_5_1");
 
 	m_Shaders["rawVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "VS", "vs_5_1");
 	m_Shaders["rawPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "PS", "ps_5_1");
 
-	m_Shaders["shadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "VS", "vs_5_1");
+	/*m_Shaders["shadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "VS", "vs_5_1");
 	m_Shaders["skinnedShadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, skinnedDefines, "VS", "vs_5_1");
 	m_Shaders["shadowOpaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "PS", "ps_5_1");
 	m_Shaders["shadowAlphaTestedPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, alphaTestDefines, "PS", "ps_5_1");
@@ -1040,7 +1081,7 @@ void DX12RHI::InitBaseShaders()
 	m_Shaders["ssaoBlurPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_7, nullptr, "PS", "ps_5_1"); 
 
 	m_Shaders["skyVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "VS", "vs_5_1"); 
-	m_Shaders["skyPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "PS", "ps_5_1"); 
+	m_Shaders["skyPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "PS", "ps_5_1"); */
 
 	m_Shaders["uiVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "VS", "vs_5_1");
 	m_Shaders["uiPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "PS", "ps_5_1");
@@ -1107,66 +1148,66 @@ void DX12RHI::InitBaseRootSignatures()
 		m_RootSignatures["default"] = MakeUnique<DX12RootSignature>(m_Device.Get(), rootSigDesc);
 	}
 
-	{
-		CD3DX12_DESCRIPTOR_RANGE texTable0;
-		texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 0);
+	//{
+	//	CD3DX12_DESCRIPTOR_RANGE texTable0;
+	//	texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 0);
 
-		CD3DX12_DESCRIPTOR_RANGE texTable1;
-		texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0);
+	//	CD3DX12_DESCRIPTOR_RANGE texTable1;
+	//	texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0);
 
-		// Root parameter can be a table, root descriptor or root constants.
-		CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	//	// Root parameter can be a table, root descriptor or root constants.
+	//	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-		// Perfomance TIP: Order from most frequent to least frequent.
-		slotRootParameter[0].InitAsConstantBufferView(0);
-		slotRootParameter[1].InitAsConstants(1, 1);
-		slotRootParameter[2].InitAsDescriptorTable(1, &texTable0, D3D12_SHADER_VISIBILITY_PIXEL);
-		slotRootParameter[3].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
+	//	// Perfomance TIP: Order from most frequent to least frequent.
+	//	slotRootParameter[0].InitAsConstantBufferView(0);
+	//	slotRootParameter[1].InitAsConstants(1, 1);
+	//	slotRootParameter[2].InitAsDescriptorTable(1, &texTable0, D3D12_SHADER_VISIBILITY_PIXEL);
+	//	slotRootParameter[3].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
-		const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-			0, // shaderRegister
-			D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+	//	const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
+	//		0, // shaderRegister
+	//		D3D12_FILTER_MIN_MAG_MIP_POINT, // filter
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
-		const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-			1, // shaderRegister
-			D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-			D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+	//	const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
+	//		1, // shaderRegister
+	//		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+	//		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
-		const CD3DX12_STATIC_SAMPLER_DESC depthMapSam(
-			2, // shaderRegister
-			D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-			D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
-			D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
-			D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
-			0.0f,
-			0,
-			D3D12_COMPARISON_FUNC_LESS_EQUAL,
-			D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE);
+	//	const CD3DX12_STATIC_SAMPLER_DESC depthMapSam(
+	//		2, // shaderRegister
+	//		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+	//		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressU
+	//		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressV
+	//		D3D12_TEXTURE_ADDRESS_MODE_BORDER,  // addressW
+	//		0.0f,
+	//		0,
+	//		D3D12_COMPARISON_FUNC_LESS_EQUAL,
+	//		D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE);
 
-		const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-			3, // shaderRegister
-			D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-			D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-			D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-			D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+	//	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+	//		3, // shaderRegister
+	//		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+	//		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+	//		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+	//		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
 
-		std::array<CD3DX12_STATIC_SAMPLER_DESC, 4> staticSamplers =
-		{
-			pointClamp, linearClamp, depthMapSam, linearWrap
-		};
+	//	std::array<CD3DX12_STATIC_SAMPLER_DESC, 4> staticSamplers =
+	//	{
+	//		pointClamp, linearClamp, depthMapSam, linearWrap
+	//	};
 
-		// A root signature is an array of root parameters.
-		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
-			(UINT)staticSamplers.size(), staticSamplers.data(),
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	//	// A root signature is an array of root parameters.
+	//	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
+	//		(UINT)staticSamplers.size(), staticSamplers.data(),
+	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-		m_RootSignatures["ssao"] = MakeUnique<DX12RootSignature>(m_Device.Get(), rootSigDesc);
-	}
+	//	m_RootSignatures["ssao"] = MakeUnique<DX12RootSignature>(m_Device.Get(), rootSigDesc);
+	//}
 
 	{
 		CD3DX12_DESCRIPTOR_RANGE table;
@@ -1222,69 +1263,70 @@ void DX12RHI::InitBasePSOs()
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueRawPsoDesc = opaquePsoDesc;
 	m_PSOs["opaqueRaw"] = CreatePSO(opaqueRawPsoDesc, &m_InputLayers["defaultRaw"], m_Shaders["rawVS"].get(), m_Shaders["rawPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedOpaquePsoDesc = opaquePsoDesc;
-	m_PSOs["skinnedOpaque"] = CreatePSO(skinnedOpaquePsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedVS"].get(), m_Shaders["opaquePS"].get());
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedOpaquePsoDesc = opaquePsoDesc;
+	//m_PSOs["skinnedOpaque"] = CreatePSO(skinnedOpaquePsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedVS"].get(), m_Shaders["opaquePS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = opaquePsoDesc;
-	smapPsoDesc.RasterizerState.DepthBias = 100000;
-	smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
-	smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
-	smapPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC smapPsoDesc = opaquePsoDesc;
+	//smapPsoDesc.RasterizerState.DepthBias = 100000;
+	//smapPsoDesc.RasterizerState.DepthBiasClamp = 0.0f;
+	//smapPsoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
+	//smapPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
 
-	// Shadow map pass does not have a render target.
-	smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
-	smapPsoDesc.NumRenderTargets = 0;
-	m_PSOs["shadow_opaque"] = CreatePSO(smapPsoDesc, nullptr, m_Shaders["shadowVS"].get(), m_Shaders["shadowOpaquePS"].get());
+	//// Shadow map pass does not have a render target.
+	//smapPsoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	//smapPsoDesc.NumRenderTargets = 0;
+	//m_PSOs["shadow_opaque"] = CreatePSO(smapPsoDesc, nullptr, m_Shaders["shadowVS"].get(), m_Shaders["shadowOpaquePS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedSmapPsoDesc = smapPsoDesc;
-	m_PSOs["skinnedShadow_opaque"] = CreatePSO(skinnedSmapPsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedShadowVS"].get(), m_Shaders["shadowOpaquePS"].get());
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedSmapPsoDesc = smapPsoDesc;
+	//m_PSOs["skinnedShadow_opaque"] = CreatePSO(skinnedSmapPsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedShadowVS"].get(), m_Shaders["shadowOpaquePS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
-	debugPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
-	
-	{
-		D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
-		transparencyBlendDesc.BlendEnable = true;
-		transparencyBlendDesc.LogicOpEnable = false;
-		transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
-		transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
-		transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
-		transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
-		transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-		for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-			debugPsoDesc.BlendState.RenderTarget[i] = transparencyBlendDesc;
-	}
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC debugPsoDesc = opaquePsoDesc;
+	//debugPsoDesc.pRootSignature = m_RootSignatures["default"]->GetRootSignature();
+	//
+	//{
+	//	D3D12_RENDER_TARGET_BLEND_DESC transparencyBlendDesc;
+	//	transparencyBlendDesc.BlendEnable = true;
+	//	transparencyBlendDesc.LogicOpEnable = false;
+	//	transparencyBlendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	//	transparencyBlendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	//	transparencyBlendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+	//	transparencyBlendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+	//	transparencyBlendDesc.DestBlendAlpha = D3D12_BLEND_ZERO;
+	//	transparencyBlendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	//	transparencyBlendDesc.LogicOp = D3D12_LOGIC_OP_NOOP;
+	//	transparencyBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	//	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+	//		debugPsoDesc.BlendState.RenderTarget[i] = transparencyBlendDesc;
+	//}
 
-	m_PSOs["debug"] = CreatePSO(debugPsoDesc, &m_InputLayers["ui"], m_Shaders["uiVS"].get(), m_Shaders["uiPS"].get());
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC uiPsoDesc = opaquePsoDesc;
+	m_PSOs["ui"] = CreatePSO(uiPsoDesc, &m_InputLayers["ui"], m_Shaders["uiVS"].get(), m_Shaders["uiPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC drawNormalsPsoDesc = opaquePsoDesc;
-	drawNormalsPsoDesc.RTVFormats[0] = Ssao::NormalMapFormat;
-	drawNormalsPsoDesc.SampleDesc.Count = 1;
-	drawNormalsPsoDesc.SampleDesc.Quality = 0;
-	drawNormalsPsoDesc.DSVFormat = m_DepthStencilFormat;
-	m_PSOs["drawNormals"] = CreatePSO(drawNormalsPsoDesc, nullptr, m_Shaders["drawNormalsVS"].get(), m_Shaders["drawNormalsPS"].get());
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC drawNormalsPsoDesc = opaquePsoDesc;
+	//drawNormalsPsoDesc.RTVFormats[0] = Ssao::NormalMapFormat;
+	//drawNormalsPsoDesc.SampleDesc.Count = 1;
+	//drawNormalsPsoDesc.SampleDesc.Quality = 0;
+	//drawNormalsPsoDesc.DSVFormat = m_DepthStencilFormat;
+	//m_PSOs["drawNormals"] = CreatePSO(drawNormalsPsoDesc, nullptr, m_Shaders["drawNormalsVS"].get(), m_Shaders["drawNormalsPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedDrawNormalsPsoDesc = drawNormalsPsoDesc;
-	m_PSOs["skinnedDrawNormals"] = CreatePSO(skinnedDrawNormalsPsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedDrawNormalsVS"].get(), m_Shaders["drawNormalsPS"].get());
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC skinnedDrawNormalsPsoDesc = drawNormalsPsoDesc;
+	//m_PSOs["skinnedDrawNormals"] = CreatePSO(skinnedDrawNormalsPsoDesc, &m_InputLayers["skinnedDefault"], m_Shaders["skinnedDrawNormalsVS"].get(), m_Shaders["drawNormalsPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoPsoDesc = opaquePsoDesc;
-	ssaoPsoDesc.InputLayout = { nullptr, 0 };
-	ssaoPsoDesc.pRootSignature = m_RootSignatures["ssao"]->GetRootSignature();
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoPsoDesc = opaquePsoDesc;
+	//ssaoPsoDesc.InputLayout = { nullptr, 0 };
+	//ssaoPsoDesc.pRootSignature = m_RootSignatures["ssao"]->GetRootSignature();
 
-	// SSAO effect does not need the depth buffer.
-	ssaoPsoDesc.DepthStencilState.DepthEnable = false;
-	ssaoPsoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	ssaoPsoDesc.RTVFormats[0] = Ssao::AmbientMapFormat;
-	ssaoPsoDesc.SampleDesc.Count = 1;
-	ssaoPsoDesc.SampleDesc.Quality = 0;
-	ssaoPsoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
-	m_PSOs["ssao"] = CreatePSO(ssaoPsoDesc, nullptr, m_Shaders["ssaoVS"].get(), m_Shaders["ssaoPS"].get());
+	//// SSAO effect does not need the depth buffer.
+	//ssaoPsoDesc.DepthStencilState.DepthEnable = false;
+	//ssaoPsoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	//ssaoPsoDesc.RTVFormats[0] = Ssao::AmbientMapFormat;
+	//ssaoPsoDesc.SampleDesc.Count = 1;
+	//ssaoPsoDesc.SampleDesc.Quality = 0;
+	//ssaoPsoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+	//m_PSOs["ssao"] = CreatePSO(ssaoPsoDesc, nullptr, m_Shaders["ssaoVS"].get(), m_Shaders["ssaoPS"].get());
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoBlurPsoDesc = ssaoPsoDesc;
-	m_PSOs["ssaoBlur"] = CreatePSO(ssaoBlurPsoDesc, nullptr, m_Shaders["ssaoBlurVS"].get(), m_Shaders["ssaoBlurPS"].get());
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC ssaoBlurPsoDesc = ssaoPsoDesc;
+	//m_PSOs["ssaoBlur"] = CreatePSO(ssaoBlurPsoDesc, nullptr, m_Shaders["ssaoBlurVS"].get(), m_Shaders["ssaoBlurPS"].get());
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC skyPsoDesc = opaquePsoDesc;
 
@@ -1604,24 +1646,24 @@ void DX12RHI::UpdateObjectCBs()
 {
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 
-	for (auto& e : m_RenderItems)
-	{
-		if (e.NumFramesDirty > 0)
-		{
-			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&e.World));
-			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&e.TexTransform));
+	//for (auto& e : m_RenderItems)
+	//{
+	//	if (e.NumFramesDirty > 0)
+	//	{
+	//		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&e.World));
+	//		DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&e.TexTransform));
 
-			ObjectUniform objConstants;
-			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			/*objConstants.MaterialIndex = e.Mat->MatCBIndex;
+	//		ObjectUniform objConstants;
+	//		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+	//		XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+	//		/*objConstants.MaterialIndex = e.Mat->MatCBIndex;
 
-			currObjectCB->CopyData(e->ObjCBIndex, objConstants);*/
+	//		currObjectCB->CopyData(e->ObjCBIndex, objConstants);*/
 
-			// Next FrameResource need to be updated too.
-			e.NumFramesDirty--;
-		}
-	}
+	//		// Next FrameResource need to be updated too.
+	//		e.NumFramesDirty--;
+	//	}
+	//}
 }
 
 void DX12RHI::UpdateSkinnedCBs(const RiverTime& time)
@@ -1928,193 +1970,6 @@ void DX12RHI::InitDescriptorHeaps()
 	}*/
 
 }
-
-//void DX12RHI::InitBaseRenderItems()
-//{
-//	auto skyRitem = std::make_unique<DX12RenderItem>();
-//	XMStoreFloat4x4((XMFLOAT4X4*)(&skyRitem->World), XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
-//	skyRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//	skyRitem->ObjCBIndex = 0;
-//	skyRitem->Mat = m_Materials["sky"].get();
-//	skyRitem->Geo = m_Geometries["shapeGeo"].get();
-//	//skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//	skyRitem->IndexCount = skyRitem->Geo->DrawArgs["sphere"].IndexCount;
-//	skyRitem->StartIndexLocation = skyRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
-//	skyRitem->BaseVertexLocation = skyRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
-//
-//	m_RitemLayer[(int)RenderLayer::Sky].push_back(skyRitem.get());
-//	m_AllRitems.push_back(std::move(skyRitem));
-//
-//	auto quadRitem = std::make_unique<DX12RenderItem>();
-//	quadRitem->World = Matrix_4_4::UnitMatrix();// Identity4x4();
-//	quadRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//	quadRitem->ObjCBIndex = 1;
-//	quadRitem->Mat = m_Materials["bricks0"].get();
-//	quadRitem->Geo = m_Geometries["shapeGeo"].get();
-//	//quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//	quadRitem->IndexCount = quadRitem->Geo->DrawArgs["quad"].IndexCount;
-//	quadRitem->StartIndexLocation = quadRitem->Geo->DrawArgs["quad"].StartIndexLocation;
-//	quadRitem->BaseVertexLocation = quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
-//
-//	//mRitemLayer[(int)RenderLayer::Debug].push_back(quadRitem.get());
-//	m_AllRitems.push_back(std::move(quadRitem));
-//
-//	auto boxRitem = std::make_unique<DX12RenderItem>();
-//	XMStoreFloat4x4((XMFLOAT4X4*)(&boxRitem->World), XMMatrixScaling(2.0f, 1.0f, 2.0f) * XMMatrixTranslation(1.0f, 0.5f, 1.0f));
-//	XMStoreFloat4x4((XMFLOAT4X4*)(&boxRitem->TexTransform), XMMatrixScaling(1.0f, 1.0f, 1.0f));
-//	boxRitem->ObjCBIndex = 2;
-//	boxRitem->Mat = m_Materials["bricks0"].get();
-//	boxRitem->Geo = m_Geometries["shapeGeo"].get();
-//	//boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//	boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
-//	boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
-//	boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
-//
-//	m_RitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
-//	m_AllRitems.push_back(std::move(boxRitem));
-//
-//	auto gridRitem = std::make_unique<DX12RenderItem>();
-//	gridRitem->World = Matrix_4_4::UnitMatrix();//Identity4x4();
-//	XMStoreFloat4x4((XMFLOAT4X4*)(&gridRitem->TexTransform), XMMatrixScaling(8.0f, 8.0f, 1.0f));
-//	gridRitem->ObjCBIndex = 3;
-//	gridRitem->Mat = m_Materials["tile0"].get();
-//	gridRitem->Geo = m_Geometries["shapeGeo"].get();
-//	//gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//	gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
-//	gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-//	gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-//
-//	m_RitemLayer[(int)RenderLayer::Opaque].push_back(gridRitem.get());
-//	m_AllRitems.push_back(std::move(gridRitem));
-//
-//	XMMATRIX brickTexTransform = XMMatrixScaling(1.5f, 2.0f, 1.0f);
-//	UINT objCBIndex = 4;
-//	for (int i = 0; i < 5; ++i)
-//	{
-//		auto leftCylRitem = std::make_unique<DX12RenderItem>();
-//		auto rightCylRitem = std::make_unique<DX12RenderItem>();
-//		auto leftSphereRitem = std::make_unique<DX12RenderItem>();
-//		auto rightSphereRitem = std::make_unique<DX12RenderItem>();
-//
-//		XMMATRIX leftCylWorld = XMMatrixTranslation(-5.0f, 1.5f, -10.0f + i * 5.0f);
-//		XMMATRIX rightCylWorld = XMMatrixTranslation(+5.0f, 1.5f, -10.0f + i * 5.0f);
-//
-//		XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0f, 3.5f, -10.0f + i * 5.0f);
-//		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.0f, 3.5f, -10.0f + i * 5.0f);
-//
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&leftCylRitem->World), rightCylWorld);
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&leftCylRitem->TexTransform), brickTexTransform);
-//		leftCylRitem->ObjCBIndex = objCBIndex++;
-//		leftCylRitem->Mat = m_Materials["bricks0"].get();
-//		leftCylRitem->Geo = m_Geometries["shapeGeo"].get();
-//		//leftCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		leftCylRitem->IndexCount = leftCylRitem->Geo->DrawArgs["cylinder"].IndexCount;
-//		leftCylRitem->StartIndexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
-//		leftCylRitem->BaseVertexLocation = leftCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
-//
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&rightCylRitem->World), leftCylWorld);
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&rightCylRitem->TexTransform), brickTexTransform);
-//		rightCylRitem->ObjCBIndex = objCBIndex++;
-//		rightCylRitem->Mat = m_Materials["bricks0"].get();
-//		rightCylRitem->Geo = m_Geometries["shapeGeo"].get();
-//		//rightCylRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		rightCylRitem->IndexCount = rightCylRitem->Geo->DrawArgs["cylinder"].IndexCount;
-//		rightCylRitem->StartIndexLocation = rightCylRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
-//		rightCylRitem->BaseVertexLocation = rightCylRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
-//
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&leftSphereRitem->World), leftSphereWorld);
-//		leftSphereRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//		leftSphereRitem->ObjCBIndex = objCBIndex++;
-//		leftSphereRitem->Mat = m_Materials["mirror0"].get();
-//		leftSphereRitem->Geo = m_Geometries["shapeGeo"].get();
-//		//leftSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		leftSphereRitem->IndexCount = leftSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
-//		leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
-//		leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
-//
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&rightSphereRitem->World), rightSphereWorld);
-//		rightSphereRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//		rightSphereRitem->ObjCBIndex = objCBIndex++;
-//		rightSphereRitem->Mat = m_Materials["mirror0"].get();
-//		rightSphereRitem->Geo = m_Geometries["shapeGeo"].get();
-//		//rightSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		rightSphereRitem->IndexCount = rightSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
-//		rightSphereRitem->StartIndexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
-//		rightSphereRitem->BaseVertexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
-//
-//		m_RitemLayer[(int)RenderLayer::Opaque].push_back(leftCylRitem.get());
-//		m_RitemLayer[(int)RenderLayer::Opaque].push_back(rightCylRitem.get());
-//		m_RitemLayer[(int)RenderLayer::Opaque].push_back(leftSphereRitem.get());
-//		m_RitemLayer[(int)RenderLayer::Opaque].push_back(rightSphereRitem.get());
-//
-//		m_AllRitems.push_back(std::move(leftCylRitem));
-//		m_AllRitems.push_back(std::move(rightCylRitem));
-//		m_AllRitems.push_back(std::move(leftSphereRitem));
-//		m_AllRitems.push_back(std::move(rightSphereRitem));
-//	}
-//
-//	for (UINT i = 0; i < mSkinnedMats.size(); ++i)
-//	{
-//		std::string submeshName = "sm_" + std::to_string(i);
-//
-//		auto ritem = std::make_unique<DX12RenderItem>();
-//
-//		// Reflect to change coordinate system from the RHS the data was exported out as.
-//		XMMATRIX modelScale = XMMatrixScaling(0.05f, 0.05f, -0.05f);
-//		XMMATRIX modelRot = XMMatrixRotationY(PI);
-//		XMMATRIX modelOffset = XMMatrixTranslation(0.0f, 0.0f, -5.0f);
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&ritem->World), modelScale * modelRot * modelOffset);
-//
-//		ritem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//		ritem->ObjCBIndex = objCBIndex++;
-//		ritem->Mat = m_Materials[mSkinnedMats[i].m_Name].get();
-//		ritem->Geo = m_Geometries["soldier"].get();
-//		//ritem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		ritem->IndexCount = ritem->Geo->DrawArgs[submeshName].IndexCount;
-//		ritem->StartIndexLocation = ritem->Geo->DrawArgs[submeshName].StartIndexLocation;
-//		ritem->BaseVertexLocation = ritem->Geo->DrawArgs[submeshName].BaseVertexLocation;
-//
-//		// All render items for this solider.m3d instance share
-//		// the same skinned model instance.
-//		ritem->SkinnedCBIndex = 0;
-//		ritem->SkinnedModelInst = mSkinnedModelInst.get();
-//
-//		m_RitemLayer[(int)RenderLayer::SkinnedOpaque].push_back(ritem.get());
-//		m_AllRitems.push_back(std::move(ritem));
-//	}
-//
-//	{
-//		/*auto uiQuadRitem = std::make_unique<DX12RenderItem>();
-//		XMStoreFloat4x4(&uiQuadRitem->World, XMMatrixScaling(5.0f, 5.0f, 2.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f));
-//		XMStoreFloat4x4(&uiQuadRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
-//		uiQuadRitem->ObjCBIndex = objCBIndex++;
-//		uiQuadRitem->Mat = mMaterials["mirror0"].get();
-//		uiQuadRitem->Geo = mGeometries["shapeGeo"].get();
-//		uiQuadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		uiQuadRitem->IndexCount = uiQuadRitem->Geo->DrawArgs["box"].IndexCount;
-//		uiQuadRitem->StartIndexLocation = uiQuadRitem->Geo->DrawArgs["box"].StartIndexLocation;
-//		uiQuadRitem->BaseVertexLocation = uiQuadRitem->Geo->DrawArgs["box"].BaseVertexLocation;
-//
-//		mRitemLayer[(int)RenderLayer::Opaque].push_back(uiQuadRitem.get());
-//		mAllRitems.push_back(std::move(uiQuadRitem));*/
-//
-//		auto quadRitem = std::make_unique<DX12RenderItem>();
-//		//XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(2.f, 2.f, 1.0f)* XMMatrixTranslation(-0.0f, 0.0f, 0.0f));
-//		XMStoreFloat4x4((XMFLOAT4X4*)(&quadRitem->World), XMMatrixScaling(2.f, 2.f, 1.0f)* XMMatrixTranslation(-1.0f, 1.0f, 0.0f));
-//		quadRitem->TexTransform = Matrix_4_4::UnitMatrix();//Identity4x4();
-//		quadRitem->ObjCBIndex = objCBIndex++;
-//		quadRitem->Mat = m_Materials["bricks0"].get();
-//		quadRitem->Geo = m_Geometries["ui"].get();
-//		//quadRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-//		quadRitem->IndexCount = quadRitem->Geo->m_IndexBuffer->GetIndexCount();//quadRitem->Geo->DrawArgs["ui"].IndexCount;
-//		quadRitem->StartIndexLocation = 0;//quadRitem->Geo->DrawArgs["ui"].StartIndexLocation;
-//		quadRitem->BaseVertexLocation = 0;//quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
-//
-//		m_UIRenderItem = quadRitem.get();
-//		m_RitemLayer[(int)RenderLayer::Debug].push_back(quadRitem.get());
-//		m_AllRitems.push_back(std::move(quadRitem));
-//	}
-//}
 
 void DX12RHI::InitFrameBuffer()
 {

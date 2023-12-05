@@ -62,9 +62,16 @@ void RHI::ClearUIRenderItem()
 	m_UIRenderItems.clear();
 }
 
-void RHI::AddRenderItem(RenderItem* renderItem)
+void RHI::AddRenderItem(RenderItem* renderItem, const char* renderPso)
 {
-	m_RenderItems.push_back(*renderItem);
+	if (renderPso)
+	{
+		m_RenderItems[renderPso].push_back(*renderItem);
+	}
+	else
+	{
+		m_RenderItems["opaque"].push_back(*renderItem);
+	}
 }
 
 void RHI::AddUIRenderItem(UIRenderItem& renderItem)

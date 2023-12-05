@@ -15,12 +15,13 @@ struct RenderItem
 
 	void* VertexBuffer;
 	void* IndexBuffer;
+	class Material* Material;
+	const char* Pso;
 	int NumFramesDirty;
 	int InstanceCount;
 	int IndexCount;
 	int StartIndexLocation;
 	int BaseVertexLocation;
-	int MaterialIndex;
 	
 	PrimitiveType PriType;
 
@@ -29,7 +30,8 @@ struct RenderItem
 
 	RenderItem()
 		: NumFramesDirty(3), InstanceCount(1), IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), 
-		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1), MaterialIndex(-1), VertexBuffer(nullptr), IndexBuffer(nullptr),
+		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1), Pso(nullptr),
+		Material(nullptr), VertexBuffer(nullptr), IndexBuffer(nullptr),
 		World(Matrix_4_4::UnitMatrix()), TexTransform(Matrix_4_4::UnitMatrix())
 	{}
 };

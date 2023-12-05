@@ -59,8 +59,8 @@ struct Vertex
 
 	FLOAT_3 Pos;
 	FLOAT_3 Normal;
-	FLOAT_3 TangentU;
 	FLOAT_2 TexC;
+	FLOAT_3 TangentU;
 
 };
 
@@ -78,6 +78,8 @@ public:
 	const V_Array<Vertex>& GetVertices() const { return m_Vertices; }
 
 	const V_Array<uint32>& GetIndices() const { return m_Indices; }
+
+	const V_Array<class Material*>& GetMeshMaterials() const { return m_Materials; }
 
 	void SetMeshMaterials(V_Array<class Material*> materials) { m_Materials = materials; }
 

@@ -15,6 +15,11 @@ public:
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_Heap->GetCPUDescriptorHandleForHeapStart());
 	}
 
+	CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuHeapStart()
+	{
+		return CD3DX12_GPU_DESCRIPTOR_HANDLE(m_Heap->GetGPUDescriptorHandleForHeapStart());
+	}
+
 private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_Heap;
 };

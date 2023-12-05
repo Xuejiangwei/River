@@ -154,8 +154,6 @@ private:
 
 	void InitDescriptorHeaps();
 
-	//void InitBaseRenderItems();
-
 	void InitFrameBuffer();
 
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& items);

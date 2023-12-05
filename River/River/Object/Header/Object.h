@@ -21,6 +21,10 @@ public:
 
 	void SetPosition(const FLOAT_3& position);
 
+	void SetRotation(const FLOAT_4& rotation);
+
+	void SetScale(const FLOAT_3& scale);
+
 	RenderProxy* GetRenderProxy();
 
 public:

@@ -27,25 +27,48 @@ void RiverEditorApplication::Initialize()
 
 	//Éú³ÉObject
 	auto obj = ProduceObject();
-	obj->SetPosition({ 1.0f, 3.0f, 1.0f });
+	/*obj->SetPosition({1.0f, 3.0f, 1.0f});
 	obj->AddComponent(MakeShare<RenderMeshComponent>());
 	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
 
-	/*obj = ProduceObject();
+	/*obj = ProduceObject();*/
 	obj->SetPosition({ 1.0f, 1.0f, 3.0f });
 	obj->AddComponent(MakeShare<StaticMeshComponent>());
 	obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultBox"));
 
-	auto mat = Material::CreateMaterial("MyMat");
-	auto texture = RHI::Get()->GetTexture("tileDiffuseMap");
-	auto normalTexture = RHI::Get()->GetTexture("tileNormalMap");
-	mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
-	obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });*/
+	{
+		auto mat = Material::CreateMaterial("MyMat");
+		auto texture = RHI::Get()->GetTexture("tileDiffuseMap");
+		auto normalTexture = RHI::Get()->GetTexture("tileNormalMap");
+		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+	}
+	
+	obj = ProduceObject();
+	obj->SetPosition({ -1.0f, 1.0f, 3.0f });
+	obj->AddComponent(MakeShare<StaticMeshComponent>());
+	obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultBox"));
 
-	/*obj = ProduceObject();
-	obj->SetPosition({ 1.0f, 3.0f, 3.0f });
-	obj->AddComponent(MakeShare<RenderMeshComponent>());
-	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawBox_24_Points());*/
+	{
+		auto mat = Material::CreateMaterial("MyMat1");
+		auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
+		auto normalTexture = RHI::Get()->GetTexture("bricksNormalMap");
+		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+	}
+
+	obj = ProduceObject();
+	obj->SetPosition({ 0.0f, 0.0f, 0.0f });
+	obj->SetScale({ 1000.f,1000.f,1000.f });
+	obj->AddComponent(MakeShare<StaticMeshComponent>());
+	obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultSphere"));
+
+	{
+		auto mat = Material::CreateMaterial("MySkyMat");
+		auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
+		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, texture);
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+	}
 }
 
 Application* CreateApplication()

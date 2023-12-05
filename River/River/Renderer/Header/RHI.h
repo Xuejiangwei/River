@@ -89,7 +89,7 @@ public:
 
 	void ClearUIRenderItem();
 
-	void AddRenderItem(RenderItem* renderItem);
+	void AddRenderItem(RenderItem* renderItem, const char* renderPso = nullptr);
 	
 	void AddUIRenderItem(UIRenderItem& renderItem);
 
@@ -114,7 +114,7 @@ protected:
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
-	V_Array<RenderItem> m_RenderItems;
+	HashMap<String, V_Array<RenderItem>> m_RenderItems;
 	V_Array<UIRenderItem> m_UIRenderItems;
 
 private:

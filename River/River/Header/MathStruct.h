@@ -109,6 +109,8 @@ namespace River
 			vResult.z = z * fLength;
 			return vResult;
 		}
+
+		inline Float3& operator=(const struct Float4& other) noexcept;
 	};
 
 	inline Float3 operator*(float other, Float3 v) noexcept
@@ -153,6 +155,15 @@ namespace River
 	inline Float4 operator*(float other, Float4 v) noexcept
 	{
 		return Float4(v.x * other, v.y * other, v.z * other, v.w * other);
+	}
+
+	inline Float3& Float3::operator=(const struct Float4& other) noexcept
+	{
+		x = other.x;
+		y = other.y;
+		z = other.z;
+
+		return *this;
 	}
 
 	//Matrix

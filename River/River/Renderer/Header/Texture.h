@@ -11,6 +11,8 @@ public:
 
 	virtual void SetTextureId(uint32 textureId);
 
+	uint64 GetTextureHandle() const { return m_DescriptorHandle; }
+
 	uint32 GetTextureId() const { return m_RendererId; }
 
 	static Texture* CreateTexture(const char* name, const char* filePath);
