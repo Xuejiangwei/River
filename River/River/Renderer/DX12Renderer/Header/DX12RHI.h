@@ -103,9 +103,9 @@ private:
 
 	//void LoadSkinnedModel();
 
-	void BuildShapeGeometry();
+	void InitBaseGeometry();
 
-	void LoadTextures();
+	void InitBaseTexture();
 
 	void InitBaseMaterials();
 

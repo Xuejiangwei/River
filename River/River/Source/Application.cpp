@@ -59,8 +59,8 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		m_RenderScene->OnUpdate();
 		RHI::Get()->OnUpdate(m_Time);
+		m_RenderScene->OnUpdate();
 
 		for (auto& layer : m_Layers)
 		{
