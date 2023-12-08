@@ -25,7 +25,7 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     renderItem.IndexCount = 6;
     renderItem.StartIndexLocation = (int)indices.size();
 
-    auto [width, height] = Application::Get().GetWindow()->GetWindowSize();
+    auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
     FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
     float ndcStartX = startPos.x / width;
     float ndcStartY = -startPos.y / height;

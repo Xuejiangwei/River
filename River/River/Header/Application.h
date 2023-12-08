@@ -33,7 +33,7 @@ public:
 
 	RenderScene* GetRenderScene() const { return m_RenderScene.get(); }
 
-	static Application& Get() { return *s_Instance; }
+	static Application* Get() { return s_Instance; }
 
 private:
 	bool m_Running;

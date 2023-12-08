@@ -23,7 +23,7 @@ RiverEditorApplication::~RiverEditorApplication()
 
 void RiverEditorApplication::Initialize()
 {
-	Application::Get().GetGameInstance()->SetGameWorld("");
+	Application::Get()->GetGameInstance()->SetGameWorld("");
 
 	//Éú³ÉObject
 	/*obj->SetPosition({1.0f, 3.0f, 1.0f});

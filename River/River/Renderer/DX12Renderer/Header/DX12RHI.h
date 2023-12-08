@@ -63,6 +63,8 @@ public:
 
 	virtual Material* CreateMaterial(const char* name) override;
 
+	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) override;
+
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
 	virtual Texture* GetTexture(const char* name) override;

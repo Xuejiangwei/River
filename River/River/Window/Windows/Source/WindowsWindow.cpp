@@ -100,7 +100,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// WM_DESTROY is sent when the window is being destroyed.
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		Application::Get().Close();
+		Application::Get()->Close();
 		return 0;
 
 		// The WM_MENUCHAR message is sent when a menu is active and the user presses
@@ -121,7 +121,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		MouseCode code = msg == WM_LBUTTONDOWN ? MouseCode::ButtonLeft : msg == WM_MBUTTONDOWN ? MouseCode::ButtonMiddle : MouseCode::ButtonRight;
 		MouseButtonPressedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		Application::Get().OnEvent(e);
+		Application::Get()->OnEvent(e);
 	}
 	return 0;
 	case WM_LBUTTONUP:
@@ -130,13 +130,13 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		MouseCode code = msg == WM_LBUTTONUP ? MouseCode::ButtonLeft : msg == WM_MBUTTONUP ? MouseCode::ButtonMiddle : MouseCode::ButtonRight;
 		MouseButtonReleasedEvent e(code, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		Application::Get().OnEvent(e);
+		Application::Get()->OnEvent(e);
 	}
 	return 0;
 	case WM_MOUSEMOVE:
 	{
 		MouseMovedEvent e((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
-		Application::Get().OnEvent(e);
+		Application::Get()->OnEvent(e);
 	}
 	return 0;
 	case WM_KEYUP:
@@ -150,7 +150,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			int vk = MapVirtualKey((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 			KeyReleasedEvent e((KeyCode)vk);
-			Application::Get().OnEvent(e);
+			Application::Get()->OnEvent(e);
 		}
 		return 0;
 	case WM_KEYDOWN:
@@ -158,7 +158,7 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			int vk = MapVirtualKey((lParam & 0x00ff0000) >> 16, MAPVK_VSC_TO_VK_EX);
 			KeyPressedEvent e((KeyCode)vk);
-			Application::Get().OnEvent(e);
+			Application::Get()->OnEvent(e);
 
 		}
 		return 0;

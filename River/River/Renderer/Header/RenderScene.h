@@ -2,6 +2,7 @@
 #include "RiverHead.h"
 
 class RenderProxy;
+class RenderPass;
 
 class RenderScene
 {
@@ -18,4 +19,5 @@ public:
 
 private:
 	HashSet<void*> m_Proxys;
+	V_Array<Share<RenderPass>> m_RenderPasses;
 };

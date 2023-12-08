@@ -47,7 +47,7 @@ void DX12Camera::OnMousePressed(int x, int y)
 	m_LastMousePos.x = x;
 	m_LastMousePos.y = y;
 
-	SetCapture((HWND)Application::Get().GetWindow()->GetWindowHandle());
+	SetCapture((HWND)Application::Get()->GetWindow()->GetWindowHandle());
 }
 
 void DX12Camera::OnMouseReleased(int x, int y)
@@ -57,7 +57,7 @@ void DX12Camera::OnMouseReleased(int x, int y)
 
 void DX12Camera::OnMouseMoved(int x, int y)
 {
-	if ((void*)GetCapture() == Application::Get().GetWindow()->GetWindowHandle())
+	if ((void*)GetCapture() == Application::Get()->GetWindow()->GetWindowHandle())
 	{
 		float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_LastMousePos.x));
 		float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_LastMousePos.y));

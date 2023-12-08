@@ -356,6 +356,14 @@ Material* DX12RHI::CreateMaterial(const char* name)
 	return m_Materials[name].get();
 }
 
+void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
+{
+	m_ScreenViewport.Width = w;
+	m_ScreenViewport.Height = h;
+	m_ScreenViewport.TopLeftX = xOffset;
+	m_ScreenViewport.TopLeftY = yOffset;
+}
+
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
 {
 	DX12Texture* ret = nullptr;

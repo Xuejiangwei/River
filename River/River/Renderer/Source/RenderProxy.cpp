@@ -6,7 +6,7 @@
 RenderProxy::RenderProxy(Object* object)
 	: m_RenderObject(object)
 {
-	Application::Get().GetRenderScene()->AddObjectProxyToScene(this);
+	Application::Get()->GetRenderScene()->AddObjectProxyToScene(this);
 }
 
 RenderProxy::~RenderProxy()

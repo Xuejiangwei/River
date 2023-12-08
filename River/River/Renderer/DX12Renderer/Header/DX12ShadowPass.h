@@ -1,23 +1,23 @@
 #pragma once
 
-#include "RenderPass.h"
+//#include "RenderPass.h"
 #include "DX12Util.h"
 #include "d3dx12.h"
 
-class DX12ShadowPass : public RenderPass
+class DX12ShadowPass// : public RenderPass
 {
 public:
 	DX12ShadowPass(ID3D12Device* device, UINT width, UINT height);
 
-	virtual ~DX12ShadowPass() override;
+	virtual ~DX12ShadowPass();
 
-	virtual void Initialize() override;
+	virtual void Initialize();
 
-	virtual void Draw() override;
+	virtual void Draw();
 
-	virtual void Update(class FrameBuffer* frameBuffer) override;
+	virtual void Update(class FrameBuffer* frameBuffer);
 
-	virtual void OnResize(int width, int height) override;
+	virtual void OnResize(int width, int height);
 
 	ID3D12Resource* Resource() { return m_ShadowMap.Get(); }
 

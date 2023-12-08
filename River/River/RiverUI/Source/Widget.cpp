@@ -25,7 +25,7 @@ void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
 	if (RHI::Get()->IsShowUIDebugOutline())
 	{
-        auto [width, height] = Application::Get().GetWindow()->GetWindowSize();
+        auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
 
         FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
 

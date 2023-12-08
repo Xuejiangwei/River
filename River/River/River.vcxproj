@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -167,6 +167,9 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\Pass\Source\RenderPass.cpp" />
+    <ClCompile Include="Renderer\Pass\Source\RenderPassForwardRendering.cpp" />
+    <ClCompile Include="Renderer\Pass\Source\RenderPassShadow.cpp" />
     <ClCompile Include="Renderer\Source\AssetManager.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp" />
     <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
@@ -265,7 +268,6 @@
     <ClInclude Include="Renderer\Header\RawPolyhedron.h" />
     <ClInclude Include="Renderer\Header\RendererUtil.h" />
     <ClInclude Include="Renderer\Header\RenderItem.h" />
-    <ClInclude Include="Renderer\Header\RenderPass.h" />
     <ClInclude Include="Renderer\Header\RHI.h" />
     <ClInclude Include="Renderer\Header\Shader.h" />
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />
@@ -276,6 +278,9 @@
     <ClInclude Include="Renderer\Header\AssetManager.h" />
     <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h" />
     <ClInclude Include="Renderer\Parse\Header\ParseObj.h" />
+    <ClInclude Include="Renderer\Pass\Header\RenderPass.h" />
+    <ClInclude Include="Renderer\Pass\Header\RenderPassForwardRendering.h" />
+    <ClInclude Include="Renderer\Pass\Header\RenderPassShadow.h" />
     <ClInclude Include="RiverUI\Header\Button.h" />
     <ClInclude Include="RiverUI\Header\Image.h" />
     <ClInclude Include="RiverUI\Header\Panel.h" />

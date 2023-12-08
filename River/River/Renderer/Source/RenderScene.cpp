@@ -7,9 +7,11 @@
 #include "Component/Header/MeshComponent.h"
 #include "Renderer/Header/Material.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Renderer/Pass/Header/RenderPassForwardRendering.h"
 
 RenderScene::RenderScene()
 {
+	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
 }
 
 RenderScene::~RenderScene()
@@ -92,6 +94,11 @@ void RenderScene::OnUpdate()
 	}
 
 	RHI::Get()->UpdateSceneData(vertices, indices);
+
+	for (auto pass : m_RenderPasses)
+	{
+		pass->Render();
+	}
 }
 
 void RenderScene::AddObjectProxyToScene(RenderProxy* proxy)
