@@ -1,7 +1,7 @@
 #include "RiverPch.h"
-#include "Component/Header/MeshComponent.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Component/Header/MeshComponent.h"
 
 StaticMeshComponent::StaticMeshComponent()
 {
@@ -23,4 +23,9 @@ void StaticMeshComponent::SetStaticMesh(StaticMesh* staticMesh)
 void StaticMeshComponent::SetStaticMeshMaterials(V_Array<Material*> materials)
 {
 	m_StaticMesh->SetMeshMaterials(materials);
+}
+
+MaterialBlendMode StaticMeshComponent::GetMaterialMode() const
+{
+	return m_StaticMesh->GetMeshMaterials()[0]->m_BlendMode;
 }

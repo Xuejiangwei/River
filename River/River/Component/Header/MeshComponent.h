@@ -1,7 +1,7 @@
 #pragma once
 #include "Component.h"
+#include "Renderer/Header/Material.h"
 
-class Material;
 class StaticMesh;
 
 class StaticMeshComponent : public Component
@@ -18,6 +18,8 @@ public:
 	void SetStaticMesh(StaticMesh* staticMesh);
 
 	void SetStaticMeshMaterials(V_Array<Material*> materials);
+
+	MaterialBlendMode GetMaterialMode() const;
 
 private:
 	StaticMesh* m_StaticMesh;

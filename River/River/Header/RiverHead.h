@@ -39,6 +39,9 @@ using V_Array = std::vector<T>;
 template<typename T>
 using List = std::list<T>;
 
+template<typename T>
+using Set = std::set<T>;
+
 template<class _Kty, class _Ty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>>
 using HashMap = std::unordered_map<_Kty, _Ty, _Hasher, _Keyeq>;
 

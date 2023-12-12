@@ -33,5 +33,9 @@ public:
 	virtual ~Shader();
 
 	virtual void* GetShader() const = 0;
+
+	int GetShaderId() const { return m_ShaderId; }
+
 private:
+	int m_ShaderId;
 };

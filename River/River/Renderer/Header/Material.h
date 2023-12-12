@@ -5,6 +5,12 @@
 
 class Texture;
 
+enum class MaterialBlendMode
+{
+	Opaque,
+	Translucent
+};
+
 class Material
 {
 public:
@@ -16,10 +22,13 @@ public:
 
 	static Material* CreateMaterial(const char* name);
 
-	void InitBaseParam(const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx, 
+	void InitBaseParam(MaterialBlendMode blendMode, const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx,
 		Texture* diffuseSrvIndex, Texture* normalSrvIndex);
 
+public:
 	String m_Name;
+	MaterialBlendMode m_BlendMode;
+	int m_RefShaderId;
 	int NumFramesDirty = 3; //frame buffer num
 	int MatCBIndex = -1;
 	float Roughness;

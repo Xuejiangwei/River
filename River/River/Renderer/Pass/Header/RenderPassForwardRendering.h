@@ -12,6 +12,6 @@ public:
 	virtual void Render() override;
 
 private:
-
+	int m_CommandId;
 };
 

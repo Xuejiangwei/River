@@ -233,30 +233,28 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 		for (auto& it : m_RenderItems)
 		{
-			for (int i = 0; i < it.second.size(); i++)
+
+			/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
+			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
+			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.World));
+			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.TexTransform));
+
+			ObjectUniform objConstants;
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+			objConstants.MaterialIndex = 2;
+			it.ObjCBIndex = index++;
+
+			currObjectCB->CopyData(it.ObjCBIndex, objConstants);
+
+			if (!it.VertexBuffer)
 			{
-				/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
-				m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
-				DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.second[i].World));
-				DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.second[i].TexTransform));
+				it.VertexBuffer = m_RawMeshVertexBuffer.get();
+			}
 
-				ObjectUniform objConstants;
-				XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-				XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-				objConstants.MaterialIndex = 2;
-				it.second[i].ObjCBIndex = index++;
-
-				currObjectCB->CopyData(it.second[i].ObjCBIndex, objConstants);
-
-				if (!it.second[i].VertexBuffer)
-				{
-					it.second[i].VertexBuffer = m_RawMeshVertexBuffer.get();
-				}
-
-				if (!it.second[i].IndexBuffer)
-				{
-					it.second[i].IndexBuffer = m_RawMeshIndexBuffer.get();
-				}
+			if (!it.IndexBuffer)
+			{
+				it.IndexBuffer = m_RawMeshIndexBuffer.get();
 			}
 		}
 	}
@@ -358,10 +356,10 @@ Material* DX12RHI::CreateMaterial(const char* name)
 
 void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
 {
-	m_ScreenViewport.Width = w;
-	m_ScreenViewport.Height = h;
-	m_ScreenViewport.TopLeftX = xOffset;
-	m_ScreenViewport.TopLeftY = yOffset;
+	m_ScreenViewport.Width = (float)w;
+	m_ScreenViewport.Height = (float)h;
+	m_ScreenViewport.TopLeftX = (float)xOffset;
+	m_ScreenViewport.TopLeftY = (float)yOffset;
 }
 
 DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
@@ -394,6 +392,89 @@ Texture* DX12RHI::GetTexture(const char* name)
 	}
 
 	return nullptr;
+}
+
+void DX12RHI::GenerateDrawCommands(int commandId)
+{
+	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
+	ThrowIfFailed(cmdListAlloc->Reset());
+	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), nullptr));
+
+	{
+		m_CommandList->RSSetViewports(1, &m_ScreenViewport);
+		m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
+
+		m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+		//清除后台缓冲与深度缓冲
+		m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+		m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	
+		m_CommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	}
+
+	
+	auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
+	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());
+	m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
+	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
+	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+	uint32 offset = 0;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+	for (auto it : m_RenderItems)
+	{
+		m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
+		m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
+
+		{
+			//若材质有constantBuffer数据
+			//m_CommandList->SetGraphicsRootConstantBufferView(0, materialData->constantBuffers[mCurrentFrame].gpuAddress);
+		}
+
+		if (it.Material)
+		{
+			auto mat = it.Material;
+			if (mat->m_DiffuseTexture)
+			{
+				m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+					D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				offset++;
+			}
+			if (mat->m_NormalTexture)
+			{
+				m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+					D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				offset++;
+			}
+		}
+
+		m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
+		m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
+		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+
+		m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+		m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+		m_CommandList->DrawIndexedInstanced(it.IndexCount, 1,
+			it.StartIndexLocation, it.BaseVertexLocation, 0);
+	}
+}
+
+int DX12RHI::AllocDrawCommand()
+{
+	return 0;
 }
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
@@ -517,60 +598,57 @@ void DX12RHI::Render()
 			auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
-			
+
 
 			uint32 offset = 0;
 			CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
 			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
 			for (auto it : m_RenderItems)
 			{
-				auto items = it.second;
-				m_CommandList->SetPipelineState(m_PSOs[it.first]->GetPSO());
-				
-				for (size_t i = 0; i < items.size(); i++)
+				//m_CommandList->SetPipelineState(m_PSOs[it.first]->GetPSO());
+
+
+				texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+
+				/*if (it.first == "sky")
 				{
+					CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
 					texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-					m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+					m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+				}*/
 
-					if (it.first == "sky")
+				if (it.Material)
+				{
+					auto mat = it.Material;
+					if (mat->m_DiffuseTexture)
 					{
-						CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-						texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-						m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
-					}
+						m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+							D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-					if (items[i].Material)
+						dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+						offset++;
+					}
+					if (mat->m_NormalTexture)
 					{
-						auto mat = items[i].Material;
-						if (mat->m_DiffuseTexture)
-						{
-							m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
-								D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+						m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+							D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-							dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-							offset++;
-						}
-						if (mat->m_NormalTexture)
-						{
-							m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
-								D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-							dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-							offset++;
-						}
+						dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+						offset++;
 					}
-
-					m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)items[i].VertexBuffer)->GetView());
-					m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)items[i].IndexBuffer)->GetView());
-					m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-					D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + items[i].ObjCBIndex * objCBByteSize;
-
-					m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-					m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-					m_CommandList->DrawIndexedInstanced(items[i].IndexCount, 1,
-						items[i].StartIndexLocation, items[i].BaseVertexLocation, 0);
 				}
+
+				m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
+				m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
+				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+
+				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
+				m_CommandList->DrawIndexedInstanced(it.IndexCount, 1,
+					it.StartIndexLocation, it.BaseVertexLocation, 0);
 			}
 		}
 	}
@@ -878,16 +956,16 @@ void DX12RHI::InitBaseTexture()
 void DX12RHI::InitBaseMaterials()
 {
 	auto bricks = MakeUnique<Material>("bricks0");
-	bricks->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f, 0, 
+	bricks->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f, 0, 
 		m_Textures["bricksDiffuseMap"].get(), m_Textures["bricksNormalMap"].get());
 	auto tile = MakeUnique<Material>("tile0");
-	tile->InitBaseParam({ 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f, 1, 
+	tile->InitBaseParam(MaterialBlendMode::Opaque, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f, 1,
 		m_Textures["tileDiffuseMap"].get(), m_Textures["tileNormalMap"].get());
 	auto mirror = MakeUnique<Material>("mirror0");
-	mirror->InitBaseParam({ 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f, 2, 
+	mirror->InitBaseParam(MaterialBlendMode::Opaque, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f, 2,
 		m_Textures["defaultDiffuseMap"].get(), m_Textures["defaultNormalMap"].get());
 	auto sky = MakeUnique<Material>("sky");
-	sky->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, 
+	sky->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3,
 		m_Textures["skyCubeMap"].get(), m_Textures["skyCubeMap"].get());
 
 	m_Materials["bricks0"] = std::move(bricks);
@@ -899,7 +977,7 @@ void DX12RHI::InitBaseMaterials()
 	for (UINT i = 0; i < mSkinnedMats.size(); ++i)
 	{
 		auto mat = MakeUnique<Material>(mSkinnedMats[i].m_Name.c_str());
-		mat->InitBaseParam(*(River::Float4*)(&mSkinnedMats[i].DiffuseAlbedo), *(River::Float3*)(&mSkinnedMats[i].FresnelR0), mSkinnedMats[i].Roughness,
+		mat->InitBaseParam(MaterialBlendMode::Opaque, *(River::Float4*)(&mSkinnedMats[i].DiffuseAlbedo), *(River::Float3*)(&mSkinnedMats[i].FresnelR0), mSkinnedMats[i].Roughness,
 			matCBIndex++, m_Textures[mSkinnedTextureNames[i * 2]].get(), m_Textures[mSkinnedTextureNames[i * 2 + 1]].get());//DiffuseSrvHeapIndex, NormalSrvHeapIndex);
 		m_Materials[mSkinnedMats[i].m_Name] = std::move(mat);
 	}

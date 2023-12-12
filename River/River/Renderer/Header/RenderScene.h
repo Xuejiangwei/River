@@ -1,6 +1,8 @@
 #pragma once
 #include "RiverHead.h"
+#include "Renderer/Header/Material.h"
 
+enum class BlendMode;
 class RenderProxy;
 class RenderPass;
 
@@ -17,7 +19,9 @@ public:
 
 	void RemoveObjectProxyFromScene(RenderProxy* proxy);
 
+	Set<void*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
+
 private:
-	HashSet<void*> m_Proxys;
+	HashMap<MaterialBlendMode, Set<void*>> m_Proxys;
 	V_Array<Share<RenderPass>> m_RenderPasses;
 };

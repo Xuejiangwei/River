@@ -87,11 +87,15 @@ public:
 
 	virtual void Pick(int x, int y) = 0;
 
+	virtual void GenerateDrawCommands(int commandId) = 0;
+
+	virtual int AllocDrawCommand() = 0;
+
 	void ClearRenderItem();
 
 	void ClearUIRenderItem();
 
-	void AddRenderItem(RenderItem* renderItem, const char* renderPso = nullptr);
+	void AddRenderItem(RenderItem* renderItem);
 	
 	void AddUIRenderItem(UIRenderItem& renderItem);
 
@@ -116,7 +120,7 @@ protected:
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
-	HashMap<String, V_Array<RenderItem>> m_RenderItems;
+	V_Array<RenderItem> m_RenderItems;
 	V_Array<UIRenderItem> m_UIRenderItems;
 
 private:

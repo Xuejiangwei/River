@@ -41,7 +41,7 @@ void RiverEditorApplication::Initialize()
 		auto mat = Material::CreateMaterial("MyMat");
 		auto texture = RHI::Get()->GetTexture("tilediffusemap");
 		auto normalTexture = RHI::Get()->GetTexture("tilenormalmap");
-		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 	
@@ -55,7 +55,7 @@ void RiverEditorApplication::Initialize()
 		auto mat = Material::CreateMaterial("MyMat1");
 		auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
 		auto normalTexture = RHI::Get()->GetTexture("bricksNormalMap");
-		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 
@@ -69,7 +69,7 @@ void RiverEditorApplication::Initialize()
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultSphere"));
 		auto mat = Material::CreateMaterial("MySkyMat");
 		auto texture = RHI::Get()->GetTexture("skyCubeMap");
-		mat->InitBaseParam({ 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, texture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, texture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 }
