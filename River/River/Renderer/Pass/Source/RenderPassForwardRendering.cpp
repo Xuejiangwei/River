@@ -33,5 +33,7 @@ void RenderPassForwardRendering::Render()
 			RHI::Get()->AddRenderItem(&renderItem);
 		}
 	}
+
 	rhi->GenerateDrawCommands(m_CommandId);
+	//rhi->Render();
 }

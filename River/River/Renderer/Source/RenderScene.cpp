@@ -15,7 +15,7 @@ RenderScene::~RenderScene()
 {
 }
 
-void RenderScene::OnUpdate()
+void RenderScene::Render()
 {
 	RHI::Get()->ClearRenderItem();
 
@@ -92,10 +92,12 @@ void RenderScene::OnUpdate()
 
 	RHI::Get()->UpdateSceneData(vertices, indices);
 
+	RHI::Get()->BeginFrame();
 	for (auto pass : m_RenderPasses)
 	{
 		pass->Render();
 	}
+	RHI::Get()->EndFrame();
 }
 
 void RenderScene::AddObjectProxyToScene(RenderProxy* proxy)

@@ -47,6 +47,10 @@ public:
 
 	virtual void Exit() override;
 
+	virtual void BeginFrame() override;
+
+	virtual void EndFrame() override;
+
 	virtual void Render() override;
 
 	virtual void OnUpdate(const RiverTime& time) override;

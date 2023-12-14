@@ -60,14 +60,14 @@ void Application::Run()
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
 		RHI::Get()->OnUpdate(m_Time);
-		m_RenderScene->OnUpdate();
+		m_RenderScene->Render();
 
 		for (auto& layer : m_Layers)
 		{
 			layer->OnRender();
 		}
 		
-		RHI::Get()->Render();
+		//RHI::Get()->Render();
 	}
 }
 

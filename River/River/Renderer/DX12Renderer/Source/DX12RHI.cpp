@@ -192,6 +192,23 @@ void DX12RHI::Exit()
 	DX12DescriptorAllocator::DestroyAllDescriptorHeap();
 }
 
+void DX12RHI::BeginFrame()
+{
+	WaitFence();
+
+	//添加与删除Uniform数据
+}
+
+void DX12RHI::EndFrame()
+{
+	ThrowIfFailed(m_SwapChain->Present(0, 0));
+	m_CurrBackBufferIndex = (m_CurrBackBufferIndex + 1) % s_SwapChainBufferCount;
+
+	m_CurrFrameResource->m_FenceValue = ++m_CurrentFence;
+
+	m_CommandQueue->Signal(m_Fence.Get(), m_CurrentFence);
+}
+
 void DX12RHI::OnUpdate(const RiverTime& time)
 {
 	m_PrespectiveCamera.OnUpdate();
@@ -210,7 +227,6 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
-	WaitFence();
 
 	UpdateObjectCBs();
 	//UpdateSkinnedCBs(time);
@@ -400,24 +416,24 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	ThrowIfFailed(cmdListAlloc->Reset());
 	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), nullptr));
 
-	{
-		m_CommandList->RSSetViewports(1, &m_ScreenViewport);
-		m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
 
-		m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	//m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 
-		//清除后台缓冲与深度缓冲
-		m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-		m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	
-		m_CommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-	}
+	//绑定材质缓冲数据
+	/*auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
+	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());*/
 
-	
-	auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
-	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());
-	m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	m_CommandList->RSSetViewports(1, &m_ScreenViewport);
+	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
+
+	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	//清除后台缓冲与深度缓冲
+	m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+	m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	m_CommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
 	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -425,6 +441,8 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
+
+
 	uint32 offset = 0;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
 	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
@@ -433,10 +451,16 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 		m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 		m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 
+
+		texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+
+		/*if (it.first == "sky")
 		{
-			//若材质有constantBuffer数据
-			//m_CommandList->SetGraphicsRootConstantBufferView(0, materialData->constantBuffers[mCurrentFrame].gpuAddress);
-		}
+			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+		}*/
 
 		if (it.Material)
 		{
@@ -463,13 +487,24 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 		m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
 		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + /*it.ObjCBIndex*/0 * objCBByteSize;
 
 		m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 		m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
 		m_CommandList->DrawIndexedInstanced(it.IndexCount, 1,
 			it.StartIndexLocation, it.BaseVertexLocation, 0);
 	}
+
+
+	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	// Done recording commands.
+	ThrowIfFailed(m_CommandList->Close());
+
+	// Add the command list to the queue for execution.
+	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 }
 
 int DX12RHI::AllocDrawCommand()
@@ -605,7 +640,7 @@ void DX12RHI::Render()
 			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
 			for (auto it : m_RenderItems)
 			{
-				//m_CommandList->SetPipelineState(m_PSOs[it.first]->GetPSO());
+				m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 
 
 				texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
@@ -643,7 +678,7 @@ void DX12RHI::Render()
 				m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
 				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + /*it.ObjCBIndex*/0 * objCBByteSize;
 
 				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);

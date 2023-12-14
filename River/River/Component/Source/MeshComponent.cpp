@@ -4,6 +4,7 @@
 #include "Component/Header/MeshComponent.h"
 
 StaticMeshComponent::StaticMeshComponent()
+	: m_StaticMesh(nullptr)
 {
 }
 
@@ -27,5 +28,5 @@ void StaticMeshComponent::SetStaticMeshMaterials(V_Array<Material*> materials)
 
 MaterialBlendMode StaticMeshComponent::GetMaterialMode() const
 {
-	return m_StaticMesh->GetMeshMaterials()[0]->m_BlendMode;
+	return m_StaticMesh ? m_StaticMesh->GetMeshMaterials()[0]->m_BlendMode : MaterialBlendMode::Opaque;
 }
