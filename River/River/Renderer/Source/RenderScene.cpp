@@ -8,11 +8,40 @@
 
 RenderScene::RenderScene()
 {
+	m_UnuseProxyId.clear();
+	m_Proxys.clear();
+	m_RenderPasses.clear();
+
 	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
 }
 
 RenderScene::~RenderScene()
 {
+}
+
+void RenderScene::Update(float delta)
+{
+	for (auto& proxys : m_Proxys)
+	{
+		for (auto proxy : proxys.second)
+		{
+			auto p = (RenderProxy*)proxy;
+			if (p->IsDirty())
+			{
+				if (p->HasRenderItem())
+				{
+					RenderItem renderItem;
+					RHI::Get()->UpdateRenderItem(p->GetRenderItemId(), &renderItem);
+				}
+				else
+				{
+					RenderItem renderItem;
+					RHI::Get()->AddRenderItem(&renderItem);
+					p->GetRenderData(renderItem);
+				}
+			} 
+		}
+	}
 }
 
 void RenderScene::Render()
@@ -100,24 +129,34 @@ void RenderScene::Render()
 	RHI::Get()->EndFrame();
 }
 
-void RenderScene::AddObjectProxyToScene(RenderProxy* proxy)
+int RenderScene::AddObjectProxyToScene(RenderProxy* proxy)
 {
+	int id = 0;
 	if (proxy->HasRenderData())
 	{
-		m_Proxys[proxy->GetRenderBlendMode()].insert(proxy);
+		if (m_UnuseProxyId.size() > 0)
+		{
+			id = m_UnuseProxyId.back();
+			m_UnuseProxyId.resize(m_UnuseProxyId.size() - 1);
+			m_Proxys[proxy->GetRenderBlendMode()][id] = proxy;
+		}
+		else
+		{
+			m_Proxys[proxy->GetRenderBlendMode()].push_back(proxy);
+			id = (int)m_Proxys[proxy->GetRenderBlendMode()].size();
+		}
 	}
+
+	return id;
 }
 
 void RenderScene::RemoveObjectProxyFromScene(RenderProxy* proxy)
 {
 	if (proxy->HasRenderData())
 	{
-		auto proxys = m_Proxys[proxy->GetRenderBlendMode()];
-		auto iter = proxys.find(proxy);
-		if (iter != proxys.end())
-		{
-			proxys.erase(iter);
-		}
+		auto& proxys = m_Proxys[proxy->GetRenderBlendMode()];
+		proxys[proxy->GetRenderProxyId()] = nullptr;
+		m_UnuseProxyId.push_back(proxy->GetRenderProxyId());
 	}
 	
 }

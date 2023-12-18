@@ -16,9 +16,23 @@ public:
 
 	bool HasRenderData() const;
 
+	bool IsDirty() const { return m_IsDirty; }
+
+	bool HasRenderItem() const { return m_RenderItemId >= 0; }
+
+	void MarkDirty() { m_IsDirty = true; }
+
+	int GetRenderProxyId() const { return m_ProxyId; }
+
+	int GetRenderItemId() const { return m_RenderItemId; }
+
 	MaterialBlendMode GetRenderBlendMode() const;
 
 private:
 	Object* m_RenderObject;
+	
+	int m_RenderItemId;
+	int m_ProxyId;
+	bool m_IsDirty;
 };
 

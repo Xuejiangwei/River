@@ -95,12 +95,18 @@ public:
 
 	virtual int AllocDrawCommand() = 0;
 
+	constexpr int GetRenderItemMaxCount() const { return 1000; }
+
+	constexpr int GetMaterialMaxCount() const { return 1000; }
+
 	void ClearRenderItem();
 
 	void ClearUIRenderItem();
 
-	void AddRenderItem(RenderItem* renderItem);
+	int AddRenderItem(RenderItem* renderItem);
 	
+	void UpdateRenderItem(int id, RenderItem* renderItem);
+
 	void AddUIRenderItem(UIRenderItem& renderItem);
 
 	APIMode GetAPIMode() const { return s_APIMode; }
@@ -119,11 +125,10 @@ protected:
 
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
-	uint32 m_MaxRenderItemCount = 1000;
-	uint32 m_MaxMaterialCount = 1000;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
+	V_Array<int> m_UnuseRenderItemId;
 	V_Array<RenderItem> m_RenderItems;
 	V_Array<UIRenderItem> m_UIRenderItems;
 

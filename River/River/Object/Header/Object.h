@@ -25,7 +25,14 @@ public:
 
 	void SetScale(const FLOAT_3& scale);
 
+	void SetTransform(const Transform& transform);
+
 	RenderProxy* GetRenderProxy();
+
+private:
+	void SetTransform(FLOAT_3* position, FLOAT_4* rotation, FLOAT_3* scale);
+	
+	void SetTransform(const FLOAT_3* position, const FLOAT_4* rotation, const FLOAT_3* scale);
 
 public:
 	template<typename T>

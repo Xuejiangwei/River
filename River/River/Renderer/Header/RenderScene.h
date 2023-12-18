@@ -13,15 +13,18 @@ public:
 
 	~RenderScene();
 
+	void Update(float delta);
+
 	void Render();
 
-	void AddObjectProxyToScene(RenderProxy* proxy);
+	int AddObjectProxyToScene(RenderProxy* proxy);
 
 	void RemoveObjectProxyFromScene(RenderProxy* proxy);
 
-	Set<void*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
+	V_Array<RenderProxy*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
 
 private:
-	HashMap<MaterialBlendMode, Set<void*>> m_Proxys;
+	V_Array<int> m_UnuseProxyId;
+	HashMap<MaterialBlendMode, V_Array<RenderProxy*>> m_Proxys;
 	V_Array<Share<RenderPass>> m_RenderPasses;
 };

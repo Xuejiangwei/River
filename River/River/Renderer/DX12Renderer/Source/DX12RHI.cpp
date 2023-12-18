@@ -1952,8 +1952,8 @@ void DX12RHI::InitFrameBuffer()
 {
 	for (int i = 0; i < s_FrameBufferCount; ++i)
 	{
-		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, m_MaxRenderItemCount/*(UINT)m_AllRitems.size()*/,
-			1, m_MaxMaterialCount));
+		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, GetRenderItemMaxCount()/*(UINT)m_AllRitems.size()*/,
+			1, GetMaterialMaxCount()));
 	}
 
 	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;

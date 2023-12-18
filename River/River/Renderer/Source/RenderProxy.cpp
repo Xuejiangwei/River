@@ -11,17 +11,14 @@
 #include "Application.h"
 
 RenderProxy::RenderProxy(Object* object)
-	: m_RenderObject(object)
+	: m_RenderObject(object), m_IsDirty(true), m_RenderItemId(-1)
 {
-	Application::Get()->GetRenderScene()->AddObjectProxyToScene(this);
+	m_ProxyId = Application::Get()->GetRenderScene()->AddObjectProxyToScene(this);
 }
 
 RenderProxy::~RenderProxy()
 {
-	/*if (Application::Get().GetRenderScene())
-	{
-		Application::Get().GetRenderScene()->RemoveObjectProxyFromScene(this);
-	}*/
+	Application::Get()->GetRenderScene()->RemoveObjectProxyFromScene(this);
 }
 
 void RenderProxy::GetRenderData(RenderItem& renderItem)
@@ -51,6 +48,7 @@ void RenderProxy::GetRenderData(RenderItem& renderItem)
 		auto buffer = RHI::Get()->GetStaticMeshBuffer(staticMeshComp->GetStaticMesh()->GetName().c_str());
 		renderItem.VertexBuffer = buffer.first;
 		renderItem.IndexBuffer = buffer.second;
+		m_RenderItemId = renderItem.ObjCBIndex;
 	}
 }
 

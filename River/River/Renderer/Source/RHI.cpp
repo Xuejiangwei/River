@@ -62,9 +62,33 @@ void RHI::ClearUIRenderItem()
 	m_UIRenderItems.clear();
 }
 
-void RHI::AddRenderItem(RenderItem* renderItem)
+int RHI::AddRenderItem(RenderItem* renderItem)
 {
-	m_RenderItems.push_back(*renderItem);
+	int id = 0;
+	if (m_UnuseRenderItemId.size() > 0)
+	{
+		id = m_UnuseRenderItemId.back();
+		m_UnuseRenderItemId.resize(m_UnuseRenderItemId.size() - 1);
+		m_RenderItems[id] = *renderItem;
+		m_RenderItems[id].ObjCBIndex = id;
+	}
+	else
+	{
+		if (m_RenderItems.size() < GetRenderItemMaxCount())
+		{
+			m_RenderItems.push_back(*renderItem);
+			id = (int)m_RenderItems.size();
+			m_RenderItems.back().ObjCBIndex = id;
+		}
+	}
+
+	return id;
+}
+
+void RHI::UpdateRenderItem(int id, RenderItem* renderItem)
+{
+	m_RenderItems[id] = *renderItem;
+	m_RenderItems[id].ObjCBIndex = id;
 }
 
 void RHI::AddUIRenderItem(UIRenderItem& renderItem)

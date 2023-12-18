@@ -24,17 +24,54 @@ void Object::Tick(float deltaTime)
 
 void Object::SetPosition(const FLOAT_3& position)
 {
-	m_Transform.Position = position;
+	SetTransform(&position, nullptr, nullptr);
 }
 
 void Object::SetRotation(const FLOAT_4& rotation)
 {
-	m_Transform.Rotation = rotation;
+	SetTransform(nullptr, &rotation, nullptr);
 }
 
 void Object::SetScale(const FLOAT_3& scale)
 {
-	m_Transform.Scale = scale;
+	SetTransform(nullptr, nullptr, &scale);
+}
+
+void Object::SetTransform(const Transform& transform)
+{
+	SetTransform(&transform.Position, &transform.Rotation, &transform.Scale);
+}
+
+void Object::SetTransform(FLOAT_3* position, FLOAT_4* rotation, FLOAT_3* scale)
+{
+	SetTransform(const_cast<const FLOAT_3*>(position), rotation, scale);
+}
+
+void Object::SetTransform(const FLOAT_3* position, const FLOAT_4* rotation, const FLOAT_3* scale)
+{
+	bool markDirty = false;
+	if (position)
+	{
+		m_Transform.Position = *position;
+		markDirty = true;
+	}
+
+	if (rotation)
+	{
+		m_Transform.Rotation = *rotation;
+		markDirty = true;
+	}
+
+	if (scale)
+	{
+		m_Transform.Scale = *scale;
+		markDirty = true;
+	}
+
+	if (markDirty && m_RenderProxy)
+	{
+		m_RenderProxy->MarkDirty();
+	}
 }
 
 RenderProxy* Object::GetRenderProxy()
