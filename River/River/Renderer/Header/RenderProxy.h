@@ -12,7 +12,7 @@ public:
 
 	~RenderProxy();
 
-	void GetRenderData(RenderItem& renderItem);
+	void GetRenderData(RenderItem* renderItem);
 
 	bool HasRenderData() const;
 

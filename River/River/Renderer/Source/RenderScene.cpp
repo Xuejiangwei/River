@@ -1,4 +1,5 @@
 #include "RiverPch.h"
+#include "RiverTime.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Header/RenderProxy.h"
 #include "Renderer/Header/RHI.h"
@@ -19,7 +20,7 @@ RenderScene::~RenderScene()
 {
 }
 
-void RenderScene::Update(float delta)
+void RenderScene::Update(const RiverTime& time)
 {
 	for (auto& proxys : m_Proxys)
 	{
@@ -30,14 +31,11 @@ void RenderScene::Update(float delta)
 			{
 				if (p->HasRenderItem())
 				{
-					RenderItem renderItem;
-					RHI::Get()->UpdateRenderItem(p->GetRenderItemId(), &renderItem);
+					p->GetRenderData(RHI::Get()->GetRenderItem(p->GetRenderItemId()));
 				}
 				else
 				{
-					RenderItem renderItem;
-					RHI::Get()->AddRenderItem(&renderItem);
-					p->GetRenderData(renderItem);
+					p->GetRenderData(RHI::Get()->AddRenderItem());
 				}
 			} 
 		}
@@ -46,8 +44,6 @@ void RenderScene::Update(float delta)
 
 void RenderScene::Render()
 {
-	RHI::Get()->ClearRenderItem();
-
 	V_Array<RawVertex> vertices;
 	V_Array<uint16> indices;
 	RenderItem renderItem;
@@ -119,7 +115,7 @@ void RenderScene::Render()
 	//	}
 	//}
 
-	RHI::Get()->UpdateSceneData(vertices, indices);
+	//RHI::Get()->UpdateSceneData(vertices, indices);
 
 	RHI::Get()->BeginFrame();
 	for (auto pass : m_RenderPasses)

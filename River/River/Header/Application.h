@@ -37,14 +37,12 @@ public:
 
 private:
 	bool m_Running;
-
 	RiverTime m_Time;
 	
-	V_Array<Share<Layer>> m_Layers;
-	
-	Unique<GameInstance> m_CurrentGameInstance;
-	Unique<Window> m_Window;
 	Unique<RenderScene> m_RenderScene;
+	Unique<Window> m_Window;
+	Unique<GameInstance> m_CurrentGameInstance;
+	V_Array<Share<Layer>> m_Layers;
 
 	static Application* s_Instance;
 };

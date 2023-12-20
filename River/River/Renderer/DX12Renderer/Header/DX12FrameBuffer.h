@@ -54,6 +54,7 @@ struct Light
 #define MaxLights 16
 struct PassUniform
 {
+	//XMFLOAT4X4 WorldViewProj = Identity4x4();
 	DirectX::XMFLOAT4X4 View = Identity4x4();
 	DirectX::XMFLOAT4X4 InvView = Identity4x4();
 	DirectX::XMFLOAT4X4 Proj = Identity4x4();
@@ -74,6 +75,7 @@ struct PassUniform
 	DirectX::XMFLOAT4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	Light Lights[MaxLights];
+
 };
 
 struct SsaoUniform

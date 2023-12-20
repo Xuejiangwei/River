@@ -197,6 +197,25 @@ void DX12RHI::BeginFrame()
 	WaitFence();
 
 	//添加与删除Uniform数据
+	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
+	for (auto& renderItem : m_RenderItems)
+	{
+		if (renderItem.ObjCBIndex != (uint32)-1 && renderItem.NumFramesDirty > 0)
+		{
+			renderItem.NumFramesDirty--;
+
+			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.World));
+			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.TexTransform));
+
+			ObjectUniform objConstants;
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+			objConstants.MaterialIndex = 2;
+
+			currObjectCB->CopyData(renderItem.ObjCBIndex, objConstants);
+
+		}
+	}
 }
 
 void DX12RHI::EndFrame()
@@ -225,14 +244,14 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 	UpdateShadowTransform(time);
 
-	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 
 	UpdateObjectCBs();
 	//UpdateSkinnedCBs(time);
 	//UpdateMaterialCBs();
 	//UpdateShadowTransform(time);
-	UpdateMainPass(time);
+	UpdateMainPass();
 	//UpdateShadowPass(time);
 	//UpdateSsaoCBs(time);
 }
@@ -441,7 +460,7 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
-
+	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 
 	uint32 offset = 0;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
@@ -454,6 +473,8 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 
 		texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 		m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+
+		m_CommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 		/*if (it.first == "sky")
 		{
@@ -487,7 +508,7 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 		m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
 		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + /*it.ObjCBIndex*/0 * objCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
 
 		m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 		m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
@@ -1687,7 +1708,7 @@ void DX12RHI::UpdateMaterialCBs()
 	}
 }
 
-void DX12RHI::UpdateMainPass(const RiverTime& time)
+void DX12RHI::UpdateMainPass(/*const RiverTime& time*/)
 {
 
 	XMMATRIX view = m_PrespectiveCamera.GetView();
@@ -1721,8 +1742,8 @@ void DX12RHI::UpdateMainPass(const RiverTime& time)
 	m_MainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
 	m_MainPassCB.NearZ = 1.0f;
 	m_MainPassCB.FarZ = 1000.0f;
-	m_MainPassCB.TotalTime = time.TotalTime();
-	m_MainPassCB.DeltaTime = time.DeltaTime();
+	m_MainPassCB.TotalTime = 0;//time.TotalTime();
+	m_MainPassCB.DeltaTime = 0;//time.DeltaTime();
 	m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
 	m_MainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
 	m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
@@ -1950,13 +1971,13 @@ void DX12RHI::InitDescriptorHeaps()
 
 void DX12RHI::InitFrameBuffer()
 {
-	for (int i = 0; i < s_FrameBufferCount; ++i)
+	for (int i = 0; i < RHI::GetFrameCount(); ++i)
 	{
 		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, GetRenderItemMaxCount()/*(UINT)m_AllRitems.size()*/,
 			1, GetMaterialMaxCount()));
 	}
 
-	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % s_FrameBufferCount;
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 }
 

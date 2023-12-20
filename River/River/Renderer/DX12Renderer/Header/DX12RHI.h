@@ -145,7 +145,7 @@ private:
 
 	void UpdateMaterialCBs();
 
-	void UpdateMainPass(const RiverTime& time);
+	void UpdateMainPass(/*const RiverTime& time*/);
 
 	void UpdateShadowPass(const RiverTime& time);
 	
@@ -178,8 +178,6 @@ private:
 
 public:
 	static const int s_SwapChainBufferCount = 2;
-	static const int s_FrameBufferCount = 2;
-	static const int s_MaxRenderItem = 100;
 
 private:
 	Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
@@ -193,7 +191,7 @@ private:
 	/** 在每帧渲染时将每个RenderItem的Texture资源（每个Texture中含有描述符handle，handle中有texture在内存中的指针）的handle复制到其中
 		使其可以在Shader代码中根据描述符的texture槽取texture资源时中可以连续并从头（即第0个）访问。
 	**/
-	Unique<DX12DynamicDescriptorHeap> m_DynamicDescriptorHeaps[s_FrameBufferCount];
+	Unique<DX12DynamicDescriptorHeap> m_DynamicDescriptorHeaps[RHI::GetFrameCount()];
 
 	int m_CurrFrameResourceIndex;
 	int m_CurrBackBufferIndex;

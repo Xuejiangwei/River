@@ -28,9 +28,9 @@ void RenderPassForwardRendering::Render()
 		auto renderProxy = static_cast<RenderProxy*>(proxy);
 		if (renderProxy)
 		{	
-			RenderItem renderItem;
+		/*	RenderItem renderItem;
 			renderProxy->GetRenderData(renderItem);
-			RHI::Get()->AddRenderItem(&renderItem);
+			RHI::Get()->AddRenderItem(&renderItem);*/
 		}
 	}
 

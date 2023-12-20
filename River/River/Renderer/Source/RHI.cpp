@@ -14,6 +14,8 @@ Unique<RHI> RHI::s_Instance = nullptr;
 
 RHI::RHI()
 {
+	m_RenderItems.clear();
+	m_UIRenderItems.clear();
 }
 
 RHI::~RHI()
@@ -52,37 +54,36 @@ FontAtlas* RHI::GetFont(const char* name) const
 	return iter->second.get();
 }
 
-void RHI::ClearRenderItem()
+RenderItem* RHI::AddRenderItem()
 {
-	m_RenderItems.clear();
-}
-
-void RHI::ClearUIRenderItem()
-{
-	m_UIRenderItems.clear();
-}
-
-int RHI::AddRenderItem(RenderItem* renderItem)
-{
-	int id = 0;
+	RenderItem* renderItem = nullptr;
 	if (m_UnuseRenderItemId.size() > 0)
 	{
-		id = m_UnuseRenderItemId.back();
+		int id = m_UnuseRenderItemId.back();
 		m_UnuseRenderItemId.resize(m_UnuseRenderItemId.size() - 1);
-		m_RenderItems[id] = *renderItem;
 		m_RenderItems[id].ObjCBIndex = id;
+		renderItem = &m_RenderItems[id];
 	}
 	else
 	{
 		if (m_RenderItems.size() < GetRenderItemMaxCount())
 		{
-			m_RenderItems.push_back(*renderItem);
-			id = (int)m_RenderItems.size();
-			m_RenderItems.back().ObjCBIndex = id;
+			m_RenderItems.resize(m_RenderItems.size() + 1);
+			m_RenderItems.back().ObjCBIndex = (int)m_RenderItems.size() - 1;
+			renderItem = &m_RenderItems.back();
 		}
 	}
 
-	return id;
+	return renderItem;
+}
+
+void RHI::RemoveRenderItem(int id)
+{
+	if (id > 0)
+	{
+		m_RenderItems[id].ObjCBIndex = -1;
+		m_UnuseRenderItemId.push_back(id);
+	}
 }
 
 void RHI::UpdateRenderItem(int id, RenderItem* renderItem)

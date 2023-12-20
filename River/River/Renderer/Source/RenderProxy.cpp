@@ -19,20 +19,23 @@ RenderProxy::RenderProxy(Object* object)
 RenderProxy::~RenderProxy()
 {
 	Application::Get()->GetRenderScene()->RemoveObjectProxyFromScene(this);
+	RHI::Get()->RemoveRenderItem(m_RenderItemId);
 }
 
-void RenderProxy::GetRenderData(RenderItem& renderItem)
+void RenderProxy::GetRenderData(RenderItem* renderItem)
 {
+	m_IsDirty = false;
 	auto staticMeshComp = m_RenderObject->GetComponent<StaticMeshComponent>();
 	if (staticMeshComp)
 	{
-		renderItem.World = m_RenderObject->GetTransform();
-		renderItem.BaseVertexLocation = 0;
-		renderItem.IndexCount = (int)staticMeshComp->GetStaticMesh()->GetIndices().size();
-		renderItem.StartIndexLocation = 0;
+		renderItem->NumFramesDirty = RHI::GetFrameCount();
+		renderItem->World = m_RenderObject->GetTransform();
+		renderItem->BaseVertexLocation = 0;
+		renderItem->IndexCount = (int)staticMeshComp->GetStaticMesh()->GetIndices().size();
+		renderItem->StartIndexLocation = 0;
 		if (staticMeshComp->GetStaticMesh()->GetMeshMaterials().size() > 0)
 		{
-			renderItem.Material = staticMeshComp->GetStaticMesh()->GetMeshMaterials()[0];
+			renderItem->Material = staticMeshComp->GetStaticMesh()->GetMeshMaterials()[0];
 		}
 
 		/*if (renderItem.Material->m_Name == "MySkyMat")
@@ -46,9 +49,9 @@ void RenderProxy::GetRenderData(RenderItem& renderItem)
 		}*/
 
 		auto buffer = RHI::Get()->GetStaticMeshBuffer(staticMeshComp->GetStaticMesh()->GetName().c_str());
-		renderItem.VertexBuffer = buffer.first;
-		renderItem.IndexBuffer = buffer.second;
-		m_RenderItemId = renderItem.ObjCBIndex;
+		renderItem->VertexBuffer = buffer.first;
+		renderItem->IndexBuffer = buffer.second;
+		m_RenderItemId = renderItem->ObjCBIndex;
 	}
 }
 

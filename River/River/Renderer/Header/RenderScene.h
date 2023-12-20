@@ -13,7 +13,7 @@ public:
 
 	~RenderScene();
 
-	void Update(float delta);
+	void Update(const RiverTime& time);
 
 	void Render();
 

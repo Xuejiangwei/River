@@ -99,11 +99,11 @@ public:
 
 	constexpr int GetMaterialMaxCount() const { return 1000; }
 
-	void ClearRenderItem();
+	RenderItem* AddRenderItem();
 
-	void ClearUIRenderItem();
+	RenderItem* GetRenderItem(int id) { return &m_RenderItems[id]; }
 
-	int AddRenderItem(RenderItem* renderItem);
+	void RemoveRenderItem(int id);
 	
 	void UpdateRenderItem(int id, RenderItem* renderItem);
 
@@ -116,6 +116,9 @@ public:
 	bool IsShowUIDebugOutline() const { return m_ShowUIDebugOutline; }
 
 	void SetShowUIDebugOutline(bool showOutline) { m_ShowUIDebugOutline = showOutline; }
+
+public:
+	static constexpr int GetFrameCount() { return 2; }
 
 public:
 	static Unique<RHI>& Get();

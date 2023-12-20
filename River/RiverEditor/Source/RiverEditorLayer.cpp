@@ -75,12 +75,10 @@ void RiverEditorLayer::OnRender()
 {
 	m_RenderVertices.clear();
 	m_RenderIndices.clear();
-	RHI::Get()->ClearUIRenderItem();
 
-	for (auto& window : m_UIWindows)
+	/*for (auto& window : m_UIWindows)
 	{
 		window.second->OnRender(m_RenderVertices, m_RenderIndices);
 	}
-
-	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);
+	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);*/
 }
