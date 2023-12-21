@@ -12,6 +12,8 @@ public:
 
 	~RenderProxy();
 
+	bool IsValid() const { return m_RenderObject != nullptr; }
+
 	void GetRenderData(RenderItem* renderItem);
 
 	bool HasRenderData() const;

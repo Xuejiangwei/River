@@ -167,10 +167,10 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		InitBaseRootSignatures();
 		InitBaseShaders();
 
-		m_RawMeshVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<float>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["defaultRaw"]);
+		m_RawMeshVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<RawVertex>(1000).data(), 1000 * sizeof(RawVertex), (uint32)sizeof(RawVertex), &m_InputLayers["defaultRaw"]);
 		m_RawMeshIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
 
-		m_UIVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<float>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["ui"]);
+		m_UIVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<UIVertex>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["ui"]);
 		m_UIIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
 
 		//InitBaseMaterials();
@@ -246,6 +246,7 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
+	WaitFence();
 
 	UpdateObjectCBs();
 	//UpdateSkinnedCBs(time);

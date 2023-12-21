@@ -64,7 +64,7 @@ void RiverEditorApplication::Initialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, 0.0f, 0.0f });
-		obj->SetScale({ 1000.f,1000.f,1000.f });
+		obj->SetScale({ 1.f,1.f,1.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultSphere"));
 		auto mat = Material::CreateMaterial("MySkyMat");
