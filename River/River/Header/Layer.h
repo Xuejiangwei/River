@@ -16,5 +16,7 @@ public:
 
 	virtual void OnRender() {}
 
+	virtual bool IsUILayer() const { return true; }
+
 private:
 };

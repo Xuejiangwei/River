@@ -7,7 +7,7 @@ class RenderPass
 public:
 	RenderPass();
 
-	~RenderPass();
+	virtual ~RenderPass();
 
 	virtual void Render() = 0;
 

@@ -2,6 +2,8 @@
 #include "RiverEditorLayer.h"
 #include "Application.h"
 #include "Renderer/Header/RHI.h"
+#include "Renderer/Header/RenderScene.h"
+#include "Renderer/Pass/Header/RenderPassUI.h"
 #include "RiverUI/Header/Panel.h"
 #include "RiverUI/Header/Button.h"
 #include "RiverUI/Header/Image.h"
@@ -73,12 +75,12 @@ bool RiverEditorLayer::OnEvent(const Event& e)
 
 void RiverEditorLayer::OnRender()
 {
-	m_RenderVertices.clear();
-	m_RenderIndices.clear();
+	auto uiRenderPass = Application::Get()->GetRenderScene()->GetUIRenderPass();
+	auto& renderVertices = uiRenderPass->GetRenderVertices();
+	auto& renderIndices = uiRenderPass->GetRenderIndices();
 
-	/*for (auto& window : m_UIWindows)
+	for (auto& window : m_UIWindows)
 	{
-		window.second->OnRender(m_RenderVertices, m_RenderIndices);
+		window.second->OnRender(renderVertices, renderIndices);
 	}
-	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);*/
 }

@@ -95,6 +95,8 @@ public:
 
 	virtual int AllocDrawCommand() = 0;
 
+	virtual void DrawRenderItem(int renderItemId) = 0;
+
 	constexpr int GetRenderItemMaxCount() const { return 1000; }
 
 	constexpr int GetMaterialMaxCount() const { return 1000; }
@@ -107,12 +109,14 @@ public:
 	
 	void UpdateRenderItem(int id, RenderItem* renderItem);
 
-	void AddUIRenderItem(UIRenderItem& renderItem);
-
 	APIMode GetAPIMode() const { return s_APIMode; }
 
 	FontAtlas* GetFont(const char* name = nullptr) const;
-	
+
+	void ClearUIRenderItem() { m_UIRenderItems.clear(); }
+
+	void AddUIRenderItem(UIRenderItem& renderItem);
+
 	bool IsShowUIDebugOutline() const { return m_ShowUIDebugOutline; }
 
 	void SetShowUIDebugOutline(bool showOutline) { m_ShowUIDebugOutline = showOutline; }

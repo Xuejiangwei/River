@@ -34,7 +34,6 @@ class DX12PipelineState;
 
 using namespace DirectX;
 
-
 class DX12RHI : public RHI
 {
 	friend static Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath);
@@ -57,7 +56,7 @@ public:
 
 	virtual void UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices) override;
 
-	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices) override;
+	virtual void UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices) override;
 
 	virtual void SetUpStaticMesh(StaticMesh* mesh) override;
 
@@ -74,6 +73,8 @@ public:
 	virtual void GenerateDrawCommands(int commandId) override;
 
 	virtual int AllocDrawCommand() override;
+
+	virtual void DrawRenderItem(int renderItemId) override;
 
 	DX12Texture* CreateTexture(const char* name, const char* filePath);
 
@@ -239,6 +240,8 @@ private:
 	std::unique_ptr<Ssao> m_Ssao;
 	PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
+
+	V_Array<int> m_DrawItems;
 
 	Unique<DX12VertexBuffer> m_RawMeshVertexBuffer;
 	Unique<DX12IndexBuffer> m_RawMeshIndexBuffer;

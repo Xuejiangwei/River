@@ -28,12 +28,21 @@ void RenderPassForwardRendering::Render()
 		auto renderProxy = static_cast<RenderProxy*>(proxy);
 		if (renderProxy)
 		{	
-		/*	RenderItem renderItem;
-			renderProxy->GetRenderData(renderItem);
-			RHI::Get()->AddRenderItem(&renderItem);*/
+			auto renderItem = rhi->GetRenderItem(renderProxy->GetRenderItemId());
+			m_RenderBatch[renderItem->Material ? renderItem->Material->m_RefShaderId : 0].push_back(renderProxy->GetRenderItemId());
+		}
+	}
+
+	for (auto& batch : m_RenderBatch)
+	{
+		for (auto& renderItemId : batch.second)
+		{
+			rhi->DrawRenderItem(renderItemId);
 		}
 	}
 
 	rhi->GenerateDrawCommands(m_CommandId);
 	//rhi->Render();
+
+	m_RenderBatch.clear();
 }

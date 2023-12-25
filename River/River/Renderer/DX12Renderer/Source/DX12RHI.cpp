@@ -325,7 +325,7 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 
 }
 
-void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16_t> indices)
+void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices)
 {
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 	
@@ -466,8 +466,9 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	uint32 offset = 0;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
 	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-	for (auto it : m_RenderItems)
+	for (auto id : /*m_RenderItems*/m_DrawItems)
 	{
+		auto& it = m_RenderItems[id];
 		m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 		m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 
@@ -527,11 +528,18 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	// Add the command list to the queue for execution.
 	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+	m_DrawItems.clear();
 }
 
 int DX12RHI::AllocDrawCommand()
 {
 	return 0;
+}
+
+void DX12RHI::DrawRenderItem(int renderItemId)
+{
+	m_DrawItems.push_back(renderItemId);
 }
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)

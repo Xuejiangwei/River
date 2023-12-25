@@ -5,6 +5,8 @@
 enum class BlendMode;
 class RenderProxy;
 class RenderPass;
+class RenderPassUI;
+class Layer;
 
 class RenderScene
 {
@@ -22,6 +24,10 @@ public:
 	void RemoveObjectProxyFromScene(RenderProxy* proxy);
 
 	V_Array<RenderProxy*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
+
+	void AddUILayer(Share<Layer>& layer);
+
+	RenderPassUI* GetUIRenderPass();
 
 private:
 	V_Array<int> m_UnuseProxyId;

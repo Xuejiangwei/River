@@ -170,6 +170,7 @@
     <ClCompile Include="Renderer\Pass\Source\RenderPass.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPassForwardRendering.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPassShadow.cpp" />
+    <ClCompile Include="Renderer\Pass\Source\RenderPassUI.cpp" />
     <ClCompile Include="Renderer\Source\AssetManager.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\StaticMesh.cpp" />
     <ClCompile Include="Renderer\Parse\Source\ParseObj.cpp" />
@@ -281,6 +282,7 @@
     <ClInclude Include="Renderer\Pass\Header\RenderPass.h" />
     <ClInclude Include="Renderer\Pass\Header\RenderPassForwardRendering.h" />
     <ClInclude Include="Renderer\Pass\Header\RenderPassShadow.h" />
+    <ClInclude Include="Renderer\Pass\Header\RenderPassUI.h" />
     <ClInclude Include="RiverUI\Header\Button.h" />
     <ClInclude Include="RiverUI\Header\Image.h" />
     <ClInclude Include="RiverUI\Header\Panel.h" />

@@ -40,7 +40,7 @@ bool UIWindow::OnEvent(const class Event& e)
 	return false;
 }
 
-void UIWindow::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
+void UIWindow::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16>& indices)
 {
 	m_RootPanel->OnRender(vertices, indices);
 	for (auto& ps : m_Panels)

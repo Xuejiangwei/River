@@ -7,7 +7,7 @@ class RenderPassShadow : public RenderPass
 public:
 	RenderPassShadow();
 
-	~RenderPassShadow();
+	virtual ~RenderPassShadow() override;
 
 	virtual void Render() override;
 

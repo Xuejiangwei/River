@@ -5,7 +5,9 @@
 #include "Renderer/Header/RHI.h"
 
 #include "Renderer/Header/Material.h"
+#include "Renderer/Pass/Header/RenderPassShadow.h"
 #include "Renderer/Pass/Header/RenderPassForwardRendering.h"
+#include "Renderer/Pass/Header/RenderPassUI.h"
 
 RenderScene::RenderScene()
 {
@@ -14,6 +16,7 @@ RenderScene::RenderScene()
 	m_RenderPasses.clear();
 
 	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
+	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
 }
 
 RenderScene::~RenderScene()
@@ -104,4 +107,30 @@ void RenderScene::RemoveObjectProxyFromScene(RenderProxy* proxy)
 		m_UnuseProxyId.push_back(proxy->GetRenderProxyId());
 	}
 	
+}
+
+void RenderScene::AddUILayer(Share<Layer>& layer)
+{
+	for (auto& pass : m_RenderPasses)
+	{
+		auto uiPass = dynamic_cast<RenderPassUI*>(pass.get());
+		if (uiPass)
+		{
+			uiPass->AddUILayer(layer);
+		}
+	}
+}
+
+RenderPassUI* RenderScene::GetUIRenderPass()
+{
+	for (auto& pass : m_RenderPasses)
+	{
+		auto uiPass = dynamic_cast<RenderPassUI*>(pass.get());
+		if (uiPass)
+		{
+			return uiPass;
+		}
+	}
+
+	return nullptr;
 }

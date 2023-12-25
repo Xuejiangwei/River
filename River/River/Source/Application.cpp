@@ -63,10 +63,10 @@ void Application::Run()
 		m_RenderScene->Update(m_Time);
 		m_RenderScene->Render();
 
-		for (auto& layer : m_Layers)
+		/*for (auto& layer : m_Layers)
 		{
 			layer->OnRender();
-		}
+		}*/
 		
 		//RHI::Get()->Render();
 	}
@@ -82,6 +82,11 @@ void Application::AddLayer(Share<Layer> layer)
 {
 	m_Layers.push_back(layer);
 	layer->OnAttach();
+
+	if (layer->IsUILayer())
+	{
+		m_RenderScene->AddUILayer(layer);
+	}
 }
 
 void Application::RemoveLayer(Share<Layer> layer)
