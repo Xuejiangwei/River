@@ -29,7 +29,7 @@ void RenderPassUI::Render()
 		layer->OnRender();
 	}
 	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);
-	//rhi->GenerateDrawCommands(m_CommandId);
+	rhi->GenerateDrawCommands(m_CommandId);
 }
 
 void RenderPassUI::AddUILayer(Share<Layer>& layer)

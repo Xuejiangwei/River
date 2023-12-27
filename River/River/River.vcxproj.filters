@@ -234,6 +234,9 @@
     <ClCompile Include="Renderer\Pass\Source\RenderPassUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12CommandPool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -486,6 +489,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Pass\Header\RenderPassUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12CommandPool.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

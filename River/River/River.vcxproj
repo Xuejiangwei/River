@@ -145,6 +145,7 @@
     <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
+    <ClCompile Include="Renderer\DX12Renderer\Source\DX12CommandPool.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12DescriptorAllocator.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12DynamicDescriptorHeap.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\d3dx12.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h" />
+    <ClInclude Include="Renderer\DX12Renderer\Header\DX12CommandPool.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DefaultConfig.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DescriptorAllocator.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DynamicDescriptorHeap.h" />
