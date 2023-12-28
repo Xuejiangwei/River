@@ -107,6 +107,12 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	//m_Resource->Release();
 }
 
+DX12Texture::DX12Texture(const String& name, Microsoft::WRL::ComPtr<ID3D12Resource>* resource)
+	: Texture(name, ""), m_Resource(*resource)
+{
+
+}
+
 DX12Texture::~DX12Texture()
 {
 }

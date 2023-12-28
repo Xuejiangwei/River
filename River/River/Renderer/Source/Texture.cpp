@@ -74,6 +74,32 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 	return ret;
 }
 
+Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
+{
+	DX12Texture* ret = nullptr;
+
+	switch (RHI::Get()->GetAPIMode())
+	{
+	case APIMode::DX12:
+	{
+		if (name)
+		{
+			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
+			ret = dx12Rhi->CreateTextureWithResource(name, resoure);
+		}
+	}
+	break;
+	case APIMode::Vulkan:
+	{
+	}
+	break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath)
 {
 	DX12Texture* ret = nullptr;

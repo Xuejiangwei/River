@@ -14,13 +14,16 @@ RenderScene::RenderScene()
 	m_UnuseProxyId.clear();
 	m_Proxys.clear();
 	m_RenderPasses.clear();
-
-	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
-	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
 }
 
 RenderScene::~RenderScene()
 {
+}
+
+void RenderScene::Initialize()
+{
+	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
+	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
 }
 
 void RenderScene::Update(const RiverTime& time)

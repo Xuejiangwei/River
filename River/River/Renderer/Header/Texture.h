@@ -19,6 +19,8 @@ public:
 
 	static Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
 
+	static Texture* CreateTextureWithResource(const char* name, void* resoure);
+
 	static Texture* CreateImmediatelyTexture(const char* name, const char* filePath);
 
 protected:

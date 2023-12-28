@@ -15,6 +15,8 @@ public:
 
 	~RenderScene();
 
+	void Initialize();
+
 	void Update(const RiverTime& time);
 
 	void Render();

@@ -30,6 +30,7 @@ Application::Application()
 	};
 
 	RHI::Get()->Initialize(rhiParam);
+	m_RenderScene->Initialize();
 
 	AddLayer(MakeShare<UILayer>());
 }

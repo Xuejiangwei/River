@@ -11,6 +11,8 @@ public:
 	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path);
 
 	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height);
+
+	DX12Texture(const String& name, Microsoft::WRL::ComPtr<ID3D12Resource>* resource);
 	
 	virtual ~DX12Texture() override;
 

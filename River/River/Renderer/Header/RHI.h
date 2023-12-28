@@ -91,7 +91,7 @@ public:
 
 	virtual void Pick(int x, int y) = 0;
 
-	virtual void GenerateDrawCommands(int commandId) = 0;
+	virtual void GenerateDrawCommands(int commandId, ) = 0;
 
 	virtual int AllocDrawCommand() = 0;
 

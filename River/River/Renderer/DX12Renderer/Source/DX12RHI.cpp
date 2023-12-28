@@ -5,6 +5,7 @@
 #include "Renderer/Font/Header/Font.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
+#include "Renderer/DX12Renderer/Header/DX12CommandPool.h"
 #include "Renderer/DX12Renderer/Header/DX12DynamicDescriptorHeap.h"
 #include "Renderer/DX12Renderer/Header/DX12RootSignature.h"
 #include "Renderer/DX12Renderer/Header/DX12PipelineState.h"
@@ -432,9 +433,12 @@ Texture* DX12RHI::GetTexture(const char* name)
 
 void DX12RHI::GenerateDrawCommands(int commandId)
 {
-	auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
+	auto& cmdListAlloc = DX12CommandPool::GetCommandAllocator(commandId)[m_CurrFrameResourceIndex];
+	//auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
 	ThrowIfFailed(cmdListAlloc->Reset());
-	ThrowIfFailed(m_CommandList->Reset(cmdListAlloc.Get(), nullptr));
+	//auto commandList = m_CommandList;
+	auto& commandList = DX12CommandPool::GetCommandList(commandId)[m_CurrFrameResourceIndex];
+	ThrowIfFailed(commandList->Reset(cmdListAlloc.Get(), nullptr));
 
 
 	//m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
@@ -443,90 +447,146 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	/*auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
 	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());*/
 
-	m_CommandList->RSSetViewports(1, &m_ScreenViewport);
-	m_CommandList->RSSetScissorRects(1, &m_ScissorRect);
+	commandList->RSSetViewports(1, &m_ScreenViewport);
+	commandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	//清除后台缓冲与深度缓冲
-	m_CommandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-	m_CommandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-	m_CommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-
-	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
-	m_CommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 
-	uint32 offset = 0;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
-	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-	for (auto id : /*m_RenderItems*/m_DrawItems)
+	//清除后台缓冲与深度缓冲
+	
+	if (commandId == 0)
 	{
-		auto& it = m_RenderItems[id];
-		m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
-		m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
+		commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
+		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-		texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-		m_CommandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+		ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
+		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-		m_CommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+		
 
-		/*if (it.first == "sky")
+		uint32 offset = 0;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+		CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+
+		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
-			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+			auto& it = m_RenderItems[id];
+			commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
+			commandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
+
+
 			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-			m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
-		}*/
+			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
-		if (it.Material)
-		{
-			auto mat = it.Material;
-			if (mat->m_DiffuseTexture)
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
+			/*if (it.first == "sky")
 			{
-				m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
-					D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+				texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+			}*/
 
-				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				offset++;
-			}
-			if (mat->m_NormalTexture)
+			if (it.Material)
 			{
-				m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
-					D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				auto mat = it.Material;
+				if (mat->m_DiffuseTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				offset++;
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					offset++;
+				}
+				if (mat->m_NormalTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					offset++;
+				}
 			}
+
+			commandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
+			commandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
+			commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+
+			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			commandList->SetGraphicsRootConstantBufferView(1, 0);
+			commandList->DrawIndexedInstanced(it.IndexCount, 1,
+				it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
+	}
+	else
+	{
+		//commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-		m_CommandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
-		m_CommandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
-		m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-		D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+		ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
+		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-		m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-		m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-		m_CommandList->DrawIndexedInstanced(it.IndexCount, 1,
-			it.StartIndexLocation, it.BaseVertexLocation, 0);
+
+
+		uint32 offset = 0;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+		CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+		//auto& geo = m_Geometries["ui"];
+		//if (geo)
+		{
+			//auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
+			//CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+			////texDescriptor.Offset(0, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			//commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+
+			for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+			{
+				commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
+				commandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
+
+
+				texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+
+				commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
+				commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
+				commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
+				commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
+
+				commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				commandList->SetGraphicsRootConstantBufferView(1, 0);
+				commandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
+					m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
+			}
+
+			//m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		}
 	}
 
 
-	m_CommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	// Done recording commands.
-	ThrowIfFailed(m_CommandList->Close());
+	ThrowIfFailed(commandList->Close());
 
 	// Add the command list to the queue for execution.
-	ID3D12CommandList* cmdsLists[] = { m_CommandList.Get() };
+	ID3D12CommandList* cmdsLists[] = { commandList.Get() };
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	m_DrawItems.clear();
@@ -534,7 +594,7 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 
 int DX12RHI::AllocDrawCommand()
 {
-	return 0;
+	return DX12CommandPool::AllocaCommand();
 }
 
 void DX12RHI::DrawRenderItem(int renderItemId)
@@ -563,6 +623,19 @@ DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, con
 	if (name && data && m_Textures.find(name) == std::end(m_Textures))
 	{
 		auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, width, height);
+		ret = texture.get();
+		m_Textures[name] = std::move(texture);
+	}
+
+	return ret;
+}
+
+DX12Texture* DX12RHI::CreateTextureWithResource(const char* name, void* resource)
+{
+	DX12Texture* ret = nullptr;
+	if (name && resource && m_Textures.find(name) == std::end(m_Textures))
+	{
+		auto texture = MakeUnique<DX12Texture>(name, static_cast<Microsoft::WRL::ComPtr<ID3D12Resource>*>(resource));
 		ret = texture.get();
 		m_Textures[name] = std::move(texture);
 	}
