@@ -70,8 +70,10 @@ public:
 
 	virtual Texture* GetTexture(const char* name) override;
 
-	virtual void GenerateDrawCommands(int commandId) override;
-
+	virtual void GenerateDrawCommands(int commandId, FrameBufferType frameBufferType) override;
+	
+	virtual void OnSetRenderTargets(int commandId, FrameBufferType frameBufferType) override;
+	
 	virtual int AllocDrawCommand() override;
 
 	virtual void DrawRenderItem(int renderItemId) override;

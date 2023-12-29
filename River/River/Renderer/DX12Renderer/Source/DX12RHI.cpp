@@ -431,7 +431,7 @@ Texture* DX12RHI::GetTexture(const char* name)
 	return nullptr;
 }
 
-void DX12RHI::GenerateDrawCommands(int commandId)
+void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferType)
 {
 	auto& cmdListAlloc = DX12CommandPool::GetCommandAllocator(commandId)[m_CurrFrameResourceIndex];
 	//auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
@@ -458,29 +458,69 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 
-	//清除后台缓冲与深度缓冲
-	
-	if (commandId == 0)
+	OnSetRenderTargets(commandId, frameBufferType);
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
+	commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	uint32 offset = 0;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+
+	if (frameBufferType == FrameBufferType::UI)
 	{
-		commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
+		commandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
 
-		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+		for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+		{
+			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
-		ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
-		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
-		
+			/*if (it.Material)
+			{
+				auto mat = it.Material;
+				if (mat->m_DiffuseTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		uint32 offset = 0;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
-		CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					offset++;
+				}
+				if (mat->m_NormalTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					offset++;
+				}
+			}*/
+
+			commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
+			commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
+			commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
+
+			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			commandList->SetGraphicsRootConstantBufferView(1, 0);
+			commandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
+				m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
+		}
+	}
+	else
+	{
+		commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
+		commandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
 			auto& it = m_RenderItems[id];
-			commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
-			commandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
+			
 
 
 			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
@@ -528,55 +568,6 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 				it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
 	}
-	else
-	{
-		//commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
-		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
-
-		ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
-		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-
-
-		uint32 offset = 0;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
-		CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-		//auto& geo = m_Geometries["ui"];
-		//if (geo)
-		{
-			//auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
-			//CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-			////texDescriptor.Offset(0, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-			//commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
-
-			for (size_t i = 0; i < m_UIRenderItems.size(); i++)
-			{
-				commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
-				commandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
-
-
-				texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
-
-				commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
-
-				commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
-				commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
-				commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
-
-				commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-				commandList->SetGraphicsRootConstantBufferView(1, 0);
-				commandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
-					m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
-			}
-
-			//m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		}
-	}
 
 
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -590,6 +581,29 @@ void DX12RHI::GenerateDrawCommands(int commandId)
 	m_CommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
 
 	m_DrawItems.clear();
+}
+
+void DX12RHI::OnSetRenderTargets(int commandId, FrameBufferType frameBufferType)
+{
+	auto& commandList = DX12CommandPool::GetCommandList(commandId)[m_CurrFrameResourceIndex];
+	switch (frameBufferType)
+	{
+	case FrameBufferType::Color:
+	{
+		commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
+		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	}
+		break;
+	case FrameBufferType::UI:
+	{
+		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	}
+		break;
+	default:
+		break;
+	}
 }
 
 int DX12RHI::AllocDrawCommand()

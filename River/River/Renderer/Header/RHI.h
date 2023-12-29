@@ -7,6 +7,7 @@
 #include "IndexBuffer.h"
 #include "RenderItem.h"
 #include "Texture.h"
+#include "FrameBuffer.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 
 #include <vector>
@@ -91,7 +92,9 @@ public:
 
 	virtual void Pick(int x, int y) = 0;
 
-	virtual void GenerateDrawCommands(int commandId, ) = 0;
+	virtual void GenerateDrawCommands(int commandId, FrameBufferType frameBufferType) = 0;
+
+	virtual void OnSetRenderTargets(int commandId, FrameBufferType frameBufferType) = 0;
 
 	virtual int AllocDrawCommand() = 0;
 
@@ -128,12 +131,24 @@ public:
 	static Unique<RHI>& Get();
 
 protected:
+
+	template<typename T, typename SizeType = int>
+	class RecycleAllocator
+	{
+	public:
+		V_Array<SizeType> m_Unuse;
+		V_Array<T> m_Containor;
+	};
+
+protected:
 	bool m_ShowUIDebugOutline = false;
 
 	bool m4xMsaaState = false;
 	uint32_t m4xMsaaQuality = 0;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
+
+
 
 	V_Array<int> m_UnuseRenderItemId;
 	V_Array<RenderItem> m_RenderItems;

@@ -41,7 +41,7 @@ void RenderPassForwardRendering::Render()
 		}
 	}
 
-	rhi->GenerateDrawCommands(m_CommandId);
+	rhi->GenerateDrawCommands(m_CommandId, FrameBufferType::Color);
 	//rhi->Render();
 
 	m_RenderBatch.clear();
