@@ -199,7 +199,7 @@ void DX12RHI::BeginFrame()
 
 	//添加与删除Uniform数据
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-	for (auto& renderItem : m_RenderItems)
+	for (auto& renderItem : m_RenderItemAllocator.m_Containor)
 	{
 		if (renderItem.ObjCBIndex != (uint32)-1 && renderItem.NumFramesDirty > 0)
 		{
@@ -268,7 +268,7 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 
 		int index = 0;
 		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-		for (auto& it : m_RenderItems)
+		for (auto& it : m_RenderItemAllocator.m_Containor)
 		{
 
 			/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
@@ -330,7 +330,7 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices)
 {
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 	
-	int index = (int)m_RenderItems.size();
+	int index = (int)m_RenderItemAllocator.m_Containor.size();
 	for (size_t i = 0; i < m_UIRenderItems.size(); i++)
 	{
 		m_UIRenderItems[i].ObjCBIndex = index++;
@@ -519,7 +519,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
-			auto& it = m_RenderItems[id];
+			auto& it = m_RenderItemAllocator.m_Containor[id];
 			
 
 
@@ -755,7 +755,7 @@ void DX12RHI::Render()
 			uint32 offset = 0;
 			CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
 			CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
-			for (auto it : m_RenderItems)
+			for (auto it : m_RenderItemAllocator.m_Containor)
 			{
 				m_CommandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
 

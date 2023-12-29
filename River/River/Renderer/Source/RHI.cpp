@@ -3,6 +3,8 @@
 
 #include "Renderer/Font/Header/FontAtlas.h"
 
+#include <limits>
+
 #ifdef _WIN32
 	#include "Renderer/DX12Renderer/Header/DX12RHI.h"
 	#include "Renderer/DX12Renderer/Header/DX12VertexBuffer.h"
@@ -14,8 +16,8 @@ Unique<RHI> RHI::s_Instance = nullptr;
 
 RHI::RHI()
 {
-	m_RenderItems.clear();
-	m_UIRenderItems.clear();
+	m_RenderItemAllocator.Clear();
+	m_UIRenderItemAllocator.Clear();
 }
 
 RHI::~RHI()
@@ -56,23 +58,14 @@ FontAtlas* RHI::GetFont(const char* name) const
 
 RenderItem* RHI::AddRenderItem()
 {
-	RenderItem* renderItem = nullptr;
-	if (m_UnuseRenderItemId.size() > 0)
+	auto id = m_RenderItemAllocator.Alloc();
+	auto i = std::numeric_limits<int>::max();
+	/*if (id < 0 || id == std::numeric_limits<decltype(m_RenderItemAllocator)::sizeType>)
 	{
-		int id = m_UnuseRenderItemId.back();
-		m_UnuseRenderItemId.resize(m_UnuseRenderItemId.size() - 1);
-		m_RenderItems[id].ObjCBIndex = id;
-		renderItem = &m_RenderItems[id];
-	}
-	else
-	{
-		if (m_RenderItems.size() < GetRenderItemMaxCount())
-		{
-			m_RenderItems.resize(m_RenderItems.size() + 1);
-			m_RenderItems.back().ObjCBIndex = (int)m_RenderItems.size() - 1;
-			renderItem = &m_RenderItems.back();
-		}
-	}
+
+	}*/
+	m_RenderItemAllocator.m_Containor[id].ObjCBIndex = id;
+	RenderItem* renderItem = &m_RenderItemAllocator.m_Containor[id];
 
 	return renderItem;
 }
@@ -81,15 +74,15 @@ void RHI::RemoveRenderItem(int id)
 {
 	if (id > 0)
 	{
-		m_RenderItems[id].ObjCBIndex = -1;
-		m_UnuseRenderItemId.push_back(id);
+		m_RenderItemAllocator.m_Containor[id].ObjCBIndex = -1;
+		m_RenderItemAllocator.Recycle(id);
 	}
 }
 
 void RHI::UpdateRenderItem(int id, RenderItem* renderItem)
 {
-	m_RenderItems[id] = *renderItem;
-	m_RenderItems[id].ObjCBIndex = id;
+	/*m_RenderItems[id] = *renderItem;
+	m_RenderItems[id].ObjCBIndex = id;*/
 }
 
 void RHI::AddUIRenderItem(UIRenderItem& renderItem)

@@ -100,13 +100,13 @@ public:
 
 	virtual void DrawRenderItem(int renderItemId) = 0;
 
-	constexpr int GetRenderItemMaxCount() const { return 1000; }
+	constexpr int GetRenderItemMaxCount() { return m_RenderItemAllocator.MaxCount; }
 
-	constexpr int GetMaterialMaxCount() const { return 1000; }
+	constexpr int GetMaterialMaxCount() { return m_UIRenderItemAllocator.MaxCount; }
 
 	RenderItem* AddRenderItem();
 
-	RenderItem* GetRenderItem(int id) { return &m_RenderItems[id]; }
+	RenderItem* GetRenderItem(int id) { return &m_RenderItemAllocator.m_Containor[id]; }
 
 	void RemoveRenderItem(int id);
 	
@@ -132,12 +132,48 @@ public:
 
 protected:
 
-	template<typename T, typename SizeType = int>
+	template<typename T, typename SizeType = int, int Max = 0>
 	class RecycleAllocator
 	{
 	public:
+		using sizeType = SizeType;
+
+		void Clear()
+		{
+			m_Unuse.clear();
+			m_Containor.clear();
+		}
+
+		SizeType Alloc()
+		{
+			SizeType id = -1;
+			if (m_Unuse.size() > 0)
+			{
+				id = m_Unuse.back();
+				m_Unuse.resize(m_Unuse.size() - 1);
+			}
+			else
+			{
+				if (m_Containor.size() < Max)
+				{
+					id = (SizeType)m_Containor.size();
+					m_Containor.resize(m_Containor.size() + 1);
+				}
+			}
+
+			return id;
+		}
+
+		void Recycle(SizeType index)
+		{
+			m_Unuse.push_back(index);
+		}
+
+	public:
 		V_Array<SizeType> m_Unuse;
 		V_Array<T> m_Containor;
+
+		const int MaxCount = Max;
 	};
 
 protected:
@@ -150,8 +186,13 @@ protected:
 
 
 
-	V_Array<int> m_UnuseRenderItemId;
-	V_Array<RenderItem> m_RenderItems;
+	RecycleAllocator<RenderItem, int, 1000> m_RenderItemAllocator;
+	RecycleAllocator<UIRenderItem, int, 2000> m_UIRenderItemAllocator;
+
+	/*V_Array<int> m_UnuseRenderItemId;
+	V_Array<RenderItem> m_RenderItems;*/
+
+
 	V_Array<UIRenderItem> m_UIRenderItems;
 
 private:
