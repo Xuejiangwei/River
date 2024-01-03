@@ -9,8 +9,8 @@
 #endif // _WIN32
 
 
-Texture::Texture(const String& name, const String& path)
-	: m_Name(std::move(name)), m_Path(std::move(path))
+Texture::Texture(const String& name, const String& path, Type type)
+	: m_Name(std::move(name)), m_Path(std::move(path)), m_Type(type)
 {
 }
 
@@ -52,6 +52,42 @@ Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isI
 		{
 		}
 		break;
+	default:
+		break;
+	}
+
+	return texture;
+}
+
+Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool isImmediately)
+{
+	auto assetManager = AssetManager::Get();
+	Texture* texture = assetManager->GetTexture(name);
+	if (texture)
+	{
+		return texture;
+	}
+
+	switch (RHI::Get()->GetAPIMode())
+	{
+	case APIMode::DX12:
+	{
+		if (name && filePath)
+		{
+#ifdef _WIN32
+			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
+			auto newTexture = dx12Rhi->CreateCubeTexture(name, filePath, isImmediately);
+			texture = newTexture.get();
+
+			assetManager->AddCacheTexture(name, newTexture);
+#endif
+		}
+	}
+	break;
+	case APIMode::Vulkan:
+	{
+	}
+	break;
 	default:
 		break;
 	}

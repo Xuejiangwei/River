@@ -84,6 +84,8 @@ public:
 
 	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) = 0;
 
+	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) = 0;
+
 	virtual Unique<Shader> CreateShader(const char* name, const char* path) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;

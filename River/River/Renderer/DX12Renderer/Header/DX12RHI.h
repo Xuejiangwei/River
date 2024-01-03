@@ -75,6 +75,8 @@ public:
 
 	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) override;
 
+	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) override;
+
 	virtual Unique<Shader> CreateShader(const char* name, const char* path) override;
 
 	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);

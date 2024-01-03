@@ -4,8 +4,8 @@
 #include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 #include "Utils/Header/StringUtils.h"
 
-DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path)
-	: Texture(name, path)
+DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path, Type type)
+	: Texture(name, path, type)
 {
 	auto ws = S_2_WS(path);
 	DirectX::CreateDDSTextureFromFile12(device, commandList, ws.c_str(), m_Resource, m_UploadHeap);
@@ -13,7 +13,7 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.ViewDimension = IsCubeTexture() ? D3D12_SRV_DIMENSION_TEXTURECUBE : D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = m_Resource->GetDesc().Format;
@@ -25,7 +25,7 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 }
 
 DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height)
-	: Texture(name, "")
+	: Texture(name, "", Type::Texture2D)
 {
 	D3D12_HEAP_PROPERTIES props;
 	memset(&props, 0, sizeof(D3D12_HEAP_PROPERTIES));
@@ -121,7 +121,7 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 }
 
 DX12Texture::DX12Texture(const String& name, Microsoft::WRL::ComPtr<ID3D12Resource>* resource)
-	: Texture(name, ""), m_Resource(*resource)
+	: Texture(name, "", Type::Texture2D), m_Resource(*resource)
 {
 
 }

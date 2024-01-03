@@ -404,7 +404,7 @@ Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool 
 		ResetCmdListAlloc();
 	}
 
-	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path);
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::Texture2D);
 	
 	if (isImmediately)
 	{
@@ -413,6 +413,27 @@ Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool 
 		WaitFence();
 	}
 	
+
+	return texture;
+}
+
+Unique<Texture> DX12RHI::CreateCubeTexture(const char* name, const char* path, bool isImmediately)
+{
+	if (isImmediately)
+	{
+		WaitFence();
+		ResetCmdListAlloc();
+	}
+
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::CubeTexture);
+
+	if (isImmediately)
+	{
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
+	}
+
 
 	return texture;
 }
@@ -564,6 +585,11 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+
+					if (mat->m_DiffuseTexture->IsCubeTexture())
+					{
+						commandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+					}
 				}
 				if (mat->m_NormalTexture)
 				{
@@ -1098,7 +1124,7 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
 	/*CreateTexture("defaultDiffuseMap", DEFAULT_TEXTURE_PATH_10);
 	CreateTexture("defaultNormalMap", DEFAULT_TEXTURE_PATH_16);*/
-	Texture::CreateTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
+	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 
 	/*for (UINT i = 0; i < mSkinnedMats.size(); ++i)
 	{
@@ -1198,6 +1224,7 @@ void DX12RHI::InitBaseShaders()
 
 	Shader::CreateShader("opaque", DEFAULT_SHADER_PATH_DEFAULT);
 	Shader::CreateShader("ui", DEFAULT_SHADER_PATH_UI);
+	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2);
 }
 
 void DX12RHI::InitBaseRootSignatures()

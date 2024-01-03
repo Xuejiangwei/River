@@ -82,50 +82,6 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 		ThrowIfFailed(device->CreateRootSignature(0, pISignatureBlob->GetBufferPointer(), pISignatureBlob->GetBufferSize()
 			, IID_PPV_ARGS(&m_RootSignature)));
 	}
-	else
-	{
-		CD3DX12_DESCRIPTOR_RANGE table;
-		table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 0);
-
-		CD3DX12_ROOT_PARAMETER slotRootParameter[2];
-		slotRootParameter[0].InitAsConstants(16, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-		slotRootParameter[1].InitAsDescriptorTable(1, &table, D3D12_SHADER_VISIBILITY_PIXEL);
-
-		CD3DX12_STATIC_SAMPLER_DESC staticSampler = {};
-		staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-		staticSampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		staticSampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		staticSampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-		staticSampler.MipLODBias = 0.f;
-		staticSampler.MaxAnisotropy = 0;
-		staticSampler.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-		staticSampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-		staticSampler.MinLOD = 0.f;
-		staticSampler.MaxLOD = 0.f;
-		staticSampler.ShaderRegister = 0;
-		staticSampler.RegisterSpace = 0;
-		staticSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-		CD3DX12_ROOT_SIGNATURE_DESC desc(_countof(slotRootParameter),slotRootParameter,1, &staticSampler,
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
-
-		Microsoft::WRL::ComPtr<ID3DBlob> pISignatureBlob;
-		Microsoft::WRL::ComPtr<ID3DBlob> pIErrorBlob;
-
-		HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pISignatureBlob, &pIErrorBlob);
-
-		if (pIErrorBlob != nullptr)
-		{
-			::OutputDebugStringA((char*)pIErrorBlob->GetBufferPointer());
-		}
-		ThrowIfFailed(hr);
-
-		ThrowIfFailed(device->CreateRootSignature(0, pISignatureBlob->GetBufferPointer(), pISignatureBlob->GetBufferSize()
-			, IID_PPV_ARGS(&m_RootSignature)));
-	}
 
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
@@ -142,6 +98,12 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 		opaquePsoDesc.SampleDesc.Count = false ? 4 : 1;
 		opaquePsoDesc.SampleDesc.Quality = false ? (0 - 1) : 0;
 		opaquePsoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+		if (filePath == "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl")
+		{
+			opaquePsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+			opaquePsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		}
 
 		opaquePsoDesc.InputLayout = { layout->data(), (UINT)layout->size() };
 
