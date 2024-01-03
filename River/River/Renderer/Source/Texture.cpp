@@ -1,6 +1,7 @@
 #include "RiverPch.h"
 #include "Texture.h"
 #include "Renderer/Header/RHI.h"
+#include "Renderer/Header/AssetManager.h"
 
 #ifdef _WIN32
 	#include "Renderer/DX12Renderer/Header/DX12Texture.h"
@@ -22,18 +23,28 @@ void Texture::SetTextureId(uint32 textureId)
 	m_RendererId = textureId;
 }
 
-Texture* Texture::CreateTexture(const char* name, const char* filePath)
+Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isImmediately)
 {
-	Texture* ret = nullptr;
-	
+	auto assetManager = AssetManager::Get();
+	Texture* texture = assetManager->GetTexture(name);
+	if (texture)
+	{
+		return texture;
+	}
+
 	switch (RHI::Get()->GetAPIMode())
 	{
 	case APIMode::DX12:
 	{
 		if (name && filePath)
 		{
+#ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			ret = dx12Rhi->CreateTexture(name, filePath);
+			auto newTexture = dx12Rhi->CreateTexture(name, filePath, isImmediately);
+			texture = newTexture.get();
+
+			assetManager->AddCacheTexture(name, newTexture);
+#endif
 		}
 	}
 		break;
@@ -45,12 +56,17 @@ Texture* Texture::CreateTexture(const char* name, const char* filePath)
 		break;
 	}
 
-	return ret;
+	return texture;
 }
 
 Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data)
 {
-	DX12Texture* ret = nullptr;
+	auto assetManager = AssetManager::Get();
+	Texture* texture = assetManager->GetTexture(name);
+	if (texture)
+	{
+		return texture;
+	}
 
 	switch (RHI::Get()->GetAPIMode())
 	{
@@ -59,7 +75,10 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 		if (name)
 		{
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			ret = dx12Rhi->CreateTexture(name, width, height, data);
+			auto newTexture = dx12Rhi->CreateTexture(name, width, height, data);
+			texture = newTexture.get();
+
+			assetManager->AddCacheTexture(name, newTexture);
 		}
 	}
 	break;
@@ -71,12 +90,17 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 		break;
 	}
 
-	return ret;
+	return texture;
 }
 
 Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
 {
-	DX12Texture* ret = nullptr;
+	auto assetManager = AssetManager::Get();
+	Texture* texture = assetManager->GetTexture(name);
+	if (texture)
+	{
+		return texture;
+	}
 
 	switch (RHI::Get()->GetAPIMode())
 	{
@@ -85,7 +109,10 @@ Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
 		if (name)
 		{
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			ret = dx12Rhi->CreateTextureWithResource(name, resoure);
+			auto newTexture = dx12Rhi->CreateTextureWithResource(name, resoure);
+			texture = newTexture.get();
+
+			assetManager->AddCacheTexture(name, newTexture);
 		}
 	}
 	break;
@@ -97,38 +124,5 @@ Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
 		break;
 	}
 
-	return ret;
-}
-
-Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath)
-{
-	DX12Texture* ret = nullptr;
-
-	switch (RHI::Get()->GetAPIMode())
-	{
-	case APIMode::DX12:
-	{
-		if (name)
-		{
-			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			if (dx12Rhi->m_Textures.find(name) == dx12Rhi->m_Textures.end())
-			{
-				dx12Rhi->WaitFence();
-				dx12Rhi->ResetCmdListAlloc();
-				dx12Rhi->AddDescriptor(dx12Rhi->CreateTexture(name, filePath));
-				dx12Rhi->ExecuteCmdList(false);
-				dx12Rhi->WaitFence();
-			}
-		}
-	}
-	break;
-	case APIMode::Vulkan:
-	{
-	}
-	break;
-	default:
-		break;
-	}
-
-	return ret;
+	return texture;
 }

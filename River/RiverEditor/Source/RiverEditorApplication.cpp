@@ -37,38 +37,34 @@ void RiverEditorApplication::Initialize()
 		auto obj = ProduceObject();
 		obj->SetPosition({ 1.0f, 1.0f, 3.0f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultBox"));
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat");
-		auto texture = RHI::Get()->GetTexture("tilediffusemap");
-		auto normalTexture = RHI::Get()->GetTexture("tilenormalmap");
+		auto texture = AssetManager::Get()->GetTexture("tileDiffuseMap");
+		auto normalTexture = AssetManager::Get()->GetTexture("tileNormalMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
-	
-	
 
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ -1.0f, 1.0f, 3.0f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultBox"));
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat1");
-		auto texture = RHI::Get()->GetTexture("bricksDiffuseMap");
-		auto normalTexture = RHI::Get()->GetTexture("bricksNormalMap");
+		auto texture = AssetManager::Get()->GetTexture("bricksDiffuseMap");
+		auto normalTexture = AssetManager::Get()->GetTexture("bricksNormalMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
-
-	
 
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, 0.0f, 0.0f });
 		obj->SetScale({ 1.f,1.f,1.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(MeshAssetManager::Get().GetStaticMesh("DefaultSphere"));
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultSphere"));
 		auto mat = Material::CreateMaterial("MySkyMat");
-		auto texture = RHI::Get()->GetTexture("skyCubeMap");
+		auto texture = AssetManager::Get()->GetTexture("skyCubeMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, texture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}

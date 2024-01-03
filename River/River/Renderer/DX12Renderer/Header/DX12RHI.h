@@ -36,7 +36,6 @@ using namespace DirectX;
 
 class DX12RHI : public RHI
 {
-	friend static Texture* Texture::CreateImmediatelyTexture(const char* name, const char* filePath);
 public:
 	DX12RHI();
 	
@@ -68,8 +67,6 @@ public:
 
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) override;
 
-	virtual Texture* GetTexture(const char* name) override;
-
 	virtual void GenerateDrawCommands(int commandId, FrameBufferType frameBufferType) override;
 	
 	virtual void OnSetRenderTargets(int commandId, FrameBufferType frameBufferType) override;
@@ -78,19 +75,17 @@ public:
 
 	virtual void DrawRenderItem(int renderItemId) override;
 
-	DX12Texture* CreateTexture(const char* name, const char* filePath);
+	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) override;
+
+	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
+
+	Unique<Texture> CreateTextureWithResource(const char* name, void* resource);
 
 	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
 	//测试
 	void AddDescriptor(DX12Texture* texture);
 
-	DX12Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
-
-	DX12Texture* CreateTextureWithResource(const char* name, void* resource);
-
-	void RemoveTexture(const String& name);
-	
 	Unique<DX12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader);
 
 	Unique<DX12VertexBuffer> CreateVertexBuffer(void* vertices, uint32_t byteSize, uint32_t elementSize, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
@@ -121,8 +116,6 @@ private:
 	void InitBaseGeometry();
 
 	void InitBaseTexture();
-
-	void InitBaseMaterials();
 
 	void InitBaseShaders();
 
@@ -167,8 +160,6 @@ private:
 		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
-	void InitDescriptorHeaps();
-
 	void InitFrameBuffer();
 
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& items);
@@ -197,6 +188,7 @@ private:
 		使其可以在Shader代码中根据描述符的texture槽取texture资源时中可以连续并从头（即第0个）访问。
 	**/
 	Unique<DX12DynamicDescriptorHeap> m_DynamicDescriptorHeaps[RHI::GetFrameCount()];
+	int m_DynamicDescriptorOffset[RHI::GetFrameCount()];
 
 	int m_CurrFrameResourceIndex;
 	int m_CurrBackBufferIndex;
@@ -230,7 +222,7 @@ private:
 	RHIInitializeParam m_InitParam;
 	HashMap<String, Unique<DX12Shader>> m_Shaders;
 	HashMap<String, Unique<DX12RootSignature>> m_RootSignatures;
-	HashMap<String, Unique<DX12Texture>> m_Textures;
+	//HashMap<String, Unique<DX12Texture>> m_Textures;
 	HashMap<String, std::unique_ptr<Material>> m_Materials;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	V_Array<DX12RenderItem*> m_RitemLayer[(int)RenderLayer::LayerCount];

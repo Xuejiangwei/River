@@ -7,7 +7,7 @@
 #include "Renderer/Font/Header/Font.h"
 
 Text::Text()
-    : m_FontSize(10.0f)
+    : m_Font(nullptr), m_FontSize(10.0f)
 {
 }
 
@@ -20,6 +20,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 	//Widget::OnRender(vertices, indices);
 
     UIRenderItem renderItem;
+    renderItem.RenderTexture = m_Font;
     renderItem.BaseVertexLocation =  (int)vertices.size();
     renderItem.StartIndexLocation =  (int)indices.size();
 
@@ -144,6 +145,11 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     }
 
     RHI::Get()->AddUIRenderItem(renderItem);
+}
+
+void Text::SetFont(Texture* font)
+{
+    m_Font = font;
 }
 
 void Text::SetText(const char* text)

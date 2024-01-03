@@ -20,7 +20,7 @@ public:
 
 	~Material();
 
-	static Material* CreateMaterial(const char* name);
+	static Material* CreateMaterial(const char* name, const char* shaderName = nullptr);
 
 	void InitBaseParam(MaterialBlendMode blendMode, const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx,
 		Texture* diffuseSrvIndex, Texture* normalSrvIndex);

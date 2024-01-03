@@ -2,35 +2,35 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
 
-Unique<MeshAssetManager> MeshAssetManager::s_AssetManager = MakeUnique<MeshAssetManager>();
+Unique<AssetManager> AssetManager::s_AssetManager = MakeUnique<AssetManager>();
 
-MeshAssetManager::MeshAssetManager()
+AssetManager::AssetManager()
 {
 }
 
-MeshAssetManager::~MeshAssetManager()
+AssetManager::~AssetManager()
 {
 }
 
-void MeshAssetManager::LoadAsset(const char* path)
+void AssetManager::LoadAsset(const char* path)
 {
 }
 
-Mesh* MeshAssetManager::AddProduceMeshAsset(Unique<Mesh>& mesh)
+Mesh* AssetManager::AddProduceMeshAsset(Unique<Mesh>& mesh)
 {
 	auto meshRaw = mesh.get();
 	m_CacheMeshes[mesh->GetName()] = std::move(mesh);
 	return meshRaw;
 }
 
-StaticMesh* MeshAssetManager::AddStaticMesh(Unique<StaticMesh>& mesh)
+StaticMesh* AssetManager::AddStaticMesh(Unique<StaticMesh>& mesh)
 {
 	auto meshPtr = mesh.get();
 	m_CacheStaticMeshes[mesh->GetName()] = std::move(mesh);
 	return meshPtr;
 }
 
-StaticMesh* MeshAssetManager::GetStaticMesh(const char* name)
+StaticMesh* AssetManager::GetStaticMesh(const char* name)
 {
 	auto iter = m_CacheStaticMeshes.find(name);
 	if (iter != m_CacheStaticMeshes.end())
@@ -41,7 +41,45 @@ StaticMesh* MeshAssetManager::GetStaticMesh(const char* name)
 	return nullptr;
 }
 
-MeshAssetManager& MeshAssetManager::Get()
+Texture* AssetManager::GetTexture(const char* name)
 {
-	return *s_AssetManager.get();
+	auto iter = m_CacheTextures.find(name);
+	if (iter != m_CacheTextures.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
+}
+
+Texture* AssetManager::GetOrCreateTexture(const char* name, const char* path)
+{
+	auto iter = m_CacheTextures.find(name);
+	if (iter != m_CacheTextures.end())
+	{
+		return iter->second.get();
+	}
+
+	return Texture::CreateTexture(name, path);
+}
+
+Shader* AssetManager::GetShader(const char* name)
+{
+	auto iter = m_CacheShaders.find(name);
+	if (iter != m_CacheShaders.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
+}
+
+void AssetManager::AddCacheTexture(const char* name, Unique<Texture>& texture)
+{
+	m_CacheTextures[name] = River::Move(texture);
+}
+
+AssetManager* AssetManager::Get()
+{
+	return s_AssetManager.get();
 }

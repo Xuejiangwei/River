@@ -30,9 +30,12 @@ class Shader
 {
 public:
 	Shader();
+	
 	virtual ~Shader();
 
 	virtual void* GetShader() const = 0;
+
+	static Shader* CreateShader(const char* name, const char* path);
 
 	int GetShaderId() const { return m_ShaderId; }
 

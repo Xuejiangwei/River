@@ -103,6 +103,19 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	commandList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, nullptr);
 	commandList->ResourceBarrier(1, &barrier);
 
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	srvDesc.Format = m_Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = m_Resource->GetDesc().MipLevels;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handle;
+	m_DescriptorHandle = DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).ptr;
+	handle.ptr = m_DescriptorHandle;
+	device->CreateShaderResourceView(m_Resource.Get(), &srvDesc, handle);
+
 	//m_UploadHeap->Release();
 	//m_Resource->Release();
 }

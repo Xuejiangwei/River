@@ -1,15 +1,20 @@
 #pragma once
 #include "RiverHead.h"
+#include "Renderer/Header/Texture.h"
+#include "Renderer/Header/Shader.h"
 
 class Mesh;
 class StaticMesh;
 
-class MeshAssetManager
+class AssetManager
 {
+	friend Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isImmediately);
+	friend Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data);
+	friend Texture* Texture::CreateTextureWithResource(const char* name, void* resoure);
 public:
-	MeshAssetManager();
+	AssetManager();
 	
-	~MeshAssetManager();
+	~AssetManager();
 
 	void LoadAsset(const char* path);
 
@@ -19,12 +24,25 @@ public:
 
 	StaticMesh* GetStaticMesh(const char* name);
 
-public:
-	static MeshAssetManager& Get();
+	//Texture
+	Texture* GetTexture(const char* name);
+
+	Texture* GetOrCreateTexture(const char* name, const char* path);
+
+	//Shader
+	Shader* GetShader(const char* name);
 
 private:
-	static Unique<MeshAssetManager> s_AssetManager;
+	void AddCacheTexture(const char* name, Unique<Texture>& texture);
+
+public:
+	static AssetManager* Get();
+
+private:
+	static Unique<AssetManager> s_AssetManager;
 
 	HashMap<String, Unique<Mesh>> m_CacheMeshes;
 	HashMap<String, Unique<StaticMesh>> m_CacheStaticMeshes;
+	HashMap<String, Unique<Texture>> m_CacheTextures;
+	HashMap<String, Unique<Shader>> m_CacheShaders;
 };

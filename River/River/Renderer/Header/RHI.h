@@ -84,7 +84,7 @@ public:
 
 	virtual Material* CreateMaterial(const char* name) = 0;
 
-	virtual Texture* GetTexture(const char* name) = 0;
+	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;
 
@@ -116,7 +116,7 @@ public:
 
 	FontAtlas* GetFont(const char* name = nullptr) const;
 
-	void ClearUIRenderItem() { m_UIRenderItems.clear(); }
+	void ClearUIRenderItem() { m_UIRenderItemAllocator.Clear(); }
 
 	void AddUIRenderItem(UIRenderItem& renderItem);
 
@@ -127,7 +127,8 @@ public:
 public:
 	static constexpr int GetFrameCount() { return 2; }
 
-public:
+	static void SetAPIMode(APIMode mode) { s_APIMode = mode; }
+
 	static Unique<RHI>& Get();
 
 protected:
@@ -184,16 +185,8 @@ protected:
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
 
-
-
 	RecycleAllocator<RenderItem, int, 1000> m_RenderItemAllocator;
 	RecycleAllocator<UIRenderItem, int, 2000> m_UIRenderItemAllocator;
-
-	/*V_Array<int> m_UnuseRenderItemId;
-	V_Array<RenderItem> m_RenderItems;*/
-
-
-	V_Array<UIRenderItem> m_UIRenderItems;
 
 private:
 	static APIMode s_APIMode;

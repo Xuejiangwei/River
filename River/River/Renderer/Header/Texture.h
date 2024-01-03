@@ -15,13 +15,11 @@ public:
 
 	uint32 GetTextureId() const { return m_RendererId; }
 
-	static Texture* CreateTexture(const char* name, const char* filePath);
+	static Texture* CreateTexture(const char* name, const char* filePath, bool isImmediately = false);
 
 	static Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
 
 	static Texture* CreateTextureWithResource(const char* name, void* resoure);
-
-	static Texture* CreateImmediatelyTexture(const char* name, const char* filePath);
 
 protected:
 	String m_Name;

@@ -59,11 +59,14 @@ FontAtlas* RHI::GetFont(const char* name) const
 RenderItem* RHI::AddRenderItem()
 {
 	auto id = m_RenderItemAllocator.Alloc();
-	auto i = std::numeric_limits<int>::max();
-	/*if (id < 0 || id == std::numeric_limits<decltype(m_RenderItemAllocator)::sizeType>)
+#ifdef max
+#undef max
+	if (id < 0 || id == std::numeric_limits<decltype(m_RenderItemAllocator)::sizeType>::max())
 	{
+		return nullptr;
+	}
+#endif // max
 
-	}*/
 	m_RenderItemAllocator.m_Containor[id].ObjCBIndex = id;
 	RenderItem* renderItem = &m_RenderItemAllocator.m_Containor[id];
 
@@ -87,5 +90,5 @@ void RHI::UpdateRenderItem(int id, RenderItem* renderItem)
 
 void RHI::AddUIRenderItem(UIRenderItem& renderItem)
 {
-	m_UIRenderItems.push_back(renderItem);
+	m_UIRenderItemAllocator.m_Containor.push_back(renderItem);
 }

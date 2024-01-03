@@ -164,7 +164,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 		//LoadSkinnedModel();
 		//LoadTextures();
-		//InitDescriptorHeaps();
 		InitBaseRootSignatures();
 		InitBaseShaders();
 
@@ -217,6 +216,9 @@ void DX12RHI::BeginFrame()
 
 		}
 	}
+
+	//÷ÿ÷√∂ØÃ¨√Ë ˆ∆´“∆
+	m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] = 0;
 }
 
 void DX12RHI::EndFrame()
@@ -331,16 +333,15 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices)
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
 	
 	int index = (int)m_RenderItemAllocator.m_Containor.size();
-	for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+	for (size_t i = 0; i < m_UIRenderItemAllocator.m_Containor.size(); i++)
 	{
-		m_UIRenderItems[i].ObjCBIndex = index++;
-		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_UIRenderItems[i].World));
+		m_UIRenderItemAllocator.m_Containor[i].ObjCBIndex = index++;
+		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_UIRenderItemAllocator.m_Containor[i].World));
 
 		ObjectUniform objConstants;
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-		objConstants.MaterialIndex = m_UIRenderItems[i].MaterialIndex;//m_Materials["bricks0"]->MatCBIndex;
 
-		currObjectCB->CopyData(m_UIRenderItems[i].ObjCBIndex, objConstants);
+		currObjectCB->CopyData(m_UIRenderItemAllocator.m_Containor[i].ObjCBIndex, objConstants);
 	}
 
 	m_UIVertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), vertices.data(), (uint32)vertices.size(), 1000);
@@ -399,36 +400,25 @@ void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
 	m_ScreenViewport.TopLeftY = (float)yOffset;
 }
 
-DX12Texture* DX12RHI::CreateTexture(const char* name, const char* filePath)
+Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool isImmediately)
 {
-	DX12Texture* ret = nullptr;
-	if (name)
+	if (isImmediately)
 	{
-		if (name && filePath && m_Textures.find(name) == std::end(m_Textures))
-		{
-			auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, filePath);
-			ret = texture.get();
-			m_Textures[name] = std::move(texture);
-		}
-
-		if (m_Textures.find(name) != std::end(m_Textures))
-		{
-			ret = m_Textures[name].get();
-		}
+		WaitFence();
+		ResetCmdListAlloc();
 	}
 
-	return ret;
-}
-
-Texture* DX12RHI::GetTexture(const char* name)
-{
-	auto iter = m_Textures.find(name);
-	if (iter != m_Textures.end())
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path);
+	
+	if (isImmediately)
 	{
-		return iter->second.get();
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
 	}
+	
 
-	return nullptr;
+	return texture;
 }
 
 void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferType)
@@ -460,11 +450,13 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 
 	OnSetRenderTargets(commandId, frameBufferType);
 
+	int offset = 0;
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
 	commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	uint32 offset = 0;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(dynamicHeaps->GetCpuHeapStart());
+	dynamicHandle.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex], DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+
 	CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
 
 	if (frameBufferType == FrameBufferType::UI)
@@ -472,23 +464,25 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 		commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 		commandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
 
-		for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+		for (size_t i = 0; i < m_UIRenderItemAllocator.m_Containor.size(); i++)
 		{
-			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			auto& renderItem = m_UIRenderItemAllocator.m_Containor[i];
+			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
-			/*if (it.Material)
+			if (renderItem.Material)
 			{
-				auto mat = it.Material;
+				auto mat = renderItem.Material;
 				if (mat->m_DiffuseTexture)
 				{
 					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
 						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-					offset++;
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
 				if (mat->m_NormalTexture)
 				{
@@ -496,20 +490,29 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-					offset++;
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
-			}*/
+			}
+
+			if (renderItem.RenderTexture)
+			{
+				m_Device->CopyDescriptorsSimple(1, dynamicHandle, 
+					{ renderItem.RenderTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+			}
 
 			commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
 			commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
 			commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + renderItem.ObjCBIndex * objCBByteSize;
 
 			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 			commandList->SetGraphicsRootConstantBufferView(1, 0);
-			commandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
-				m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
+			commandList->DrawIndexedInstanced(renderItem.IndexCount, 1,
+				renderItem.StartIndexLocation, renderItem.BaseVertexLocation, 0);
 		}
 	}
 	else
@@ -521,9 +524,8 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
 			
-
-
-			texDescriptor.Offset(offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
@@ -544,7 +546,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-					offset++;
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
 				if (mat->m_NormalTexture)
 				{
@@ -552,7 +554,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-					offset++;
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
 			}
 
@@ -631,39 +633,14 @@ void DX12RHI::AddDescriptor(DX12Texture* texture)
 	m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, nullSrv);
 }
 
-DX12Texture* DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
+Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
 {
-	DX12Texture* ret = nullptr;
-	if (name && data && m_Textures.find(name) == std::end(m_Textures))
-	{
-		auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, width, height);
-		ret = texture.get();
-		m_Textures[name] = std::move(texture);
-	}
-
-	return ret;
+	return MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, width, height);;
 }
 
-DX12Texture* DX12RHI::CreateTextureWithResource(const char* name, void* resource)
+Unique<Texture> DX12RHI::CreateTextureWithResource(const char* name, void* resource)
 {
-	DX12Texture* ret = nullptr;
-	if (name && resource && m_Textures.find(name) == std::end(m_Textures))
-	{
-		auto texture = MakeUnique<DX12Texture>(name, static_cast<Microsoft::WRL::ComPtr<ID3D12Resource>*>(resource));
-		ret = texture.get();
-		m_Textures[name] = std::move(texture);
-	}
-
-	return ret;
-}
-
-void DX12RHI::RemoveTexture(const String& name)
-{
-	auto iter = m_Textures.find(name);
-	if (iter != m_Textures.end())
-	{
-		m_Textures.erase(iter);
-	}
+	return MakeUnique<DX12Texture>(name, static_cast<Microsoft::WRL::ComPtr<ID3D12Resource>*>(resource));
 }
 
 void DX12RHI::Render()
@@ -816,18 +793,18 @@ void DX12RHI::Render()
 			UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 			auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 
-			for (size_t i = 0; i < m_UIRenderItems.size(); i++)
+			for (size_t i = 0; i < m_UIRenderItemAllocator.m_Containor.size(); i++)
 			{
 				m_CommandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
 				m_CommandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
 				m_CommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItems[i].ObjCBIndex * objCBByteSize;
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + m_UIRenderItemAllocator.m_Containor[i].ObjCBIndex * objCBByteSize;
 
 				m_CommandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 				m_CommandList->SetGraphicsRootConstantBufferView(1, 0);
-				m_CommandList->DrawIndexedInstanced(m_UIRenderItems[i].IndexCount, 1,
-					m_UIRenderItems[i].StartIndexLocation, m_UIRenderItems[i].BaseVertexLocation, 0);
+				m_CommandList->DrawIndexedInstanced(m_UIRenderItemAllocator.m_Containor[i].IndexCount, 1,
+					m_UIRenderItemAllocator.m_Containor[i].StartIndexLocation, m_UIRenderItemAllocator.m_Containor[i].BaseVertexLocation, 0);
 			}
 
 			//m_CommandList->SetGraphicsRootDescriptorTable(5, m_SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -1076,15 +1053,17 @@ void DX12RHI::InitBaseGeometry()
 void DX12RHI::InitBaseTexture()
 {
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
-	CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
+	Texture::CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
 
-	CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
-	CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
-	/*CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
-	CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
-	CreateTexture("defaultDiffuseMap", DEFAULT_TEXTURE_PATH_10);
+	//CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
+
+	Texture::CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
+	Texture::CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
+	Texture::CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
+	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
+	/*CreateTexture("defaultDiffuseMap", DEFAULT_TEXTURE_PATH_10);
 	CreateTexture("defaultNormalMap", DEFAULT_TEXTURE_PATH_16);*/
-	CreateTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
+	Texture::CreateTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 
 	/*for (UINT i = 0; i < mSkinnedMats.size(); ++i)
 	{
@@ -1103,36 +1082,6 @@ void DX12RHI::InitBaseTexture()
 		mSkinnedTextureNames.push_back(diffuseName);
 		mSkinnedTextureNames.push_back(normalName);
 	}*/
-}
-
-void DX12RHI::InitBaseMaterials()
-{
-	auto bricks = MakeUnique<Material>("bricks0");
-	bricks->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 0.3f, 0, 
-		m_Textures["bricksDiffuseMap"].get(), m_Textures["bricksNormalMap"].get());
-	auto tile = MakeUnique<Material>("tile0");
-	tile->InitBaseParam(MaterialBlendMode::Opaque, { 0.9f, 0.9f, 0.9f, 1.0f }, { 0.2f, 0.2f, 0.2f }, 0.1f, 1,
-		m_Textures["tileDiffuseMap"].get(), m_Textures["tileNormalMap"].get());
-	auto mirror = MakeUnique<Material>("mirror0");
-	mirror->InitBaseParam(MaterialBlendMode::Opaque, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.98f, 0.97f, 0.95f }, 0.1f, 2,
-		m_Textures["defaultDiffuseMap"].get(), m_Textures["defaultNormalMap"].get());
-	auto sky = MakeUnique<Material>("sky");
-	sky->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3,
-		m_Textures["skyCubeMap"].get(), m_Textures["skyCubeMap"].get());
-
-	m_Materials["bricks0"] = std::move(bricks);
-	m_Materials["tile0"] = std::move(tile);
-	m_Materials["mirror0"] = std::move(mirror);
-	m_Materials["sky"] = std::move(sky);
-
-	UINT matCBIndex = 4;
-	for (UINT i = 0; i < mSkinnedMats.size(); ++i)
-	{
-		auto mat = MakeUnique<Material>(mSkinnedMats[i].m_Name.c_str());
-		mat->InitBaseParam(MaterialBlendMode::Opaque, *(River::Float4*)(&mSkinnedMats[i].DiffuseAlbedo), *(River::Float3*)(&mSkinnedMats[i].FresnelR0), mSkinnedMats[i].Roughness,
-			matCBIndex++, m_Textures[mSkinnedTextureNames[i * 2]].get(), m_Textures[mSkinnedTextureNames[i * 2 + 1]].get());//DiffuseSrvHeapIndex, NormalSrvHeapIndex);
-		m_Materials[mSkinnedMats[i].m_Name] = std::move(mat);
-	}
 }
 
 void DX12RHI::InitBaseShaders()
@@ -1946,123 +1895,6 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 		m_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_CurrBackBufferIndex,
 		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));//m_RtvDescriptorSize);
-}
-
-void DX12RHI::InitDescriptorHeaps()
-{
-	//
-	// Create the SRV heap.
-	//
-	/*D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 64;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SrvDescriptorHeap)));*/
-
-	
-
-	//
-	// Fill out the heap with actual descriptors.
-	//
-	
-
-	std::vector<DX12Texture*> tex2DList =
-	{
-		m_Textures["bricksDiffuseMap"].get(),
-		m_Textures["bricksNormalMap"].get(),
-		m_Textures["tileDiffuseMap"].get(),
-		m_Textures["tileNormalMap"].get(),
-		m_Textures["defaultDiffuseMap"].get(),
-		m_Textures["defaultNormalMap"].get(),
-		m_Textures["font"].get(),
-	};
-
-	for (UINT i = 0; i < (UINT)mSkinnedTextureNames.size(); ++i)
-	{
-		auto texResource = m_Textures[mSkinnedTextureNames[i]]->GetResource();
-		assert(texResource != nullptr);
-		tex2DList.push_back(m_Textures[mSkinnedTextureNames[i]].get());
-	}
-
-	auto skyCubeMap = m_Textures["skyCubeMap"]->GetResource();
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, (uint32)tex2DList.size() + 1));
-	for (uint32 i = 0; i < (uint32)tex2DList.size(); ++i)
-	{
-		tex2DList[i]->SetTextureId(i);
-		srvDesc.Format = tex2DList[i]->GetResource()->GetDesc().Format;
-		srvDesc.Texture2D.MipLevels = tex2DList[i]->GetResource()->GetDesc().MipLevels;
-		m_Device->CreateShaderResourceView(tex2DList[i]->GetResource().Get(), &srvDesc, hDescriptor);
-
-		// next descriptor
-		hDescriptor.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	}
-
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	srvDesc.TextureCube.MostDetailedMip = 0;
-	srvDesc.TextureCube.MipLevels = skyCubeMap->GetDesc().MipLevels;
-	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-	srvDesc.Format = skyCubeMap->GetDesc().Format;
-	m_Device->CreateShaderResourceView(skyCubeMap.Get(), &srvDesc, hDescriptor);
-
-	m_Textures["skyCubeMap"]->SetTextureId((UINT)tex2DList.size());
-	mShadowMapHeapIndex = m_Textures["skyCubeMap"]->GetTextureId() + 1;
-	mSsaoHeapIndexStart = mShadowMapHeapIndex + 1;
-	mSsaoAmbientMapIndex = mSsaoHeapIndexStart + 3;
-	mNullCubeSrvIndex = mSsaoHeapIndexStart + 5;
-	mNullTexSrvIndex1 = mNullCubeSrvIndex + 1;
-	mNullTexSrvIndex2 = mNullTexSrvIndex1 + 1;
-
-	auto nullSrv = DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mNullCubeSrvIndex);
-	mNullSrv = DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mNullCubeSrvIndex);
-
-	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
-	nullSrv.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
-
-	nullSrv.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-	m_Device->CreateShaderResourceView(nullptr, &srvDesc, nullSrv);
-
-	//m_ShadowMap->BuildDescriptors(GetCpuSrv(mShadowMapHeapIndex), GetGpuSrv(mShadowMapHeapIndex), GetDsv(1));
-	m_ShadowMap->BuildDescriptors(DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mShadowMapHeapIndex),
-		DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mShadowMapHeapIndex),
-		DX12DescriptorAllocator::CpuOffset(m_DsvHeap, 1));
-
-	m_Ssao->BuildDescriptors(
-		m_DepthStencilBuffer.Get(),
-		//GetCpuSrv(mSsaoHeapIndexStart),
-		DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mSsaoHeapIndexStart),
-		//GetGpuSrv(mSsaoHeapIndexStart),
-		DX12DescriptorAllocator::GpuOffset(m_SrvDescriptorHeap, mSsaoHeapIndexStart),
-		DX12DescriptorAllocator::CpuOffset(m_RtvDescriptorHeap, s_SwapChainBufferCount),
-		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), //m_CbvSrvUavDescriptorSize,
-		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));// m_RtvDescriptorSize);
-
-	/*nullSrv.Offset(1, mCbvSrvUavDescriptorSize);
-	auto mFontTextureView = mNullTexSrvIndex2 + 1;
-	{
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		ZeroMemory(&srvDesc, sizeof(srvDesc));
-		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = 1;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		md3dDevice->CreateShaderResourceView(mTextures["font"]->GetResource().Get(), &srvDesc, nullSrv);
-	}*/
-
 }
 
 void DX12RHI::InitFrameBuffer()

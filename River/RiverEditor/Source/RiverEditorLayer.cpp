@@ -2,6 +2,7 @@
 #include "RiverEditorLayer.h"
 #include "Application.h"
 #include "Renderer/Header/RHI.h"
+#include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
 #include "RiverUI/Header/Panel.h"
@@ -29,18 +30,21 @@ void RiverEditorLayer::OnAttach()
 	{
 		auto text = MakeShare<Text>();
 		text->SetSize(1, 1);
+		text->SetFont(AssetManager::Get()->GetTexture("font"));
 		text->SetFontSize(30.0f);
 		text->SetPosition(100, 200);
 		text->SetText(u8"齐鸟 This.aabbaabbaabb哈哈哈");
 		(*rootPanel)[text];
 
 		auto img = MakeShare<Image>();
+		img->SetTexture(AssetManager::Get()->GetTexture("bricksNormalMap"));
 		img->SetSize(100, 100);
 		img->SetPosition(100, 100);
 
 		(*rootPanel)[img];
 
 		auto img1 = MakeShare<Image>();
+		img1->SetTexture(AssetManager::Get()->GetTexture("tileNormalMap"));
 		img1->SetSize(100, 100);
 		img1->SetPosition(300, 300);
 

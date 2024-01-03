@@ -20,8 +20,8 @@ public:
 
 	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override { return true; }
 
-	void SetTexture(const char* texturePath);
+	void SetTexture(Texture* texture);
 
 private:
-	const char* m_Texture;
+	Texture* m_Texture;
 };

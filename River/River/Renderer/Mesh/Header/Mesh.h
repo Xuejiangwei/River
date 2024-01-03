@@ -79,13 +79,8 @@ public:
 
 	const V_Array<uint32>& GetIndices() const { return m_Indices; }
 
-	const V_Array<class Material*>& GetMeshMaterials() const { return m_Materials; }
-
-	void SetMeshMaterials(V_Array<class Material*> materials) { m_Materials = materials; }
-
 protected:
 	String m_Name;
 	V_Array<Vertex> m_Vertices;
 	V_Array<uint32> m_Indices;
-	V_Array<class Material*> m_Materials;
 };

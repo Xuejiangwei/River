@@ -43,10 +43,11 @@ struct UIRenderItem
 	int StartIndexLocation;
 	int BaseVertexLocation;
 	int ObjCBIndex;
-	int MaterialIndex;
+	class Material* Material;
+	class Texture* RenderTexture;
 
 	UIRenderItem()
-		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1), MaterialIndex(-1),
-		World(Matrix_4_4::UnitMatrix())
+		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1), Material(nullptr),
+		World(Matrix_4_4::UnitMatrix()), RenderTexture(nullptr)
 	{}
 };

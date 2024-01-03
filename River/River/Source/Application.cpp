@@ -28,7 +28,7 @@ Application::Application()
 	{
 		720, 720, m_Window->GetWindowHandle()
 	};
-
+	RHI::SetAPIMode(APIMode::DX12);
 	RHI::Get()->Initialize(rhiParam);
 	m_RenderScene->Initialize();
 

@@ -9,6 +9,7 @@
 #include "Renderer/Header/Texture.h"
 
 Image::Image()
+    : m_Texture(nullptr)
 {
 }
 
@@ -21,6 +22,7 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     Widget::OnRender(vertices, indices);
 
     UIRenderItem renderItem;
+    renderItem.RenderTexture = m_Texture;
     renderItem.BaseVertexLocation = (int)vertices.size();
     renderItem.IndexCount = 6;
     renderItem.StartIndexLocation = (int)indices.size();
@@ -53,7 +55,7 @@ bool Image::OnMouseButtonDown(const Event& e)
     //https://blog.csdn.net/zzy1448331580/article/details/104998941
     //https://blog.csdn.net/csdnyonghu123/article/details/102793869
 
-    auto texture = Texture::CreateImmediatelyTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds");
+    //auto texture = Texture::CreateTexture("MyImage", "F:\\GitHub\\River\\River\\Textures\\treearray.dds", true);
     return true;
 }
 
@@ -65,7 +67,7 @@ bool Image::OnMouseButtonRelease(const Event& e)
     return true;
 }
 
-void Image::SetTexture(const char* texturePath)
+void Image::SetTexture(Texture* texture)
 {
-	m_Texture = texturePath;
+	m_Texture = texture;
 }

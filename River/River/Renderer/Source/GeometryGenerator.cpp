@@ -88,7 +88,7 @@ StaticMesh* GeometryGenerator::CreateBoxStaticMesh(float width, float height, fl
 		Subdivide(vertices, indices);
 	}
 
-	return MeshAssetManager::Get().AddStaticMesh(MakeUnique<StaticMesh>("DefaultBox", vertices, indices, V_Array<class Material*>()));
+	return AssetManager::Get()->AddStaticMesh(MakeUnique<StaticMesh>("DefaultBox", vertices, indices, V_Array<class Material*>()));
 }
 
 StaticMesh* GeometryGenerator::CreateSphereStaticMesh(float radius, uint32_t sliceCount, uint32_t stackCount)
@@ -199,7 +199,7 @@ StaticMesh* GeometryGenerator::CreateSphereStaticMesh(float radius, uint32_t sli
 		indices.push_back(baseIndex + i + 1);
 	}
 
-	return MeshAssetManager::Get().AddStaticMesh(MakeUnique<StaticMesh>("DefaultSphere", vertices, indices, V_Array<class Material*>()));
+	return AssetManager::Get()->AddStaticMesh(MakeUnique<StaticMesh>("DefaultSphere", vertices, indices, V_Array<class Material*>()));
 }
 
 void GeometryGenerator::Subdivide(V_Array<Vertex>& vertices, V_Array<uint32>& indices)

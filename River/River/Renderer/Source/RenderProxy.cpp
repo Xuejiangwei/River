@@ -33,9 +33,9 @@ void RenderProxy::GetRenderData(RenderItem* renderItem)
 		renderItem->BaseVertexLocation = 0;
 		renderItem->IndexCount = (int)staticMeshComp->GetStaticMesh()->GetIndices().size();
 		renderItem->StartIndexLocation = 0;
-		if (staticMeshComp->GetStaticMesh()->GetMeshMaterials().size() > 0)
+		if (staticMeshComp->GetMeshMaterials().size() > 0)
 		{
-			renderItem->Material = staticMeshComp->GetStaticMesh()->GetMeshMaterials()[0];
+			renderItem->Material = staticMeshComp->GetMeshMaterials()[0];
 		}
 
 		/*if (renderItem.Material->m_Name == "MySkyMat")

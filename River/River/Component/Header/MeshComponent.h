@@ -17,10 +17,13 @@ public:
 
 	void SetStaticMesh(StaticMesh* staticMesh);
 
-	void SetStaticMeshMaterials(V_Array<Material*> materials);
+	void SetStaticMeshMaterials(V_Array<Material*> materials) { m_Materials = materials; }
+
+	const V_Array<class Material*>& GetMeshMaterials() const { return m_Materials; }
 
 	MaterialBlendMode GetMaterialMode() const;
 
 private:
 	StaticMesh* m_StaticMesh;
+	V_Array<class Material*> m_Materials;
 };

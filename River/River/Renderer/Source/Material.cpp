@@ -4,7 +4,7 @@
 
 Material::Material(String& name)
 	: m_Name(std::move(name)), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
-	, MatTransform(River::Matrix4x4::UnitMatrix()), m_DiffuseTexture(nullptr), m_NormalTexture(nullptr)
+	, MatTransform(River::Matrix4x4::UnitMatrix()), m_DiffuseTexture(nullptr), m_NormalTexture(nullptr), m_RefShaderId(-1)
 {
 	RHI::Get()->SetUpMaterial(this);
 }
@@ -19,9 +19,17 @@ Material::~Material()
 {
 }
 
-Material* Material::CreateMaterial(const char* name)
+Material* Material::CreateMaterial(const char* name, const char* shaderName)
 {
-	return RHI::Get()->CreateMaterial(name);
+	auto material = RHI::Get()->CreateMaterial(name);
+	
+	/*if (shaderName)
+	{
+		RHI::Get()->Get
+		material->m_RefShaderId = 0;
+	}*/
+
+	return material;
 }
 
 void Material::InitBaseParam(MaterialBlendMode blendMode, const River::Float4& diffuseAlbedo, const River::Float3& fresnelR0, float roughness, int cbIndx,
