@@ -32,11 +32,11 @@ Shader* Shader::CreateShader(const char* name, const char* path)
 		if (name && path)
 		{
 #ifdef _WIN32
-			/*auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			auto newTexture = dx12Rhi->CreateTexture(name, filePath, isImmediately);
-			texture = newTexture.get();
+			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
+			auto newShader = dx12Rhi->CreateShader(name, path);
+			shader = newShader.get();
 
-			assetManager->AddCacheTexture(name, newTexture);*/
+			assetManager->AddCacheShader(name, newShader);
 #endif
 		}
 	}
@@ -50,6 +50,4 @@ Shader* Shader::CreateShader(const char* name, const char* path)
 	}
 
 	return shader;
-
-    return nullptr;
 }

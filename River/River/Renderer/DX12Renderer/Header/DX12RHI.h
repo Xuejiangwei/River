@@ -59,8 +59,6 @@ public:
 
 	virtual void SetUpStaticMesh(StaticMesh* mesh) override;
 
-	virtual void SetUpMaterial(Material* material) override;
-
 	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) override;
 
 	virtual Material* CreateMaterial(const char* name) override;
@@ -76,6 +74,8 @@ public:
 	virtual void DrawRenderItem(int renderItemId) override;
 
 	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) override;
+
+	virtual Unique<Shader> CreateShader(const char* name, const char* path) override;
 
 	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
 
@@ -160,6 +160,8 @@ private:
 		return m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
+	void InitBaseMaterials();
+
 	void InitFrameBuffer();
 
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const V_Array<DX12RenderItem*>& items);
@@ -223,7 +225,6 @@ private:
 	HashMap<String, Unique<DX12Shader>> m_Shaders;
 	HashMap<String, Unique<DX12RootSignature>> m_RootSignatures;
 	//HashMap<String, Unique<DX12Texture>> m_Textures;
-	HashMap<String, std::unique_ptr<Material>> m_Materials;
 	V_Array<Unique<DX12FrameBuffer>> m_FrameBuffer;
 	V_Array<DX12RenderItem*> m_RitemLayer[(int)RenderLayer::LayerCount];
 	HashMap<String, Unique<DX12PipelineState>> m_PSOs;

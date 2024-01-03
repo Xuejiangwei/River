@@ -72,8 +72,6 @@ public:
 
 	virtual void SetUpStaticMesh(StaticMesh* mesh) = 0;
 
-	virtual void SetUpMaterial(Material* material) = 0;
-
 	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) = 0;
 
 	//virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
@@ -85,6 +83,8 @@ public:
 	virtual Material* CreateMaterial(const char* name) = 0;
 
 	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) = 0;
+
+	virtual Unique<Shader> CreateShader(const char* name, const char* path) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;
 
@@ -103,6 +103,8 @@ public:
 	constexpr int GetRenderItemMaxCount() { return m_RenderItemAllocator.MaxCount; }
 
 	constexpr int GetMaterialMaxCount() { return m_UIRenderItemAllocator.MaxCount; }
+
+	Material* GetMaterial(const char* name);
 
 	RenderItem* AddRenderItem();
 
@@ -184,6 +186,7 @@ protected:
 	uint32_t m4xMsaaQuality = 0;
 
 	HashMap<String, Unique<FontAtlas>> m_Fonts;
+	HashMap<String, Unique<Material>> m_Materials;
 
 	RecycleAllocator<RenderItem, int, 1000> m_RenderItemAllocator;
 	RecycleAllocator<UIRenderItem, int, 2000> m_UIRenderItemAllocator;

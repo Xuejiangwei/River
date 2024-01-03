@@ -3,6 +3,7 @@
 
 #include "Renderer/Font/Header/FontAtlas.h"
 #include "Renderer/Font/Header/Font.h"
+#include "Renderer/Header/AssetManager.h"
 #include "Renderer/DX12Renderer/Header/d3dx12.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 #include "Renderer/DX12Renderer/Header/DX12CommandPool.h"
@@ -164,7 +165,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 
 		//LoadSkinnedModel();
 		//LoadTextures();
-		InitBaseRootSignatures();
+		//InitBaseRootSignatures();
 		InitBaseShaders();
 
 		m_RawMeshVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<RawVertex>(1000).data(), 1000 * sizeof(RawVertex), (uint32)sizeof(RawVertex), &m_InputLayers["defaultRaw"]);
@@ -173,9 +174,9 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_UIVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<UIVertex>(1000).data(), 1000 * sizeof(UIVertex), (uint32)sizeof(UIVertex), &m_InputLayers["ui"]);
 		m_UIIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
 
-		//InitBaseMaterials();
+		InitBaseMaterials();
 		InitFrameBuffer();
-		InitBasePSOs();
+		//InitBasePSOs();
 
 		//m_Ssao->SetPSOs(m_PSOs["ssao"]->GetPSO(), m_PSOs["ssaoBlur"]->GetPSO());
 	}
@@ -364,11 +365,6 @@ void DX12RHI::SetUpStaticMesh(StaticMesh* mesh)
 	}
 }
 
-void DX12RHI::SetUpMaterial(Material* material)
-{
-	//TestMaterial = material;
-}
-
 Pair<void*, void*> DX12RHI::GetStaticMeshBuffer(const char* name)
 {
 	auto iter = m_MeshBuffer.find(name);
@@ -421,8 +417,20 @@ Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool 
 	return texture;
 }
 
+Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path)
+{
+	auto layout = &m_InputLayers["default"];
+	if (name == String("ui"))
+	{
+		layout = &m_InputLayers["ui"];
+	}
+	return MakeUnique<DX12Shader>(m_Device.Get(), path, Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>(nullptr, nullptr),
+		Pair<const char*, const char*>("VS", "PS"), Pair<const char*, const char*>{ "vs_5_1", "ps_5_1" }, layout);
+}
+
 void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferType)
 {
+	auto assetManager = AssetManager::Get();
 	auto& cmdListAlloc = DX12CommandPool::GetCommandAllocator(commandId)[m_CurrFrameResourceIndex];
 	//auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
 	ThrowIfFailed(cmdListAlloc->Reset());
@@ -461,18 +469,13 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 
 	if (frameBufferType == FrameBufferType::UI)
 	{
-		commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
-		commandList->SetPipelineState(m_PSOs["ui"]->GetPSO());
-
 		for (size_t i = 0; i < m_UIRenderItemAllocator.m_Containor.size(); i++)
 		{
 			auto& renderItem = m_UIRenderItemAllocator.m_Containor[i];
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
-			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 
-			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
-
+			bool setPipeline = false;
 			if (renderItem.Material)
 			{
 				auto mat = renderItem.Material;
@@ -492,7 +495,26 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
+
+				auto shader = static_cast<DX12Shader*>(mat->m_Shader);
+				if (shader)
+				{
+					commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+					commandList->SetPipelineState(shader->GetPipelineState());
+					setPipeline = true;
+				}
 			}
+			
+			if (!setPipeline)
+			{
+				auto shader = static_cast<DX12Shader*>(assetManager->GetShader("ui"));
+				commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+				commandList->SetPipelineState(shader->GetPipelineState());
+			}
+
+			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
 
 			if (renderItem.RenderTexture)
 			{
@@ -517,19 +539,13 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 	}
 	else
 	{
-		commandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
-		commandList->SetPipelineState(m_PSOs["opaque"]->GetPSO());
-
+		
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
 			
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
-			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
-
-			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
-
 			/*if (it.first == "sky")
 			{
 				CD3DX12_GPU_DESCRIPTOR_HANDLE texDescriptor(dynamicHeaps->GetGpuHeapStart());
@@ -537,6 +553,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 				m_CommandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
 			}*/
 
+			bool setPipeline = false;
 			if (it.Material)
 			{
 				auto mat = it.Material;
@@ -556,7 +573,25 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 				}
+
+				auto shader = static_cast<DX12Shader*>(mat->m_Shader);
+				if (shader)
+				{
+					commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+					commandList->SetPipelineState(shader->GetPipelineState());
+					setPipeline = true;
+				}
 			}
+
+			if (!setPipeline)
+			{
+				auto shader = static_cast<DX12Shader*>(assetManager->GetShader("default"));
+				commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+				commandList->SetPipelineState(shader->GetPipelineState());
+			}
+
+			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 			commandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
 			commandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
@@ -850,7 +885,7 @@ void DX12RHI::Render()
 
 Unique<DX12PipelineState> DX12RHI::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc, const V_Array<D3D12_INPUT_ELEMENT_DESC>* layout, Shader* vsShader, Shader* psShader)
 {
-	if (layout)
+	/*if (layout)
 	{
 		desc.InputLayout = { layout->data(), (UINT)layout->size() };
 	}
@@ -858,14 +893,14 @@ Unique<DX12PipelineState> DX12RHI::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC&
 	if (vsShader)
 	{
 		auto dx12VsShader = dynamic_cast<DX12Shader*>(vsShader);
-		desc.VS = { GetShaderBufferPointer(dx12VsShader), GetShaderBufferSize(dx12VsShader) };
+		desc.VS = { GetVSShaderBufferPointer(dx12VsShader), GetVSShaderBufferSize(dx12VsShader) };
 	}
 
 	if (psShader)
 	{
 		auto dx12PsShader = dynamic_cast<DX12Shader*>(psShader);
-		desc.PS = { GetShaderBufferPointer(dx12PsShader), GetShaderBufferSize(dx12PsShader) };
-	}
+		desc.PS = { GetPSShaderBufferPointer(dx12PsShader), GetPSShaderBufferSize(dx12PsShader) };
+	}*/
 
 	return MakeUnique<DX12PipelineState>(m_Device.Get(), desc);
 }
@@ -1098,12 +1133,12 @@ void DX12RHI::InitBaseShaders()
 		NULL, NULL
 	};
 
-	m_Shaders["standardVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, nullptr, "VS", "vs_5_1");
+	//m_Shaders["standardVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, { nullptr, nullptr }, { "VS", "PS"}, "vs_5_1");
 	//m_Shaders["skinnedVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_1, skinnedDefines, "VS", "vs_5_1");
-	m_Shaders["opaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, nullptr, "PS", "ps_5_1");
+	//m_Shaders["opaquePS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT, nullptr, "PS", "ps_5_1");
 
-	m_Shaders["rawVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "VS", "vs_5_1");
-	m_Shaders["rawPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "PS", "ps_5_1");
+	//m_Shaders["rawVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "VS", "vs_5_1");
+	//m_Shaders["rawPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_DEFAULT_RAW, nullptr, "PS", "ps_5_1");
 
 	/*m_Shaders["shadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, nullptr, "VS", "vs_5_1");
 	m_Shaders["skinnedShadowVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_3, skinnedDefines, "VS", "vs_5_1");
@@ -1126,8 +1161,8 @@ void DX12RHI::InitBaseShaders()
 	m_Shaders["skyVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "VS", "vs_5_1"); 
 	m_Shaders["skyPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_2, nullptr, "PS", "ps_5_1"); */
 
-	m_Shaders["uiVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "VS", "vs_5_1");
-	m_Shaders["uiPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "PS", "ps_5_1");
+	//m_Shaders["uiVS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "VS", "vs_5_1");
+	//m_Shaders["uiPS"] = MakeUnique<DX12Shader>(DEFAULT_SHADER_PATH_UI, nullptr, "PS", "ps_5_1");
 
 	m_InputLayers["default"] = 
 	{
@@ -1160,6 +1195,9 @@ void DX12RHI::InitBaseShaders()
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
+
+	Shader::CreateShader("opaque", DEFAULT_SHADER_PATH_DEFAULT);
+	Shader::CreateShader("ui", DEFAULT_SHADER_PATH_UI);
 }
 
 void DX12RHI::InitBaseRootSignatures()
@@ -1181,7 +1219,7 @@ void DX12RHI::InitBaseRootSignatures()
 		slotRootParameter[4].InitAsDescriptorTable(1, &texTable0, D3D12_SHADER_VISIBILITY_PIXEL);
 		slotRootParameter[5].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
-		auto staticSamplers = DX12RootSignature::GetStaticSamplers();
+		auto staticSamplers = GetStaticSamplers();
 
 		// A root signature is an array of root parameters.
 		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(6, slotRootParameter,
@@ -1895,6 +1933,13 @@ D3D12_CPU_DESCRIPTOR_HANDLE DX12RHI::CurrentBackBufferView() const
 		m_RtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_CurrBackBufferIndex,
 		DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));//m_RtvDescriptorSize);
+}
+
+void DX12RHI::InitBaseMaterials()
+{
+	auto mat = Material::CreateMaterial("uiDefault");
+	auto shader = AssetManager::Get()->GetShader("ui");
+	mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, nullptr, nullptr);
 }
 
 void DX12RHI::InitFrameBuffer()

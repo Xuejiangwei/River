@@ -14,8 +14,6 @@ public:
 
 	ID3D12RootSignature* GetRootSignature() { return m_RootSignature.Get(); }
 
-	static std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> GetStaticSamplers();
-
 private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
 };

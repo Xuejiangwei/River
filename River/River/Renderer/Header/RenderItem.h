@@ -47,7 +47,8 @@ struct UIRenderItem
 	class Texture* RenderTexture;
 
 	UIRenderItem()
-		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1), Material(nullptr),
-		World(Matrix_4_4::UnitMatrix()), RenderTexture(nullptr)
-	{}
+		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1),
+		World(Matrix_4_4::UnitMatrix()), Material(nullptr), RenderTexture(nullptr)
+	{
+	}
 };

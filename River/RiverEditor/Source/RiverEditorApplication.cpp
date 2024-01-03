@@ -32,7 +32,7 @@ void RiverEditorApplication::Initialize()
 
 	/*obj = ProduceObject();*/
 	
-
+	auto shader = AssetManager::Get()->GetShader("opaque");
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 1.0f, 1.0f, 3.0f });
@@ -41,7 +41,7 @@ void RiverEditorApplication::Initialize()
 		auto mat = Material::CreateMaterial("MyMat");
 		auto texture = AssetManager::Get()->GetTexture("tileDiffuseMap");
 		auto normalTexture = AssetManager::Get()->GetTexture("tileNormalMap");
-		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 
@@ -53,7 +53,7 @@ void RiverEditorApplication::Initialize()
 		auto mat = Material::CreateMaterial("MyMat1");
 		auto texture = AssetManager::Get()->GetTexture("bricksDiffuseMap");
 		auto normalTexture = AssetManager::Get()->GetTexture("bricksNormalMap");
-		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 
@@ -65,7 +65,7 @@ void RiverEditorApplication::Initialize()
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultSphere"));
 		auto mat = Material::CreateMaterial("MySkyMat");
 		auto texture = AssetManager::Get()->GetTexture("skyCubeMap");
-		mat->InitBaseParam(MaterialBlendMode::Opaque, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, texture);
+		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, nullptr);
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 }

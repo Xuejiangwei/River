@@ -33,7 +33,9 @@ public:
 	
 	virtual ~Shader();
 
-	virtual void* GetShader() const = 0;
+	virtual void* GetVSShader() const = 0;
+	
+	virtual void* GetPSShader() const = 0;
 
 	static Shader* CreateShader(const char* name, const char* path);
 

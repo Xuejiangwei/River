@@ -2,6 +2,7 @@
 
 #include <wrl.h>
 #include <d3d12.h>
+#include "d3dx12.h"
 #include "DirectXMath.h"
 #include "ShaderDataType.h"
 
@@ -54,3 +55,5 @@ Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
 	const std::string& target);
 
 DXGI_FORMAT ShaderDateTypeToDXGIFormat(ShaderDataType type);
+
+std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> GetStaticSamplers();

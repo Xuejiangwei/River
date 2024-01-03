@@ -2,6 +2,7 @@
 #include "RHI.h"
 
 #include "Renderer/Font/Header/FontAtlas.h"
+#include "Renderer/Header/Material.h"
 
 #include <limits>
 
@@ -54,6 +55,17 @@ FontAtlas* RHI::GetFont(const char* name) const
 
 	auto iter = m_Fonts.find(name);
 	return iter->second.get();
+}
+
+Material* RHI::GetMaterial(const char* name)
+{
+	auto iter = m_Materials.find(name);
+	if (iter != m_Materials.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
 }
 
 RenderItem* RHI::AddRenderItem()

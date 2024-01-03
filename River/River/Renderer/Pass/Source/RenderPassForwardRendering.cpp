@@ -29,7 +29,7 @@ void RenderPassForwardRendering::Render()
 		if (renderProxy)
 		{	
 			auto renderItem = rhi->GetRenderItem(renderProxy->GetRenderItemId());
-			m_RenderBatch[renderItem->Material ? renderItem->Material->m_RefShaderId : 0].push_back(renderProxy->GetRenderItemId());
+			m_RenderBatch[renderItem->Material ? renderItem->Material->m_Shader->GetShaderId() : 0].push_back(renderProxy->GetRenderItemId());
 		}
 	}
 
