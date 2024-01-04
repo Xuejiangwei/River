@@ -27,7 +27,7 @@ void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 	{
         auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
 
-        FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
+        Float2 startPos = GetAbsoluteLeftTopPosition();
 
         UIRenderItem renderItem;
         renderItem.BaseVertexLocation = (int)vertices.size();
@@ -114,7 +114,7 @@ void Widget::SetPosition(float x, float y)
 	m_Position.y = y;
 }
 
-FLOAT_2 Widget::GetAbsoluteLeftTopPosition()
+Float2 Widget::GetAbsoluteLeftTopPosition()
 {
     switch (m_WidgetAlign)
     {
@@ -139,9 +139,9 @@ FLOAT_2 Widget::GetAbsoluteLeftTopPosition()
     return { 0.0f, 0.0f };
 }
 
-FLOAT_2 Widget::GetWindowPosition()
+Float2 Widget::GetWindowPosition()
 {
-    FLOAT_2 pos = GetAbsoluteLeftTopPosition();
+    Float2 pos = GetAbsoluteLeftTopPosition();
     if (m_Parent)
     {
         pos += m_Parent->GetWindowPosition();

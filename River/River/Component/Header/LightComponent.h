@@ -11,9 +11,9 @@ public:
 
 	virtual void Tick(float deltaTime) override;
 
-
-
 private:
-	FLOAT_3 m_Position;
-	FLOAT_3 m_Rotation;
+	float m_Rotation;
+	Float3 m_Position;
+	Float3 m_Direction;
+	Float3 m_CurrDirection;
 };

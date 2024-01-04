@@ -1,7 +1,7 @@
 #include "RiverPch.h"
 #include <DirectXPackedVector.h>
 #include "Renderer/DX12Renderer/Header/DX12Ssao.h"
-#include "MathHelper.h"
+#include "Math/Header/Probability.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;

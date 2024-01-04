@@ -1,5 +1,6 @@
 #include "RiverPch.h"
 #include "Renderer/DX12Renderer/Header/DX12SkinnedData.h"
+#include "Math/Header/BaseFunction.h"
 
 using namespace DirectX;
 

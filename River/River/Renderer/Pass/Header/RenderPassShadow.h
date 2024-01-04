@@ -12,5 +12,6 @@ public:
 	virtual void Render() override;
 
 private:
-
+	int m_CommandId;
+	HashMap<int, V_Array<int>> m_RenderBatch;
 };

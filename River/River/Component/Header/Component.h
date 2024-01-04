@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RiverHead.h"
-#include "MathStruct.h"
 
 class Component
 {

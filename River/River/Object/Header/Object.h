@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
-#include "MathStruct.h"
+
 
 class Component;
 class RenderProxy;
@@ -19,20 +19,20 @@ public:
 
 	const Transform& GetTransform() const { return m_Transform; }
 
-	void SetPosition(const FLOAT_3& position);
+	void SetPosition(const Float3& position);
 
-	void SetRotation(const FLOAT_4& rotation);
+	void SetRotation(const Float4& rotation);
 
-	void SetScale(const FLOAT_3& scale);
+	void SetScale(const Float3& scale);
 
 	void SetTransform(const Transform& transform);
 
 	RenderProxy* GetRenderProxy();
 
 private:
-	void SetTransform(FLOAT_3* position, FLOAT_4* rotation, FLOAT_3* scale);
+	void SetTransform(Float3* position, Float4* rotation, Float3* scale);
 	
-	void SetTransform(const FLOAT_3* position, const FLOAT_4* rotation, const FLOAT_3* scale);
+	void SetTransform(const Float3* position, const Float4* rotation, const Float3* scale);
 
 public:
 	template<typename T>

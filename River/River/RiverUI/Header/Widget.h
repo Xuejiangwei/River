@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MathStruct.h"
+
 #include "RiverUI.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 #include "Renderer/Header/RenderItem.h"
@@ -40,19 +40,19 @@ public:
 
 	WidgetAnchors GetWidgetAlign() const { return m_WidgetAlign; }
 
-	FLOAT_2 GetSize() const { return m_Size; }
+	Float2 GetSize() const { return m_Size; }
 
-	FLOAT_2 GetPosition() const { return m_Position; }
+	Float2 GetPosition() const { return m_Position; }
 
-	FLOAT_2 GetAbsoluteLeftTopPosition();
+	Float2 GetAbsoluteLeftTopPosition();
 
-	FLOAT_2 GetWindowPosition();
+	Float2 GetWindowPosition();
 
 protected:
 	WidgetAnchors m_WidgetAlign;
-	FLOAT_2 m_Alignment;
-	FLOAT_2 m_Size;
-	FLOAT_2 m_Position;
+	Float2 m_Alignment;
+	Float2 m_Size;
+	Float2 m_Position;
 
 	Widget* m_Parent;
 };

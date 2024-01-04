@@ -7,7 +7,6 @@
 #include <vector>
 #include "RiverHead.h"
 #include "DX12Util.h"
-#include "MathHelper.h"
 
 ///<summary>
 /// A Keyframe defines the bone transformation at an instant in time.

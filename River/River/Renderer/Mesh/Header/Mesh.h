@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
-#include "MathStruct.h"
+
 
 struct UIVertex
 {
@@ -22,8 +22,8 @@ struct UIVertex
 		Color[3] = a;
 	}
 
-	FLOAT_3 Pos;
-	FLOAT_2 TexC;
+	Float3 Pos;
+	Float2 TexC;
 	uint8 Color[4];
 };
 
@@ -40,9 +40,9 @@ struct RawVertex
 		Color[3] = a;
 	}
 
-	FLOAT_3 Pos;
+	Float3 Pos;
 	uint8 Color[4];
-	FLOAT_2 TexC;
+	Float2 TexC;
 };
 
 struct Vertex
@@ -53,14 +53,14 @@ struct Vertex
 		: Pos(x, y, z), Normal(nx, ny, nz), TangentU(tx, ty, tz), TexC(u, v)
 	{}
 
-	Vertex(FLOAT_3 pos, FLOAT_3 normal, FLOAT_3 tangent, FLOAT_2 tex)
+	Vertex(Float3 pos, Float3 normal, Float3 tangent, Float2 tex)
 		: Pos(pos), Normal(normal), TangentU(tangent), TexC(tex)
 	{}
 
-	FLOAT_3 Pos;
-	FLOAT_3 Normal;
-	FLOAT_2 TexC;
-	FLOAT_3 TangentU;
+	Float3 Pos;
+	Float3 Normal;
+	Float2 TexC;
+	Float3 TangentU;
 
 };
 

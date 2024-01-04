@@ -1,6 +1,6 @@
 #pragma once
 #include "RiverHead.h"
-#include "MathStruct.h"
+
 
 enum class PrimitiveType
 {
@@ -9,8 +9,8 @@ enum class PrimitiveType
 
 struct RenderItem
 {
-	Matrix_4_4 World;
-	Matrix_4_4 TexTransform;
+	Matrix4x4 World;
+	Matrix4x4 TexTransform;
 
 
 	void* VertexBuffer;
@@ -31,13 +31,13 @@ struct RenderItem
 		: NumFramesDirty(3), InstanceCount(1), IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), 
 		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1),
 		Material(nullptr), VertexBuffer(nullptr), IndexBuffer(nullptr),
-		World(Matrix_4_4::UnitMatrix()), TexTransform(Matrix_4_4::UnitMatrix())
+		World(Matrix4x4::UnitMatrix()), TexTransform(Matrix4x4::UnitMatrix())
 	{}
 };
 
 struct UIRenderItem
 {
-	Matrix_4_4 World;
+	Matrix4x4 World;
 
 	int IndexCount;
 	int StartIndexLocation;
@@ -48,7 +48,7 @@ struct UIRenderItem
 
 	UIRenderItem()
 		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1),
-		World(Matrix_4_4::UnitMatrix()), Material(nullptr), RenderTexture(nullptr)
+		World(Matrix4x4::UnitMatrix()), Material(nullptr), RenderTexture(nullptr)
 	{
 	}
 };

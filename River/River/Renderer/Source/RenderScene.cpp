@@ -22,6 +22,7 @@ RenderScene::~RenderScene()
 
 void RenderScene::Initialize()
 {
+	m_RenderPasses.push_back(MakeShare<RenderPassShadow>());
 	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
 	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
 }

@@ -86,7 +86,7 @@ public:
 
 	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) = 0;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path) = 0;
+	virtual Unique<Shader> CreateShader(const char* name, const char* path, ShaderParam* param = nullptr) = 0;
 
 	virtual class Camera* GetMainCamera() = 0;
 
@@ -116,8 +116,6 @@ public:
 	
 	void UpdateRenderItem(int id, RenderItem* renderItem);
 
-	APIMode GetAPIMode() const { return s_APIMode; }
-
 	FontAtlas* GetFont(const char* name = nullptr) const;
 
 	void ClearUIRenderItem() { m_UIRenderItemAllocator.Clear(); }
@@ -129,6 +127,8 @@ public:
 	void SetShowUIDebugOutline(bool showOutline) { m_ShowUIDebugOutline = showOutline; }
 
 public:
+	static APIMode GetAPIMode() { return s_APIMode; }
+
 	static constexpr int GetFrameCount() { return 2; }
 
 	static void SetAPIMode(APIMode mode) { s_APIMode = mode; }

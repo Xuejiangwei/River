@@ -3,7 +3,7 @@
 #include "FrameBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12Util.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
-
+#include "Renderer/Pass/Header/RenderPass.h"
 #include <d3d12.h>
 #include <wrl.h>
 #include "DirectXMath.h"
@@ -142,7 +142,7 @@ public:
 	friend class Ssao;
 	friend class DX12ShadowPass;
 private:
-	Unique<DX12UniformBuffer<PassUniform>> m_PassUniform;
+	Unique<DX12UniformBuffer<RenderPass::PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
 	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
 	Unique<DX12UniformBuffer<SkinnedUniform>> m_SkinnedUniform;

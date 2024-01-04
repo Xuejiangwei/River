@@ -1,12 +1,12 @@
 #include "RiverPch.h"
-#include "MathHelper.h"
 #include "RiverUI/Header/Panel.h"
 #include "RiverUI/Header/Image.h"
 #include "RiverUI/Header/Button.h"
 
+#include "Renderer/Header/Texture.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 
-#include "Renderer/Header/Texture.h"
+#include "Math/Header/Geometric.h"
 
 Panel::Panel()
 {
@@ -62,14 +62,14 @@ void Panel::AddMouseButtonDownDetector(Widget* widget)
 
 bool Panel::MouseIsInPanel(int x, int y)
 {
-	FLOAT_2 pos = GetWindowPosition();
-	FLOAT_2 size = GetSize();
+	Float2 pos = GetWindowPosition();
+	Float2 size = GetSize();
 	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
 }
 
 bool Panel::MouseInWidget(Widget* widget, int x, int y)
 {
-	FLOAT_2 pos = widget->GetWindowPosition();
-	FLOAT_2 size = widget->GetSize();
+	Float2 pos = widget->GetWindowPosition();
+	Float2 size = widget->GetSize();
 	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
 }

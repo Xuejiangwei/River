@@ -32,7 +32,7 @@ Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isI
 		return texture;
 	}
 
-	switch (RHI::Get()->GetAPIMode())
+	switch (RHI::GetAPIMode())
 	{
 	case APIMode::DX12:
 	{
@@ -68,7 +68,7 @@ Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool
 		return texture;
 	}
 
-	switch (RHI::Get()->GetAPIMode())
+	switch (RHI::GetAPIMode())
 	{
 	case APIMode::DX12:
 	{
@@ -104,7 +104,7 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 		return texture;
 	}
 
-	switch (RHI::Get()->GetAPIMode())
+	switch (RHI::GetAPIMode())
 	{
 	case APIMode::DX12:
 	{
@@ -138,7 +138,7 @@ Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
 		return texture;
 	}
 
-	switch (RHI::Get()->GetAPIMode())
+	switch (RHI::GetAPIMode())
 	{
 	case APIMode::DX12:
 	{

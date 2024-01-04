@@ -165,9 +165,9 @@ void Font::AddGlyph(uint16 codepoint, float x0, float y0, float x1, float y1, fl
     //MetricsTotalSurface += (int)((glyph.U1 - glyph.U0) * m_Atlas->m_TextureWidth + pad) * (int)((glyph.V1 - glyph.V0) * m_Atlas->m_TextureHeight + pad);
 }
 
-FLOAT_2 Font::CalcTextSize(const String& text, float size)
+Float2 Font::CalcTextSize(const String& text, float size)
 {
-    FLOAT_2 text_size;
+    Float2 text_size;
     float fontSize = m_SizePixels;
     float line_width = 0.0f;
     float line_height = fontSize;

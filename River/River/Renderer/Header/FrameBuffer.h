@@ -5,6 +5,7 @@
 enum class FrameBufferType : uint8
 {
 	Color,
+	ShadowMap,
 	UI,
 };
 

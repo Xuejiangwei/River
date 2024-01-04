@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
-#include "MathStruct.h"
+
 #include "Renderer/Font/Header/TTF_Info.h"
 
 enum ImFontAtlasFlags_
@@ -38,14 +38,14 @@ private:
 public:
 	V_Array<uint8> m_Data;
 	V_Array<uint8> m_PixelAlpha8;
-	V_Array<UINT8_4> m_PixelRGBA32;
+	V_Array<Byte4> m_PixelRGBA32;
 	V_Array<FontAtlasCustomRect> m_CustomRects;
 
 	int m_TextureWidth;
 	int m_TextureHeight;
-	FLOAT_2 m_TextureUvScale;
-	FLOAT_2 m_TextureUvWhitePixel;
-	FLOAT_4 m_TexUvLines[63 + 1];
+	Float2 m_TextureUvScale;
+	Float2 m_TextureUvWhitePixel;
+	Float4 m_TexUvLines[63 + 1];
 
 	int m_PackIdMouseCursors; // Custom texture rectangle ID for white pixel and mouse cursors
 	int m_PackIdLines;        // Custom texture rectangle ID for baked anti-aliased lines

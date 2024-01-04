@@ -237,6 +237,9 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12CommandPool.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Object\Source\LightObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -318,12 +321,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Header\ShaderDataType.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Header\MathStruct.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Header\MathHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\Event.h">
@@ -492,6 +489,27 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12CommandPool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Header\LightObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\BaseStruct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\Trigonometric.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\Geometric.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\BaseDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\Probability.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\BaseFunction.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

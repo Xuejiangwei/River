@@ -1,6 +1,7 @@
 #include "RiverPch.h"
 #include "RendererUtil.h"
 
+#include "Math/Header/Geometric.h"
 #include "Renderer/Font/Header/FontAtlas.h"
 #include "Renderer/Font/Header/Font.h"
 #include "Renderer/Header/AssetManager.h"
@@ -438,7 +439,7 @@ Unique<Texture> DX12RHI::CreateCubeTexture(const char* name, const char* path, b
 	return texture;
 }
 
-Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path)
+Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, ShaderParam* param)
 {
 	auto layout = &m_InputLayers["default"];
 	if (name == String("ui"))
@@ -446,7 +447,7 @@ Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path)
 		layout = &m_InputLayers["ui"];
 	}
 	return MakeUnique<DX12Shader>(m_Device.Get(), path, Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>(nullptr, nullptr),
-		Pair<const char*, const char*>("VS", "PS"), Pair<const char*, const char*>{ "vs_5_1", "ps_5_1" }, layout);
+		Pair<const char*, const char*>("VS", "PS"), Pair<const char*, const char*>{ "vs_5_1", "ps_5_1" }, layout, param);
 }
 
 void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferType)
@@ -1024,7 +1025,7 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 
-	m_PrespectiveCamera.SetLens(0.25f * PI, (float)param.WindowWidth / param.WindowHeight, 1.0f, 1000.0f);
+	m_PrespectiveCamera.SetLens(0.25f * MATH_PI, (float)param.WindowWidth / param.WindowHeight, 1.0f, 1000.0f);
 	if (m_Ssao != nullptr)
 	{
 		m_Ssao->OnResize(param.WindowWidth, param.WindowHeight);
@@ -1109,6 +1110,7 @@ void DX12RHI::InitBaseGeometry()
 {
 	GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
+	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
 }
 
 void DX12RHI::InitBaseTexture()
@@ -1224,7 +1226,9 @@ void DX12RHI::InitBaseShaders()
 
 	Shader::CreateShader("opaque", DEFAULT_SHADER_PATH_DEFAULT);
 	Shader::CreateShader("ui", DEFAULT_SHADER_PATH_UI);
-	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2);
+
+	ShaderParam param = { CullMode::None, ComparisonFunc::LessEqual };
+	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2, &param);
 }
 
 void DX12RHI::InitBaseRootSignatures()
@@ -1839,28 +1843,55 @@ void DX12RHI::UpdateMainPass(/*const RiverTime& time*/)
 	XMMATRIX viewProjTex = XMMatrixMultiply(viewProj, T);
 	XMMATRIX shadowTransform = XMLoadFloat4x4(&mShadowTransform);
 
-	XMStoreFloat4x4(&m_MainPassCB.View, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&m_MainPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&m_MainPassCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&m_MainPassCB.InvProj, XMMatrixTranspose(invProj));
-	XMStoreFloat4x4(&m_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&m_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	XMStoreFloat4x4(&m_MainPassCB.ViewProjTex, XMMatrixTranspose(viewProjTex));
-	XMStoreFloat4x4(&m_MainPassCB.ShadowTransform, XMMatrixTranspose(shadowTransform));
-	m_MainPassCB.EyePosW = m_PrespectiveCamera.GetPosition();
-	m_MainPassCB.RenderTargetSize = XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight);
-	m_MainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight);
+	//XMStoreFloat4x4(&m_MainPassCB.View, XMMatrixTranspose(view));
+	//XMStoreFloat4x4(&m_MainPassCB.InvView, XMMatrixTranspose(invView));
+	//XMStoreFloat4x4(&m_MainPassCB.Proj, XMMatrixTranspose(proj));
+	//XMStoreFloat4x4(&m_MainPassCB.InvProj, XMMatrixTranspose(invProj));
+	//XMStoreFloat4x4(&m_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+	//XMStoreFloat4x4(&m_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+	//XMStoreFloat4x4(&m_MainPassCB.ViewProjTex, XMMatrixTranspose(viewProjTex));
+	//XMStoreFloat4x4(&m_MainPassCB.ShadowTransform, XMMatrixTranspose(shadowTransform));
+
+	//m_MainPassCB.EyePosW = m_PrespectiveCamera.GetPosition();
+	//m_MainPassCB.RenderTargetSize = (XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight));
+	//m_MainPassCB.InvRenderTargetSize = (XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight));
+	//m_MainPassCB.NearZ = 1.0f;
+	//m_MainPassCB.FarZ = 1000.0f;
+	//m_MainPassCB.TotalTime = 0;//time.TotalTime();
+	//m_MainPassCB.DeltaTime = 0;//time.DeltaTime();
+	//m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+	//m_MainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
+	//m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
+	//m_MainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
+	//m_MainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	//m_MainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
+	//m_MainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+
+	m_MainPassCB.View = Matrix4x4_Transpose(*(Matrix4x4*)&view);
+	m_MainPassCB.InvView = Matrix4x4_Transpose(*(Matrix4x4*)&invView);
+	m_MainPassCB.Proj = Matrix4x4_Transpose(*(Matrix4x4*)&proj);
+	m_MainPassCB.InvProj = Matrix4x4_Transpose(*(Matrix4x4*)&invProj);
+	m_MainPassCB.ViewProj = Matrix4x4_Transpose(*(Matrix4x4*)&viewProj);
+	m_MainPassCB.InvViewProj = Matrix4x4_Transpose(*(Matrix4x4*)&invViewProj);
+	m_MainPassCB.ViewProjTex = Matrix4x4_Transpose(*(Matrix4x4*)&viewProjTex);
+	m_MainPassCB.ShadowTransform = Matrix4x4_Transpose(*(Matrix4x4*)&shadowTransform);
+
+	m_MainPassCB.EyePosW = *(Float3*)&m_PrespectiveCamera.GetPosition();
+	m_MainPassCB.RenderTargetSize = *(Float2*)&(XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight));
+	m_MainPassCB.InvRenderTargetSize = *(Float2*)&(XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight));
 	m_MainPassCB.NearZ = 1.0f;
 	m_MainPassCB.FarZ = 1000.0f;
 	m_MainPassCB.TotalTime = 0;//time.TotalTime();
 	m_MainPassCB.DeltaTime = 0;//time.DeltaTime();
 	m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	m_MainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
+	m_MainPassCB.Lights[0].Direction = *(Float3*)&mRotatedLightDirections[0];
 	m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
-	m_MainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
+	m_MainPassCB.Lights[1].Direction = *(Float3*)&mRotatedLightDirections[1];
 	m_MainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	m_MainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
+	m_MainPassCB.Lights[2].Direction = *(Float3*)&mRotatedLightDirections[2];
 	m_MainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+
+	
 
 	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
 	currPassCB->CopyData(0, m_MainPassCB);
@@ -1879,20 +1910,33 @@ void DX12RHI::UpdateShadowPass(const RiverTime& time)
 	UINT w = m_ShadowMap->Width();
 	UINT h = m_ShadowMap->Height();
 
-	XMStoreFloat4x4(&m_ShadowPassCB.View, XMMatrixTranspose(view));
+	/*XMStoreFloat4x4(&m_ShadowPassCB.View, XMMatrixTranspose(view));
 	XMStoreFloat4x4(&m_ShadowPassCB.InvView, XMMatrixTranspose(invView));
 	XMStoreFloat4x4(&m_ShadowPassCB.Proj, XMMatrixTranspose(proj));
 	XMStoreFloat4x4(&m_ShadowPassCB.InvProj, XMMatrixTranspose(invProj));
 	XMStoreFloat4x4(&m_ShadowPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	XMStoreFloat4x4(&m_ShadowPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
 	m_ShadowPassCB.EyePosW = mLightPosW;
-	m_ShadowPassCB.RenderTargetSize = XMFLOAT2((float)w, (float)h);
-	m_ShadowPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / w, 1.0f / h);
+	m_ShadowPassCB.RenderTargetSize = (XMFLOAT2((float)w, (float)h));
+	m_ShadowPassCB.InvRenderTargetSize = (XMFLOAT2(1.0f / w, 1.0f / h));
+	m_ShadowPassCB.NearZ = mLightNearZ;
+	m_ShadowPassCB.FarZ = mLightFarZ;*/
+
+	/*m_ShadowPassCB.View = *(Matrix4x4*)&view;
+	m_ShadowPassCB.InvView = *(Matrix4x4*)&invView;
+	m_ShadowPassCB.Proj = *(Matrix4x4*)&proj;
+	m_ShadowPassCB.InvProj = *(Matrix4x4*)&invProj;
+	m_ShadowPassCB.ViewProj = *(Matrix4x4*)&viewProj;
+	m_ShadowPassCB.InvViewProj = *(Matrix4x4*)&invViewProj;
+
+	m_ShadowPassCB.EyePosW = *(Float3*)&mLightPosW;
+	m_ShadowPassCB.RenderTargetSize = *(Float2*)&(XMFLOAT2((float)w, (float)h));
+	m_ShadowPassCB.InvRenderTargetSize = *(Float2*)&(XMFLOAT2(1.0f / w, 1.0f / h));
 	m_ShadowPassCB.NearZ = mLightNearZ;
 	m_ShadowPassCB.FarZ = mLightFarZ;
 
 	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(1, m_ShadowPassCB);
+	currPassCB->CopyData(1, m_ShadowPassCB);*/
 }
 
 void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
@@ -1908,8 +1952,8 @@ void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 
-	ssaoCB.Proj = m_MainPassCB.Proj;
-	ssaoCB.InvProj = m_MainPassCB.InvProj;
+	ssaoCB.Proj = *(DirectX::XMFLOAT4X4*)&m_MainPassCB.Proj;
+	ssaoCB.InvProj = *(DirectX::XMFLOAT4X4*)&m_MainPassCB.InvProj;
 	XMStoreFloat4x4(&ssaoCB.ProjTex, XMMatrixTranspose(P * T));
 
 	m_Ssao->GetOffsetVectors(ssaoCB.OffsetVectors);
@@ -2033,7 +2077,7 @@ void DX12RHI::DrawSceneToShadowMap()
 	m_CommandList->OMSetRenderTargets(0, nullptr, false, &m_ShadowMap->Dsv());
 
 	// Bind the pass constant buffer for the shadow map pass.
-	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
+	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(RenderPass::PassUniform));
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 	D3D12_GPU_VIRTUAL_ADDRESS passCBAddress = passCB->GetGPUVirtualAddress() + 1 * passCBByteSize;
 	m_CommandList->SetGraphicsRootConstantBufferView(2, passCBAddress);

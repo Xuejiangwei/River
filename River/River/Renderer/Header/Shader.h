@@ -16,6 +16,25 @@ enum class ShaderLayotClassification
 	PER_INSTANCE_DATA
 };
 
+enum class CullMode
+{
+	None = 1,
+	Back,
+	Front,
+};
+
+enum class ComparisonFunc
+{
+	Never = 1,
+	Less,
+	Equal,
+	LessEqual,
+	Greater,
+	NotEqual,
+	GreaterEqual,
+	always,
+};
+
 struct ShaderLayout
 {
 	String m_Name;
@@ -24,6 +43,13 @@ struct ShaderLayout
 	int Slot;
 	int OffsetByte;
 	ShaderLayotClassification Classification;
+};
+
+
+struct ShaderParam
+{
+	CullMode Cull;
+	ComparisonFunc DepthComparisonFunc;
 };
 
 class Shader
@@ -37,9 +63,10 @@ public:
 	
 	virtual void* GetPSShader() const = 0;
 
-	static Shader* CreateShader(const char* name, const char* path);
-
 	int GetShaderId() const { return m_ShaderId; }
+
+public:
+	static Shader* CreateShader(const char* name, const char* path, ShaderParam* param = nullptr);
 
 private:
 	int m_ShaderId;

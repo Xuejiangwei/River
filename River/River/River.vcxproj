@@ -136,6 +136,7 @@
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
+    <ClCompile Include="Object\Source\LightObject.cpp" />
     <ClCompile Include="Object\Source\Object.cpp" />
     <ClCompile Include="Component\Source\Component.cpp" />
     <ClCompile Include="Component\Source\LightComponent.cpp" />
@@ -215,6 +216,13 @@
     <ClInclude Include="Header\GameInstance.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />
+    <ClInclude Include="Math\Header\BaseDefine.h" />
+    <ClInclude Include="Math\Header\BaseFunction.h" />
+    <ClInclude Include="Math\Header\BaseStruct.h" />
+    <ClInclude Include="Math\Header\Geometric.h" />
+    <ClInclude Include="Math\Header\Probability.h" />
+    <ClInclude Include="Math\Header\Trigonometric.h" />
+    <ClInclude Include="Object\Header\LightObject.h" />
     <ClInclude Include="Object\Header\Object.h" />
     <ClInclude Include="Component\Header\Component.h" />
     <ClInclude Include="Component\Header\LightComponent.h" />
@@ -225,7 +233,6 @@
     <ClInclude Include="Header\RiverTime.h" />
     <ClInclude Include="Header\KeyCode.h" />
     <ClInclude Include="Header\Layer.h" />
-    <ClInclude Include="Header\MathHelper.h" />
     <ClInclude Include="Header\RiverHead.h" />
     <ClInclude Include="Header\RiverPch.h" />
     <ClInclude Include="Header\UILayer.h" />
@@ -276,7 +283,6 @@
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />
     <ClInclude Include="Renderer\Header\Texture.h" />
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
-    <ClInclude Include="Header\MathStruct.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
     <ClInclude Include="Renderer\Header\AssetManager.h" />
     <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h" />

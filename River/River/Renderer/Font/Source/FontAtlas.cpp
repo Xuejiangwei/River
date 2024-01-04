@@ -209,7 +209,7 @@ void FontAtlas::BuildTrueType()
 
 	//∑÷≈‰texture
 	m_TextureHeight = UpperPowerOfTwo(m_TextureHeight);
-	m_TextureUvScale = FLOAT_2(1.0f / m_TextureWidth, 1.0f / m_TextureHeight);
+	m_TextureUvScale = Float2(1.0f / m_TextureWidth, 1.0f / m_TextureHeight);
 	m_PixelAlpha8.resize(m_TextureWidth* m_TextureHeight);
 	memset(m_PixelAlpha8.data(), 0, m_PixelAlpha8.size());
 	spc.pixels = m_PixelAlpha8.data();

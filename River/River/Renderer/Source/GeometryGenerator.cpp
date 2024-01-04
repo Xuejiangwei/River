@@ -1,7 +1,7 @@
 #include "RiverPch.h"
 #include "Renderer/Header/GeometryGenerator.h"
 #include "Renderer/Header/AssetManager.h"
-#include "MathHelper.h"
+#include "Math/Header/Geometric.h"
 
 StaticMesh* GeometryGenerator::CreateBoxStaticMesh(float width, float height, float depth, uint32 numSubdivisions)
 {
@@ -107,8 +107,8 @@ StaticMesh* GeometryGenerator::CreateSphereStaticMesh(float radius, uint32_t sli
 
 	vertices.push_back(topVertex);
 
-	float phiStep = PI / stackCount;
-	float thetaStep = 2.0f * PI / sliceCount;
+	float phiStep = MATH_PI / stackCount;
+	float thetaStep = 2.0f * MATH_PI / sliceCount;
 
 	// Compute vertices for each stack ring (do not count the poles as rings).
 	for (uint32_t i = 1; i <= stackCount - 1; ++i)
@@ -132,14 +132,14 @@ StaticMesh* GeometryGenerator::CreateSphereStaticMesh(float radius, uint32_t sli
 			v.TangentU.y = 0.0f;
 			v.TangentU.z = +radius * sinf(phi) * cosf(theta);
 
-			FLOAT_4 T = GetFloat3(v.TangentU);
+			Float4 T = GetFloat3(v.TangentU);
 			v.TangentU = VectorNormalize(T);
 
-			FLOAT_4 p = GetFloat3(v.Pos);
+			Float4 p = GetFloat3(v.Pos);
 			v.Normal = VectorNormalize(p);
 
-			v.TexC.x = theta / _2_PI;
-			v.TexC.y = phi / PI;
+			v.TexC.x = theta / MATH_2PI;
+			v.TexC.y = phi / MATH_PI;
 
 			vertices.push_back(v);
 		}
@@ -200,6 +200,72 @@ StaticMesh* GeometryGenerator::CreateSphereStaticMesh(float radius, uint32_t sli
 	}
 
 	return AssetManager::Get()->AddStaticMesh(MakeUnique<StaticMesh>("DefaultSphere", vertices, indices, V_Array<class Material*>()));
+}
+
+StaticMesh* GeometryGenerator::CreateGridStaticMesh(float width, float depth, uint32_t m, uint32_t n)
+{
+	V_Array<Vertex> vertices;
+	V_Array<uint32> indices;
+
+	uint32_t vertexCount = m * n;
+	uint32_t faceCount = (m - 1) * (n - 1) * 2;
+
+	//
+	// Create the vertices.
+	//
+
+	float halfWidth = 0.5f * width;
+	float halfDepth = 0.5f * depth;
+
+	float dx = width / (n - 1);
+	float dz = depth / (m - 1);
+
+	float du = 1.0f / (n - 1);
+	float dv = 1.0f / (m - 1);
+
+	vertices.resize(vertexCount);
+	for (uint32_t i = 0; i < m; ++i)
+	{
+		float z = halfDepth - i * dz;
+		for (uint32_t j = 0; j < n; ++j)
+		{
+			float x = -halfWidth + j * dx;
+
+			vertices[i * n + j].Pos = Float3(x, 0.0f, z);
+			vertices[i * n + j].Normal = Float3(0.0f, 1.0f, 0.0f);
+			vertices[i * n + j].TangentU = Float3(1.0f, 0.0f, 0.0f);
+
+			// Stretch texture over grid.
+			vertices[i * n + j].TexC.x = j * du;
+			vertices[i * n + j].TexC.y = i * dv;
+		}
+	}
+
+	//
+	// Create the indices.
+	//
+
+	indices.resize(faceCount * 3); // 3 indices per face
+
+	// Iterate over each quad and compute indices.
+	uint32_t k = 0;
+	for (uint32_t i = 0; i < m - 1; ++i)
+	{
+		for (uint32_t j = 0; j < n - 1; ++j)
+		{
+			indices[k] = i * n + j;
+			indices[k + 1] = i * n + j + 1;
+			indices[k + 2] = (i + 1) * n + j;
+
+			indices[k + 3] = (i + 1) * n + j;
+			indices[k + 4] = i * n + j + 1;
+			indices[k + 5] = (i + 1) * n + j + 1;
+
+			k += 6; // next quad
+		}
+	}
+
+	return AssetManager::Get()->AddStaticMesh(MakeUnique<StaticMesh>("DefaultGrid", vertices, indices, V_Array<class Material*>()));
 }
 
 void GeometryGenerator::Subdivide(V_Array<Vertex>& vertices, V_Array<uint32>& indices)
@@ -267,24 +333,24 @@ void GeometryGenerator::Subdivide(V_Array<Vertex>& vertices, V_Array<uint32>& in
 
 Vertex GeometryGenerator::MidPoint(const Vertex& v0, const Vertex& v1)
 {
-	FLOAT_4 p0 = GetFloat3(v0.Pos);
-	FLOAT_4 p1 = GetFloat3(v1.Pos);
+	Float4 p0 = GetFloat3(v0.Pos);
+	Float4 p1 = GetFloat3(v1.Pos);
 
-	FLOAT_4 n0 = GetFloat3(v0.Normal);
-	FLOAT_4 n1 = GetFloat3(v1.Normal);
+	Float4 n0 = GetFloat3(v0.Normal);
+	Float4 n1 = GetFloat3(v1.Normal);
 
-	FLOAT_4 tan0 = GetFloat3(v0.TangentU);
-	FLOAT_4 tan1 = GetFloat3(v1.TangentU);
+	Float4 tan0 = GetFloat3(v0.TangentU);
+	Float4 tan1 = GetFloat3(v1.TangentU);
 
-	FLOAT_4 tex0 = GetFloat2(v0.TexC);
-	FLOAT_4 tex1 = GetFloat2(v1.TexC);
+	Float4 tex0 = GetFloat2(v0.TexC);
+	Float4 tex1 = GetFloat2(v1.TexC);
 
 	// Compute the midpoints of all the attributes.  Vectors need to be normalized
 	// since linear interpolating can make them not unit length.  
-	FLOAT_4 pos = 0.5f * (p0 + p1);
-	FLOAT_4 normal = VectorNormalize(0.5f * (n0 + n1));
-	FLOAT_4 tangent = VectorNormalize(0.5f * (tan0 + tan1));
-	FLOAT_4 tex = 0.5f * (tex0 + tex1);
+	Float4 pos = 0.5f * (p0 + p1);
+	Float4 normal = VectorNormalize(0.5f * (n0 + n1));
+	Float4 tangent = VectorNormalize(0.5f * (tan0 + tan1));
+	Float4 tex = 0.5f * (tex0 + tex1);
 
 
 	return Vertex({ pos.x, pos.y, pos.z }, { normal.x, normal.y, normal.z }, { tangent.x, tangent.y, tangent.z }, { tex.x, tex.y });

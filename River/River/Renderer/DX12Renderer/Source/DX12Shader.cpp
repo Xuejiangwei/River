@@ -6,7 +6,8 @@
 #include "Utils/Header/StringUtils.h"
 
 DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>& defines,
-	Pair<const char*, const char*>& name, Pair<const char*, const char*> target, V_Array<D3D12_INPUT_ELEMENT_DESC>* layout)
+	Pair<const char*, const char*>& name, Pair<const char*, const char*> target, V_Array<D3D12_INPUT_ELEMENT_DESC>* layout,
+	ShaderParam* param)
 {
 #if defined(_DEBUG)
 	//调试状态下，打开Shader编译的调试标志，不优化
@@ -42,9 +43,7 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 		}
 	}
 
-	if (true)
 	{
-
 		CD3DX12_DESCRIPTOR_RANGE texTable0;
 		texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0);
 
@@ -84,33 +83,33 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 	}
 
 	{
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 
-		ZeroMemory(&opaquePsoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-		opaquePsoDesc.pRootSignature = m_RootSignature.Get();
-		opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-		opaquePsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-		opaquePsoDesc.SampleMask = UINT_MAX;
-		opaquePsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		opaquePsoDesc.NumRenderTargets = 1;
-		opaquePsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-		opaquePsoDesc.SampleDesc.Count = false ? 4 : 1;
-		opaquePsoDesc.SampleDesc.Quality = false ? (0 - 1) : 0;
-		opaquePsoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+		psoDesc.pRootSignature = m_RootSignature.Get();
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.SampleDesc.Count = false ? 4 : 1;
+		psoDesc.SampleDesc.Quality = false ? (0 - 1) : 0;
+		psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-		if (filePath == "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl")
+		if (param)
 		{
-			opaquePsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-			opaquePsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+			psoDesc.RasterizerState.CullMode = (D3D12_CULL_MODE)param->Cull;
+			psoDesc.DepthStencilState.DepthFunc = (D3D12_COMPARISON_FUNC)param->DepthComparisonFunc;
 		}
 
-		opaquePsoDesc.InputLayout = { layout->data(), (UINT)layout->size() };
+		psoDesc.InputLayout = { layout->data(), (UINT)layout->size() };
 
-		opaquePsoDesc.VS = { reinterpret_cast<BYTE*>(m_VSByteCode->GetBufferPointer()), m_VSByteCode->GetBufferSize() };
-		opaquePsoDesc.PS = { reinterpret_cast<BYTE*>(m_PSByteCode->GetBufferPointer()), m_PSByteCode->GetBufferSize() };
+		psoDesc.VS = { reinterpret_cast<BYTE*>(m_VSByteCode->GetBufferPointer()), m_VSByteCode->GetBufferSize() };
+		psoDesc.PS = { reinterpret_cast<BYTE*>(m_PSByteCode->GetBufferPointer()), m_PSByteCode->GetBufferSize() };
 
-		ThrowIfFailed(device->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&m_PipelineState)));
+		ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PipelineState)));
 	}
 }
 

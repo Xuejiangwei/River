@@ -27,6 +27,8 @@ public:
 
 	V_Array<RenderProxy*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
 
+	V_Array<RenderProxy*>& GetRenderLightProxys() { return m_Lights; }
+
 	void AddUILayer(Share<Layer>& layer);
 
 	RenderPassUI* GetUIRenderPass();
@@ -34,5 +36,6 @@ public:
 private:
 	V_Array<int> m_UnuseProxyId;
 	HashMap<MaterialBlendMode, V_Array<RenderProxy*>> m_Proxys;
+	V_Array<RenderProxy*> m_Lights;
 	V_Array<Share<RenderPass>> m_RenderPasses;
 };

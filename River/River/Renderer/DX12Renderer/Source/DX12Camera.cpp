@@ -3,12 +3,12 @@
 
 #include "Application.h"
 #include "Window.h"
-#include "MathHelper.h"
+#include "Math/Header/BaseDefine.h"
 
 DX12Camera::DX12Camera(CameraType type)
 	: Camera(type)
 {
-	SetLens(0.25f * PI, 1.0f, 1.0f, 1000.0f);
+	SetLens(0.25f * MATH_PI, 1.0f, 1.0f, 1000.0f);
 }
 
 DX12Camera::~DX12Camera()

@@ -30,7 +30,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 	auto textSize = font->m_Font->CalcTextSize(m_Text, m_FontSize);
 
     auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
-    FLOAT_2 startPos = GetAbsoluteLeftTopPosition();
+    Float2 startPos = GetAbsoluteLeftTopPosition();
     float ndcStartX = startPos.x / width;
     float ndcStartY = -startPos.y / height;
 

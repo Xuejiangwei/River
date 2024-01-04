@@ -13,7 +13,7 @@ class AssetManager
 	friend Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool isImmediately);
 	friend Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data);
 	friend Texture* Texture::CreateTextureWithResource(const char* name, void* resoure);
-	friend Shader* Shader::CreateShader(const char* name, const char* path);
+	friend Shader* Shader::CreateShader(const char* name, const char* path, ShaderParam* param);
 	friend Material* Material::CreateMaterial(const char* name, const char* shaderName);
 public:
 	AssetManager();

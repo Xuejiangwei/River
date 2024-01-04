@@ -2577,10 +2577,10 @@ static void ImFontAtlasBuildRenderDefaultTexData(FontAtlas* atlas)
         }
         else
         {
-            atlas->m_PixelRGBA32[offset] = atlas->m_PixelRGBA32[offset + 1] = atlas->m_PixelRGBA32[offset + w] = atlas->m_PixelRGBA32[offset + w + 1] = UINT8_4(255, 255, 255, 255);
+            atlas->m_PixelRGBA32[offset] = atlas->m_PixelRGBA32[offset + 1] = atlas->m_PixelRGBA32[offset + w] = atlas->m_PixelRGBA32[offset + w + 1] = Byte4(255, 255, 255, 255);
         }
     }
-    atlas->m_TextureUvWhitePixel = River::Float2((r.X + 0.5f) * atlas->m_TextureUvScale.x, (r.Y + 0.5f) * atlas->m_TextureUvScale.y);
+    atlas->m_TextureUvWhitePixel = Float2((r.X + 0.5f) * atlas->m_TextureUvScale.x, (r.Y + 0.5f) * atlas->m_TextureUvScale.y);
 }
 
 static void ImFontAtlasBuildRenderLinesTexData(FontAtlas* atlas)
@@ -2617,20 +2617,20 @@ static void ImFontAtlasBuildRenderLinesTexData(FontAtlas* atlas)
         {
             unsigned int* write_ptr = (uint32*)(&atlas->m_PixelRGBA32[r->X + ((r->Y + y) * atlas->m_TextureWidth)]);
             for (unsigned int i = 0; i < pad_left; i++)
-                *(write_ptr + i) = UINT8_4(255, 255, 255, 0);
+                *(write_ptr + i) = Byte4(255, 255, 255, 0);
 
             for (unsigned int i = 0; i < line_width; i++)
-                *(write_ptr + pad_left + i) = UINT8_4(255, 255, 255, 255);
+                *(write_ptr + pad_left + i) = Byte4(255, 255, 255, 255);
 
             for (unsigned int i = 0; i < pad_right; i++)
-                *(write_ptr + pad_left + line_width + i) = UINT8_4(255, 255, 255, 0);
+                *(write_ptr + pad_left + line_width + i) = Byte4(255, 255, 255, 0);
         }
 
         // Calculate UVs for this line
-        FLOAT_2 uv0 = FLOAT_2((float)(r->X + pad_left - 1), (float)(r->Y + y)) * atlas->m_TextureUvScale;
-        FLOAT_2 uv1 = FLOAT_2((float)(r->X + pad_left + line_width + 1), (float)(r->Y + y + 1)) * atlas->m_TextureUvScale;
+        Float2 uv0 = Float2((float)(r->X + pad_left - 1), (float)(r->Y + y)) * atlas->m_TextureUvScale;
+        Float2 uv1 = Float2((float)(r->X + pad_left + line_width + 1), (float)(r->Y + y + 1)) * atlas->m_TextureUvScale;
         float half_v = (uv0.y + uv1.y) * 0.5f; // Calculate a constant V in the middle of the row to avoid sampling artifacts
-        atlas->m_TexUvLines[n] = FLOAT_4(uv0.x, half_v, uv1.x, half_v);
+        atlas->m_TexUvLines[n] = Float4(uv0.x, half_v, uv1.x, half_v);
     }
 }
 

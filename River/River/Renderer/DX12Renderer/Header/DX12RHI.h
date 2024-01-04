@@ -77,7 +77,7 @@ public:
 
 	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) override;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path) override;
+	virtual Unique<Shader> CreateShader(const char* name, const char* path, ShaderParam* param = nullptr) override;
 
 	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
 
@@ -237,7 +237,7 @@ private:
 
 	Unique<ShadowMap> m_ShadowMap;
 	std::unique_ptr<Ssao> m_Ssao;
-	PassUniform m_MainPassCB;
+	RenderPass::PassUniform m_MainPassCB;
 	PassUniform m_ShadowPassCB;
 
 	V_Array<int> m_DrawItems;

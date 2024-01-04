@@ -10,7 +10,8 @@ class DX12Shader : public Shader
 
 public:
 	DX12Shader(ID3D12Device* device, const String& filePath, Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>& defines,
-		Pair<const char*, const char*>& name, Pair<const char*, const char*> target, V_Array<D3D12_INPUT_ELEMENT_DESC>* layout);
+		Pair<const char*, const char*>& name, Pair<const char*, const char*> target, V_Array<D3D12_INPUT_ELEMENT_DESC>* layout,
+		ShaderParam* param = nullptr);
 
 	virtual ~DX12Shader() override;
 

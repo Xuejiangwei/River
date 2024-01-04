@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
-#include "MathStruct.h"
+
 
 enum class TTF_HeadType
 {
@@ -224,9 +224,9 @@ struct FontAtlasCustomRect
 	unsigned short  X, Y;           // Output   // Packed position in Atlas
 	unsigned int    GlyphID;        // Input    // For custom font glyphs only (ID < 0x110000)
 	float           GlyphAdvanceX;  // Input    // For custom font glyphs only: glyph xadvance
-	FLOAT_2          GlyphOffset;    // Input    // For custom font glyphs only: glyph display offset
+	Float2          GlyphOffset;    // Input    // For custom font glyphs only: glyph display offset
 	class Font* Font;           // Input    // For custom font glyphs only: target font
-	FontAtlasCustomRect() { Width = Height = 0; X = Y = 0xFFFF; GlyphID = 0; GlyphAdvanceX = 0.0f; GlyphOffset = FLOAT_2(0.0f, 0.0f); Font = nullptr; }
+	FontAtlasCustomRect() { Width = Height = 0; X = Y = 0xFFFF; GlyphID = 0; GlyphAdvanceX = 0.0f; GlyphOffset = Float2(0.0f, 0.0f); Font = nullptr; }
 	bool IsPacked() const { return X != 0xFFFF; }
 };
 

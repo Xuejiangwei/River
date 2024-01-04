@@ -58,6 +58,15 @@ void RiverEditorApplication::Initialize()
 	}
 
 	{
+		auto obj = ProduceObject();
+		obj->SetPosition({ 0.0f, -1.0f, 3.0f });
+		obj->AddComponent(MakeShare<StaticMeshComponent>());
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
+		auto mat = AssetManager::Get()->GetMaterial("MyMat");
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+	}
+
+	{
 		shader = AssetManager::Get()->GetShader("sky");
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, 0.0f, 0.0f });

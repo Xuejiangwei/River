@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MathHelper.h"
+#include "Math/Header/BaseDefine.h"
 #include "Camera.h"
 #include "DX12Util.h"
 
@@ -57,8 +57,8 @@ private:
 	DirectX::XMFLOAT3 m_Up = { 0.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_Look = { 0.0f, 0.0f, 1.0f };
 
-	float m_Theta = 1.5f * PI;
-	float m_Phi = PI_DIV_2 - 0.1f;
+	float m_Theta = 1.5f * MATH_PI;
+	float m_Phi = MATH_PI / 2 - 0.1f;
 	float m_Radius = 50.0f;
 
 	float m_NearZ = 0.0f;
