@@ -1,6 +1,7 @@
 #include "RiverPch.h"
 #include "Renderer/Pass/Header/RenderPassShadow.h"
 #include "Application.h"
+#include "Math/Header/Geometric.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Header/RenderProxy.h"
@@ -9,6 +10,7 @@
 RenderPassShadow::RenderPassShadow()
 {
 	m_CommandId = RHI::Get()->AllocDrawCommand();
+	m_ShadowMapSize = { 2048, 2048 };
 }
 
 RenderPassShadow::~RenderPassShadow()
@@ -17,7 +19,12 @@ RenderPassShadow::~RenderPassShadow()
 
 void RenderPassShadow::Render()
 {
-	/*auto& rhi = RHI::Get();
+	if (true)
+	{
+		return;
+	}
+
+	auto& rhi = RHI::Get();
 	auto renderScene = Application::Get()->GetRenderScene();
 
 	rhi->SetViewPort(720, 720);
@@ -33,7 +40,49 @@ void RenderPassShadow::Render()
 		}
 	}
 
+	if (mainLight)
+	{
+		float radius = 18.f;
+		auto lightDir = mainLight->GetDirection();
+		auto lightPos = -2.0f * radius * lightDir;
+		auto targetPos = Float3();
+		auto lightUp = Float3(0, 1, 0);
+		auto lightView = Matrix4x4_LookAtLH(lightPos, targetPos, lightUp);
+		auto sphereCenterLS = Vector3TransformCoord(GetFloat3(targetPos), lightView);
 
+		float l = sphereCenterLS.x - radius;
+		float b = sphereCenterLS.y - radius;
+		float n = sphereCenterLS.z - radius;
+		float r = sphereCenterLS.x + radius;
+		float t = sphereCenterLS.y + radius;
+		float f = sphereCenterLS.z + radius;
+
+		float mLightNearZ = n;
+		float mLightFarZ = f;
+		auto lightProj = Matrix4x4_OrthographicOffCenterLH(l, r, b, t, n, f);
+
+		Matrix4x4 T(
+			0.5f, 0.0f, 0.0f, 0.0f,
+			0.0f, -0.5f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.5f, 0.5f, 0.0f, 1.0f);
+
+		Matrix4x4 shadowTransform = lightView * lightProj * T;
+		auto viewProj = lightView * lightProj;
+
+		m_PassUniform.View = Matrix4x4_Transpose(lightView);
+		m_PassUniform.InvView = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(lightView), lightView));
+		m_PassUniform.Proj = Matrix4x4_Transpose(lightProj);
+		m_PassUniform.InvProj = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(lightProj), lightProj));
+		m_PassUniform.ViewProj = Matrix4x4_Transpose(viewProj);
+		m_PassUniform.InvViewProj = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(viewProj), viewProj));
+		m_PassUniform.EyePosW = targetPos;
+		m_PassUniform.RenderTargetSize =m_ShadowMapSize;
+		m_PassUniform.InvRenderTargetSize = { 1.0f / m_ShadowMapSize.x, 1.0f / m_ShadowMapSize.y };
+		m_PassUniform.NearZ = mLightNearZ;
+		m_PassUniform.FarZ = mLightFarZ;
+	}
+	
 	auto& renderProxys = renderScene->GetRenderProxys(MaterialBlendMode::Opaque);
 	for (auto& proxy : renderProxys)
 	{
@@ -54,5 +103,5 @@ void RenderPassShadow::Render()
 	}
 
 	rhi->GenerateDrawCommands(m_CommandId, FrameBufferType::ShadowMap);
-	m_RenderBatch.clear();*/
+	m_RenderBatch.clear();
 }

@@ -16,6 +16,19 @@ struct Byte4
 	}
 };
 
+struct UInt4
+{
+	union
+	{
+		struct
+		{
+			unsigned int x, y, z, w;
+		};
+
+		unsigned int v[4];
+	};
+};
+
 struct Float2
 {
 	float x = 0.f, y = 0.f;
@@ -63,6 +76,11 @@ struct Float3
 	Float3 operator+(const Float3& other)
 	{
 		return Float3(x + other.x, y + other.y, z + other.z);
+	}
+
+	Float3 operator-(const Float3& other)
+	{
+		return Float3(x - other.x, y - other.y, z - other.z);
 	}
 
 	Float3 Dot(const Float3& other)
@@ -129,6 +147,11 @@ struct Float4
 
 		struct
 		{
+			unsigned int ux, uy, uz, uw;
+		};
+
+		struct
+		{
 			float r, g, b, a;
 		};
 	};
@@ -140,6 +163,10 @@ struct Float4
 
 	Float4(float x, float y, float z, float w)
 		: x(x), y(y), z(z), w(w)
+	{}
+
+	Float4(unsigned int x, unsigned int y, unsigned int z, unsigned int w)
+		: ux(x), uy(y), uz(z), uw(w)
 	{}
 
 	Float4& operator+(const Float4& v) noexcept
@@ -155,6 +182,16 @@ struct Float4
 	{
 		return *((float*)this + i);
 	}
+
+	float operator[](int i) const
+	{
+		return *((float*)this + i);
+	}
+
+	unsigned int& GetUintIndex(int i)
+	{
+		return *((unsigned int*)this + i);
+	}
 };
 
 inline Float4 operator*(float other, Float4 v) noexcept
@@ -162,9 +199,14 @@ inline Float4 operator*(float other, Float4 v) noexcept
 	return Float4(v.x * other, v.y * other, v.z * other, v.w * other);
 }
 
-inline Float4 Float4_Multiply(Float4& v1, Float4& v2) noexcept
+inline Float4 Float4_Multiply(const Float4& v1, const Float4& v2) noexcept
 {
 	return Float4(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z, v1.w * v2.w);
+}
+
+inline Float4 Float4_Divide(const Float4& v1, const Float4& v2) noexcept
+{
+	return Float4(v1[0] / v2[0], v1[1] / v2[1], v1[2] / v2[2], v1[3] / v2[3]);
 }
 
 inline Float3& Float3::operator=(const struct Float4& other) noexcept
@@ -211,6 +253,8 @@ struct Matrix4x4
 	float operator() (size_t Row, size_t Column) const noexcept { return m[Row][Column]; }
 	float& operator() (size_t Row, size_t Column) noexcept { return m[Row][Column]; }
 
+	const Float4& GetFloat4(int index) const { return *(Float4*)m[index]; }
+	
 	Float4& GetFloat4(int index) { return *(Float4*)m[index]; }
 
 	static Matrix4x4 Multiply(const Matrix4x4& M1, const Matrix4x4& M2)

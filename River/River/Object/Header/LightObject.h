@@ -12,6 +12,8 @@ public:
 
 	virtual void Tick(float deltaTime);
 
+	const Float3& GetDirection() const { return m_LightComponent->GetDirection(); }
+
 private:
 	Share<LightComponent> m_LightComponent;
 };

@@ -11,6 +11,8 @@ public:
 
 	virtual void Tick(float deltaTime) override;
 
+	const Float3& GetDirection() const { return m_CurrDirection; }
+
 private:
 	float m_Rotation;
 	Float3 m_Position;
