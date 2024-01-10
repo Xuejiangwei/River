@@ -2,6 +2,7 @@
 #include "RiverTime.h"
 
 class Object;
+class PhyScene;
 
 class World
 {
@@ -18,5 +19,6 @@ private:
 
 private:
 	V_Array<Share<Object>> m_ObjectList;
+	Unique<PhyScene> m_PhyScene;
 };
 

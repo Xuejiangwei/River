@@ -240,6 +240,15 @@
     <ClCompile Include="Object\Source\LightObject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Physics\Source\PhyScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Source\RigidBody.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Source\RigidComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -512,8 +521,26 @@
     <ClInclude Include="Math\Header\BaseFunction.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Physics\Header\PhyScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Header\BVH_Tree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Header\RigidBody.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Header\PhysicsDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\RigidComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="DataStructure\Header\BVH_Tree.inl">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

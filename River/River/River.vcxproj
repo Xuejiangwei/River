@@ -134,6 +134,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
+    <ClCompile Include="Component\Source\RigidComponent.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
     <ClCompile Include="Object\Source\LightObject.cpp" />
@@ -143,6 +144,8 @@
     <ClCompile Include="Component\Source\MeshComponent.cpp" />
     <ClCompile Include="Component\Source\SkinMeshComponent.cpp" />
     <ClCompile Include="Object\Source\ObjectUtils.cpp" />
+    <ClCompile Include="Physics\Source\PhyScene.cpp" />
+    <ClCompile Include="Physics\Source\RigidBody.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Header\Waves.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp" />
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp" />
@@ -213,6 +216,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component\Header\RenderMeshComponent.h" />
+    <ClInclude Include="Component\Header\RigidComponent.h" />
+    <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
     <ClInclude Include="Header\GameInstance.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />
@@ -237,6 +242,9 @@
     <ClInclude Include="Header\RiverPch.h" />
     <ClInclude Include="Header\UILayer.h" />
     <ClInclude Include="Object\Header\ObjectUtils.h" />
+    <ClInclude Include="Physics\Header\PhyScene.h" />
+    <ClInclude Include="Physics\Header\PhysicsDefine.h" />
+    <ClInclude Include="Physics\Header\RigidBody.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\d3dx12.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h" />
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h" />
@@ -304,6 +312,7 @@
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DataStructure\Header\BVH_Tree.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -3,6 +3,7 @@
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/MeshComponent.h"
 #include "Component/Header/SkinMeshComponent.h"
+#include "Component/Header/RigidComponent.h"
 #include "Renderer/Header/RenderProxy.h"
 
 
