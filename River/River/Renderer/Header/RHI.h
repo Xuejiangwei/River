@@ -9,6 +9,7 @@
 #include "Texture.h"
 #include "FrameBuffer.h"
 #include "Renderer/Mesh/Header/Mesh.h"
+#include "Renderer/Pass/Header/RenderPass.h"
 
 #include <vector>
 
@@ -91,6 +92,8 @@ public:
 	virtual class Camera* GetMainCamera() = 0;
 
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) = 0;
+
+	virtual void UpdatePassUniform(int index, RenderPass::PassUniform* uniform) = 0;
 
 	virtual void Pick(int x, int y) = 0;
 

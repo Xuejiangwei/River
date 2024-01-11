@@ -81,6 +81,8 @@ void RenderPassShadow::Render()
 		m_PassUniform.InvRenderTargetSize = { 1.0f / m_ShadowMapSize.x, 1.0f / m_ShadowMapSize.y };
 		m_PassUniform.NearZ = mLightNearZ;
 		m_PassUniform.FarZ = mLightFarZ;
+
+		rhi->UpdatePassUniform(1, &m_PassUniform);
 	}
 	
 	auto& renderProxys = renderScene->GetRenderProxys(MaterialBlendMode::Opaque);

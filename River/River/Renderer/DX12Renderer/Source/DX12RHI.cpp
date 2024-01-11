@@ -397,6 +397,12 @@ void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
 	m_ScreenViewport.TopLeftY = (float)yOffset;
 }
 
+void DX12RHI::UpdatePassUniform(int index, RenderPass::PassUniform* uniform)
+{
+	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
+	currPassCB->CopyData(1, *uniform);
+}
+
 Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool isImmediately)
 {
 	if (isImmediately)
@@ -657,6 +663,12 @@ void DX12RHI::OnSetRenderTargets(int commandId, FrameBufferType frameBufferType)
 		commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	}
+		break;
+	case FrameBufferType::ShadowMap:
+	{
+		/*m_CommandList->SetGraphicsRootDescriptorTable(4, mNullSrv);
+		DrawSceneToShadowMap();*/
 	}
 		break;
 	case FrameBufferType::UI:
