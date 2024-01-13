@@ -11,6 +11,7 @@ RenderPassShadow::RenderPassShadow()
 {
 	m_CommandId = RHI::Get()->AllocDrawCommand();
 	m_ShadowMapSize = { 2048, 2048 };
+	m_ShadowMapTexture = Texture::CreateTexture("ShadowMap", m_ShadowMapSize.x, m_ShadowMapSize.y);
 }
 
 RenderPassShadow::~RenderPassShadow()
@@ -19,10 +20,10 @@ RenderPassShadow::~RenderPassShadow()
 
 void RenderPassShadow::Render()
 {
-	if (true)
+	/*if (true)
 	{
 		return;
-	}
+	}*/
 
 	auto& rhi = RHI::Get();
 	auto renderScene = Application::Get()->GetRenderScene();
@@ -104,6 +105,6 @@ void RenderPassShadow::Render()
 		}
 	}
 
-	rhi->GenerateDrawCommands(m_CommandId, FrameBufferType::ShadowMap);
+	rhi->DrawRenderPass(this, FrameBufferType::ShadowMap);
 	m_RenderBatch.clear();
 }

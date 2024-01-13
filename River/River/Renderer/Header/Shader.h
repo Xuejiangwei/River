@@ -35,6 +35,12 @@ enum class ComparisonFunc
 	always,
 };
 
+enum class ShaderDefaultType : uint8
+{
+	None,
+	ShadowMap,
+};
+
 struct ShaderLayout
 {
 	String m_Name;
@@ -45,11 +51,11 @@ struct ShaderLayout
 	ShaderLayotClassification Classification;
 };
 
-
 struct ShaderParam
 {
 	CullMode Cull;
 	ComparisonFunc DepthComparisonFunc;
+	ShaderDefaultType DefaultType = ShaderDefaultType::None;
 };
 
 class Shader

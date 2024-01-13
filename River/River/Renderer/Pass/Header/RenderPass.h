@@ -47,6 +47,8 @@ public:
 
 	virtual void Render() = 0;
 
-private:
+	int GetCommandId() const { return m_CommandId; }
 
+protected:
+	int m_CommandId;
 };

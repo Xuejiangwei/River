@@ -23,6 +23,8 @@
 #include "Renderer/DX12Renderer/Header/DDSTextureLoader.h"
 #include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 
+#include "Renderer/Pass/Header/RenderPassShadow.h"
+
 #include "Renderer/Header/GeometryGenerator.h"
 #include "Renderer/Header/Material.h"
 
@@ -456,8 +458,9 @@ Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, ShaderP
 		Pair<const char*, const char*>("VS", "PS"), Pair<const char*, const char*>{ "vs_5_1", "ps_5_1" }, layout, param);
 }
 
-void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferType)
+void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBufferType)
 {
+	auto commandId = renderPass->GetCommandId();
 	auto assetManager = AssetManager::Get();
 	auto& cmdListAlloc = DX12CommandPool::GetCommandAllocator(commandId)[m_CurrFrameResourceIndex];
 	//auto cmdListAlloc = m_CurrFrameResource->m_CommandAlloc;
@@ -484,7 +487,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 
-	OnSetRenderTargets(commandId, frameBufferType);
+	DrawRenderPassBegin(renderPass, frameBufferType);
 
 	int offset = 0;
 	ID3D12DescriptorHeap* descriptorHeaps[] = { m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex]->GetHeap() };
@@ -565,6 +568,61 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 				renderItem.StartIndexLocation, renderItem.BaseVertexLocation, 0);
 		}
 	}
+	else if (frameBufferType == FrameBufferType::ShadowMap)
+	{
+		auto shader = static_cast<DX12Shader*>(assetManager->GetShader("shadowMap"));
+		commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+		commandList->SetPipelineState(shader->GetPipelineState());
+
+		for (auto id : /*m_RenderItems*/m_DrawItems)
+		{
+			auto& it = m_RenderItemAllocator.m_Containor[id];
+
+			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
+
+			if (it.Material)
+			{
+				auto mat = it.Material;
+				if (mat->m_DiffuseTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_DiffuseTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+
+					if (mat->m_DiffuseTexture->IsCubeTexture())
+					{
+						commandList->SetGraphicsRootDescriptorTable(4, texDescriptor);
+					}
+				}
+				if (mat->m_NormalTexture)
+				{
+					m_Device->CopyDescriptorsSimple(1, dynamicHandle, { mat->m_NormalTexture->GetTextureHandle() },
+						D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+					dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+					m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+				}
+			}
+
+			//commandList->SetGraphicsRootDescriptorTable(3, )
+			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+
+			commandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
+			commandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
+			commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
+
+			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+			commandList->SetGraphicsRootConstantBufferView(1, 0);
+			commandList->DrawIndexedInstanced(it.IndexCount, 1,
+				it.StartIndexLocation, it.BaseVertexLocation, 0);
+		}
+	}
 	else
 	{
 		
@@ -639,9 +697,7 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 		}
 	}
 
-
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	DrawRenderPassEnd(renderPass, frameBufferType);
 
 	// Done recording commands.
 	ThrowIfFailed(commandList->Close());
@@ -653,8 +709,9 @@ void DX12RHI::GenerateDrawCommands(int commandId, FrameBufferType frameBufferTyp
 	m_DrawItems.clear();
 }
 
-void DX12RHI::OnSetRenderTargets(int commandId, FrameBufferType frameBufferType)
+void DX12RHI::DrawRenderPassBegin(RenderPass* renderPass, FrameBufferType frameBufferType)
 {
+	auto commandId = renderPass->GetCommandId();
 	auto& commandList = DX12CommandPool::GetCommandList(commandId)[m_CurrFrameResourceIndex];
 	switch (frameBufferType)
 	{
@@ -667,8 +724,15 @@ void DX12RHI::OnSetRenderTargets(int commandId, FrameBufferType frameBufferType)
 		break;
 	case FrameBufferType::ShadowMap:
 	{
-		/*m_CommandList->SetGraphicsRootDescriptorTable(4, mNullSrv);
-		DrawSceneToShadowMap();*/
+		auto shadowPass = static_cast<RenderPassShadow*>(renderPass);
+		auto shadowMapTexture = (DX12Texture*)shadowPass->GetShadowMapTexture();
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(shadowMapTexture->GetResource().Get(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = { shadowMapTexture->m_DSV_DescriptorHandle };
+		commandList->ClearDepthStencilView(dsvHandle,
+			D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+		commandList->OMSetRenderTargets(0, nullptr, false, &dsvHandle);
 	}
 		break;
 	case FrameBufferType::UI:
@@ -677,6 +741,32 @@ void DX12RHI::OnSetRenderTargets(int commandId, FrameBufferType frameBufferType)
 		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 	}
 		break;
+	default:
+		break;
+	}
+}
+
+void DX12RHI::DrawRenderPassEnd(RenderPass* renderPass, FrameBufferType frameBufferType)
+{
+	auto commandId = renderPass->GetCommandId();
+	auto& commandList = DX12CommandPool::GetCommandList(commandId)[m_CurrFrameResourceIndex];
+	switch (frameBufferType)
+	{
+	case FrameBufferType::Color:
+	case FrameBufferType::UI:
+	{
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	}
+	break;
+	case FrameBufferType::ShadowMap:
+	{
+		auto shadowPass = static_cast<RenderPassShadow*>(renderPass);
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+			((DX12Texture*)shadowPass->GetShadowMapTexture())->GetResource().Get(),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
+	}
+	break;
 	default:
 		break;
 	}
@@ -712,9 +802,9 @@ Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height, 
 	return MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, width, height);;
 }
 
-Unique<Texture> DX12RHI::CreateTextureWithResource(const char* name, void* resource)
+Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height)
 {
-	return MakeUnique<DX12Texture>(name, static_cast<Microsoft::WRL::ComPtr<ID3D12Resource>*>(resource));
+	return MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, width, height);
 }
 
 void DX12RHI::Render()
@@ -1241,6 +1331,10 @@ void DX12RHI::InitBaseShaders()
 
 	ShaderParam param = { CullMode::None, ComparisonFunc::LessEqual };
 	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2, &param);
+
+	//由自定义的Shader语言去做（D3D12_GRAPHICS_PIPELINE_STATE_DESC）相关参数配置，暂时先不做实现
+	ShaderParam shadowParam = { CullMode::Back, ComparisonFunc::Less, ShaderDefaultType::ShadowMap };
+	Shader::CreateShader("shadowMap", DEFAULT_SHADER_PATH_3, &shadowParam);
 }
 
 void DX12RHI::InitBaseRootSignatures()

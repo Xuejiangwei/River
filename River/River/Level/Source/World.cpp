@@ -23,7 +23,7 @@ void World::OnUpdate(const RiverTime& time)
 	m_PhyScene->OnUpdate(time.DeltaTime());
 }
 
-void World::AddObject(Share<Object>& object)
+void World::AddObject(Share<Object> object)
 {
 	m_ObjectList.push_back(object);
 }

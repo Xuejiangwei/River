@@ -30,7 +30,7 @@ public:
 
 	static Texture* CreateTexture(const char* name, int width, int height, const uint8* data);
 
-	static Texture* CreateTextureWithResource(const char* name, void* resoure);
+	static Texture* CreateTexture(const char* name, int width, int height);
 
 protected:
 	String m_Name;

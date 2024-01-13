@@ -25,5 +25,4 @@ private:
 	V_Array<UIVertex> m_RenderVertices;
 	V_Array<uint16> m_RenderIndices;
 
-	int m_CommandId;
 };

@@ -28,8 +28,9 @@ void RenderPassUI::Render()
 	{
 		layer->OnRender();
 	}
+
 	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);
-	rhi->GenerateDrawCommands(m_CommandId, FrameBufferType::UI);
+	rhi->DrawRenderPass(this, FrameBufferType::UI);
 }
 
 void RenderPassUI::AddUILayer(Share<Layer>& layer)

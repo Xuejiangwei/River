@@ -67,9 +67,7 @@ public:
 	
 	virtual void UpdatePassUniform(int index, RenderPass::PassUniform* uniform) override;
 
-	virtual void GenerateDrawCommands(int commandId, FrameBufferType frameBufferType) override;
-	
-	virtual void OnSetRenderTargets(int commandId, FrameBufferType frameBufferType) override;
+	virtual void DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBufferType) override;
 	
 	virtual int AllocDrawCommand() override;
 
@@ -83,7 +81,7 @@ public:
 
 	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
 
-	Unique<Texture> CreateTextureWithResource(const char* name, void* resource);
+	Unique<Texture> CreateTexture(const char* name, int width, int height);
 
 	ID3D12Device* GetDevice() { return m_Device.Get(); }
 
@@ -138,6 +136,10 @@ private:
 	void CreateFence();
 
 	void CheckQualityLevel();
+
+	void DrawRenderPassBegin(RenderPass* renderPass, FrameBufferType frameBufferType);
+
+	void DrawRenderPassEnd(RenderPass* renderPass, FrameBufferType frameBufferType);
 
 	void UpdateShadowTransform(const RiverTime& time);
 

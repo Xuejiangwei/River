@@ -129,7 +129,7 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 	return texture;
 }
 
-Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
+Texture* Texture::CreateTexture(const char* name, int width, int height)
 {
 	auto assetManager = AssetManager::Get();
 	Texture* texture = assetManager->GetTexture(name);
@@ -145,7 +145,7 @@ Texture* Texture::CreateTextureWithResource(const char* name, void* resoure)
 		if (name)
 		{
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			auto newTexture = dx12Rhi->CreateTextureWithResource(name, resoure);
+			auto newTexture = dx12Rhi->CreateTexture(name, width, height);
 			texture = newTexture.get();
 
 			assetManager->AddCacheTexture(name, newTexture);

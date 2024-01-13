@@ -6,7 +6,8 @@ class PhyScene;
 
 class World
 {
-	friend Share<Object> ProduceObject();
+	template<typename T, typename... _Types>
+	friend Share<T> ProduceObject(_Types&& ...);
 public:
 	World();
 
@@ -15,7 +16,7 @@ public:
 	void OnUpdate(const RiverTime& time);
 
 private:
-	void AddObject(Share<Object>& object);
+	void AddObject(Share<Object> object);
 
 private:
 	V_Array<Share<Object>> m_ObjectList;

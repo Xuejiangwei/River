@@ -2,8 +2,8 @@
 #include "Component/Header/LightComponent.h"
 #include "Math/Header/Geometric.h"
 
-LightComponent::LightComponent()
-	: m_Rotation(0.f)
+LightComponent::LightComponent(Float3 direction)
+	: m_Rotation(0.f), m_Direction(direction)
 {
 }
 

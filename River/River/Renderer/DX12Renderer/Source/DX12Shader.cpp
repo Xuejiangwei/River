@@ -102,6 +102,15 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 		{
 			psoDesc.RasterizerState.CullMode = (D3D12_CULL_MODE)param->Cull;
 			psoDesc.DepthStencilState.DepthFunc = (D3D12_COMPARISON_FUNC)param->DepthComparisonFunc;
+
+			if (param->DefaultType == ShaderDefaultType::ShadowMap)
+			{
+				psoDesc.RasterizerState.DepthBias = 100000;
+				psoDesc.RasterizerState.DepthBiasClamp = 0.f;
+				psoDesc.RasterizerState.SlopeScaledDepthBias = 1.f;
+				psoDesc.RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+				psoDesc.NumRenderTargets = 0;
+			}
 		}
 
 		psoDesc.InputLayout = { layout->data(), (UINT)layout->size() };

@@ -5,7 +5,7 @@
 class LightComponent : public Component
 {
 public:
-	LightComponent();
+	LightComponent(Float3 direction);
 
 	virtual ~LightComponent() override;
 

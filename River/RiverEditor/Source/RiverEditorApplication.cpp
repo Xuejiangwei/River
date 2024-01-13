@@ -4,6 +4,7 @@
 
 #include "GameInstance.h"
 #include "Object/Header/ObjectUtils.h"
+#include "Object/Header/LightObject.h"
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/MeshComponent.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
@@ -32,6 +33,15 @@ void RiverEditorApplication::Initialize()
 
 	/*obj = ProduceObject();*/
 	
+	{
+		V_Array<Float3> lights = { {0.57735f, -0.57735f, 0.57735f}, {-0.57735f, -0.57735f, 0.57735f}, {0.0f, -0.707f, -0.707f} };
+		for (size_t i = 0; i < lights.size(); i++)
+		{
+			auto obj = ProduceObject<LightObject>(lights[i]);
+			obj->SetPosition({ 0.0f, 0.0f, 0.0f });
+		}
+	}
+
 	auto shader = AssetManager::Get()->GetShader("opaque");
 	{
 		auto obj = ProduceObject();

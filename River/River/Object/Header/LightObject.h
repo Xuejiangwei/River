@@ -6,7 +6,7 @@
 class LightObject : public Object
 {
 public:
-	LightObject();
+	LightObject(Float3 direction);
 
 	~LightObject();
 

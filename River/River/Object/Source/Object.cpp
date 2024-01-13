@@ -6,7 +6,6 @@
 #include "Component/Header/RigidComponent.h"
 #include "Renderer/Header/RenderProxy.h"
 
-
 Object::Object()
 {
 }
