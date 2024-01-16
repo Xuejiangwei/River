@@ -18,6 +18,10 @@ public:
 
 	virtual void SetTextureId(uint32 textureId);
 
+	virtual int GetTextureWidth() = 0;
+
+	virtual int GetTextureHeight() = 0;
+
 	bool IsCubeTexture() const { return m_Type == Type::CubeTexture; }
 
 	uint64 GetTextureHandle() const { return m_DescriptorHandle; }

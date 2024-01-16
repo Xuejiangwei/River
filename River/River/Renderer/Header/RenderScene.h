@@ -23,6 +23,8 @@ public:
 
 	int AddObjectProxyToScene(RenderProxy* proxy);
 
+	int AddLightObjectProxyToScene(RenderProxy* proxy);
+
 	void RemoveObjectProxyFromScene(RenderProxy* proxy);
 
 	V_Array<RenderProxy*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }

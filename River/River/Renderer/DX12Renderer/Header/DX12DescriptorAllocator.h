@@ -22,6 +22,7 @@ public:
 
 	static CD3DX12_GPU_DESCRIPTOR_HANDLE GpuOffset(ID3D12DescriptorHeap* heap, int index);
 
+	V_Array<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> m_DescriptorHeapPool;
 private:
 	D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32 count);
 
@@ -32,7 +33,6 @@ private:
 	ID3D12DescriptorHeap* m_CurrentHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_CurrentHandle;
 
-	V_Array<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> m_DescriptorHeapPool;
 };
 
 class DescriptorUtils

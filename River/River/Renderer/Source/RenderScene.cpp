@@ -102,6 +102,12 @@ int RenderScene::AddObjectProxyToScene(RenderProxy* proxy)
 	return id;
 }
 
+int RenderScene::AddLightObjectProxyToScene(RenderProxy* proxy)
+{
+	m_Lights.push_back(proxy);
+	return (int)m_Lights.size();
+}
+
 void RenderScene::RemoveObjectProxyFromScene(RenderProxy* proxy)
 {
 	if (proxy->HasRenderData())

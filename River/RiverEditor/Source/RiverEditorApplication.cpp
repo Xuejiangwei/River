@@ -35,10 +35,12 @@ void RiverEditorApplication::Initialize()
 	
 	{
 		V_Array<Float3> lights = { {0.57735f, -0.57735f, 0.57735f}, {-0.57735f, -0.57735f, 0.57735f}, {0.0f, -0.707f, -0.707f} };
+		V_Array<Float3> lightStrenght = { { 0.9f, 0.8f, 0.7f }, { 0.4f, 0.4f, 0.4f }, { 0.2f, 0.2f, 0.2f } };
 		for (size_t i = 0; i < lights.size(); i++)
 		{
 			auto obj = ProduceObject<LightObject>(lights[i]);
 			obj->SetPosition({ 0.0f, 0.0f, 0.0f });
+			obj->GetComponent<LightComponent>()->SetLightStrength(lightStrenght[i]);
 		}
 	}
 
@@ -58,6 +60,7 @@ void RiverEditorApplication::Initialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ -1.0f, 1.0f, 3.0f });
+		obj->SetScale({ 100.f,100.f,100.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat1");

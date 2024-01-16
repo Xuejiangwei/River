@@ -15,7 +15,6 @@ public:
 	Texture* GetShadowMapTexture() { return m_ShadowMapTexture; }
 
 private:
-	int m_CommandId;
 	Float2 m_ShadowMapSize;
 	Texture* m_ShadowMapTexture;
 	RenderPass::PassUniform m_PassUniform;

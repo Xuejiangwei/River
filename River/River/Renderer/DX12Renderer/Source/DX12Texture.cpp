@@ -157,11 +157,8 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	srvDesc.TextureCube.MostDetailedMip = 0;
-	srvDesc.TextureCube.MipLevels = 1;
-	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.PlaneSlice = 0;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE handle;
 	m_DescriptorHandle = DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).ptr;

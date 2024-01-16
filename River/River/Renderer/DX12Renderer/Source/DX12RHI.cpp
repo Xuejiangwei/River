@@ -44,7 +44,7 @@
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
 
 //Material* TestMaterial;
-
+extern Unique<DX12DescriptorAllocator> s_DescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 using Microsoft::WRL::ComPtr;
 
 DirectX::BoundingSphere mSceneBounds;
@@ -402,7 +402,7 @@ void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
 void DX12RHI::UpdatePassUniform(int index, RenderPass::PassUniform* uniform)
 {
 	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(1, *uniform);
+	currPassCB->CopyData(index, *uniform);
 }
 
 Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool isImmediately)
@@ -460,6 +460,7 @@ Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, ShaderP
 
 void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBufferType)
 {
+	static RenderPass* shadowPass;
 	auto commandId = renderPass->GetCommandId();
 	auto assetManager = AssetManager::Get();
 	auto& cmdListAlloc = DX12CommandPool::GetCommandAllocator(commandId)[m_CurrFrameResourceIndex];
@@ -479,11 +480,9 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	commandList->RSSetViewports(1, &m_ScreenViewport);
 	commandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
+	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 
@@ -547,10 +546,19 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 
-			if (renderItem.RenderTexture)
+			/*if (renderItem.RenderTexture)
 			{
 				m_Device->CopyDescriptorsSimple(1, dynamicHandle, 
 					{ renderItem.RenderTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+			}
+			else*/
+			{
+				auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
+				m_Device->CopyDescriptorsSimple(1, dynamicHandle,
+					{ shadowMapTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
@@ -570,6 +578,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	}
 	else if (frameBufferType == FrameBufferType::ShadowMap)
 	{
+		shadowPass = renderPass;
 		auto shader = static_cast<DX12Shader*>(assetManager->GetShader("shadowMap"));
 		commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
 		commandList->SetPipelineState(shader->GetPipelineState());
@@ -609,7 +618,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 			//commandList->SetGraphicsRootDescriptorTable(3, )
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
-			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
 
 			commandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
 			commandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
@@ -625,7 +634,6 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	}
 	else
 	{
-		
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
@@ -717,6 +725,8 @@ void DX12RHI::DrawRenderPassBegin(RenderPass* renderPass, FrameBufferType frameB
 	{
 	case FrameBufferType::Color:
 	{
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 		commandList->ClearRenderTargetView(CurrentBackBufferView(), Colors::LightSteelBlue, 0, nullptr);
 		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
@@ -737,6 +747,8 @@ void DX12RHI::DrawRenderPassBegin(RenderPass* renderPass, FrameBufferType frameB
 		break;
 	case FrameBufferType::UI:
 	{
+		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 		commandList->ClearDepthStencilView(DepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 		commandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 	}
@@ -1219,34 +1231,13 @@ void DX12RHI::InitBaseTexture()
 {
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 	Texture::CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
-
-	//CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
-
+	
 	Texture::CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
 	Texture::CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
 	Texture::CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
-	/*CreateTexture("defaultDiffuseMap", DEFAULT_TEXTURE_PATH_10);
-	CreateTexture("defaultNormalMap", DEFAULT_TEXTURE_PATH_16);*/
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
-
-	/*for (UINT i = 0; i < mSkinnedMats.size(); ++i)
-	{
-		std::string diffuseName = mSkinnedMats[i].DiffuseMapName;
-		std::string normalName = mSkinnedMats[i].NormalMapName;
-
-		std::string diffuseFilename = DEFAULT_TEXTURE_PATH + diffuseName;
-		std::string normalFilename = DEFAULT_TEXTURE_PATH + normalName;
-
-		diffuseName = diffuseName.substr(0, diffuseName.find_last_of("."));
-		normalName = normalName.substr(0, normalName.find_last_of("."));
-
-		CreateTexture(diffuseName.c_str(), diffuseFilename.c_str());
-		CreateTexture(normalName.c_str(), normalFilename.c_str());
-
-		mSkinnedTextureNames.push_back(diffuseName);
-		mSkinnedTextureNames.push_back(normalName);
-	}*/
+	Texture::CreateTexture("ShadowMap", 2048, 2048);
 }
 
 void DX12RHI::InitBaseShaders()
@@ -1797,7 +1788,8 @@ void DX12RHI::ExecuteCmdList(bool isSwapChain)
 void DX12RHI::CreateRtvAndDsvHeaps()
 {
 	m_RtvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, s_SwapChainBufferCount + 3);
-	m_DsvHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
+	m_DsvHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2);
 }
 
 void DX12RHI::CreateFence()

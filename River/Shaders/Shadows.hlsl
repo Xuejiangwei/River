@@ -53,9 +53,10 @@ VertexOut VS(VertexIn vin)
     vout.PosH = mul(posW, gViewProj);
 	
 	// Output vertex attributes for interpolation across triangle.
-	float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
-	vout.TexC = mul(texC, matData.MatTransform).xy;
-	
+	//float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
+	//vout.TexC = mul(texC, matData.MatTransform).xy;
+	vout.TexC = vin.TexC;
+
     return vout;
 }
 
@@ -65,18 +66,19 @@ VertexOut VS(VertexIn vin)
 void PS(VertexOut pin) 
 {
 	// Fetch the material data.
-	MaterialData matData = gMaterialData[gMaterialIndex];
-	float4 diffuseAlbedo = matData.DiffuseAlbedo;
-    uint diffuseMapIndex = matData.DiffuseMapIndex;
+	//MaterialData matData = gMaterialData[gMaterialIndex];
+	//loat4 diffuseAlbedo = matData.DiffuseAlbedo;
+    //uint diffuseMapIndex = matData.DiffuseMapIndex;
 	
 	// Dynamically look up the texture in the array.
-	diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+	// diffuseAlbedo *= gTextureMaps[diffuseMapIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+	//diffuseAlbedo *= gTextureMaps[0].Sample(gsamAnisotropicWrap, pin.TexC);
 
 #ifdef ALPHA_TEST
     // Discard pixel if texture alpha < 0.1.  We do this test as soon 
     // as possible in the shader so that we can potentially exit the
     // shader early, thereby skipping the rest of the shader code.
-    clip(diffuseAlbedo.a - 0.1f);
+    //clip(diffuseAlbedo.a - 0.1f);
 #endif
 }
 

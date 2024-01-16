@@ -22,13 +22,13 @@ RiverEditorLayer::~RiverEditorLayer()
 void RiverEditorLayer::OnAttach()
 {
 	//initialize
-	RHI::Get()->SetShowUIDebugOutline(true);
+	RHI::Get()->SetShowUIDebugOutline(false);
 
 	auto rootPanel = MakeUnique<Panel>();
 	rootPanel->SetSize(720 / 2, 720 / 2);
 	rootPanel->SetPosition(0.0f, 0.0f);
 	{
-		auto text = MakeShare<Text>();
+		/*auto text = MakeShare<Text>();
 		text->SetSize(1, 1);
 		text->SetFont(AssetManager::Get()->GetTexture("font"));
 		text->SetFontSize(30.0f);
@@ -41,7 +41,7 @@ void RiverEditorLayer::OnAttach()
 		img->SetSize(100, 100);
 		img->SetPosition(100, 100);
 
-		(*rootPanel)[img];
+		(*rootPanel)[img];*/
 
 		auto img1 = MakeShare<Image>();
 		img1->SetTexture(AssetManager::Get()->GetTexture("tileNormalMap"));

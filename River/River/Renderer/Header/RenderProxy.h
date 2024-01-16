@@ -32,6 +32,8 @@ public:
 
 	MaterialBlendMode GetRenderBlendMode() const;
 
+	void AddLightObjectProxy();
+
 private:
 	Object* m_RenderObject;
 	

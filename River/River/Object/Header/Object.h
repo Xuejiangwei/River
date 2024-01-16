@@ -52,7 +52,7 @@ public:
 		return component;
 	}
 
-private:
+protected:
 	V_Array<Share<Component>> m_Components;
 	
 	Transform m_Transform;

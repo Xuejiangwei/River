@@ -6,12 +6,13 @@
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Header/RenderProxy.h"
 #include "Object/Header/LightObject.h"
+#include "Renderer/Header/AssetManager.h"
 
 RenderPassShadow::RenderPassShadow()
 {
 	m_CommandId = RHI::Get()->AllocDrawCommand();
-	m_ShadowMapSize = { 2048, 2048 };
-	m_ShadowMapTexture = Texture::CreateTexture("ShadowMap", m_ShadowMapSize.x, m_ShadowMapSize.y);
+	m_ShadowMapTexture = AssetManager::Get()->GetTexture("ShadowMap"); //Texture::CreateTexture("ShadowMap", m_ShadowMapSize.x, m_ShadowMapSize.y);
+	m_ShadowMapSize = { (float)m_ShadowMapTexture->GetTextureWidth(), (float)m_ShadowMapTexture->GetTextureHeight() };
 }
 
 RenderPassShadow::~RenderPassShadow()
@@ -32,13 +33,18 @@ void RenderPassShadow::Render()
 
 	LightObject* mainLight = nullptr;
 	auto& lightProxys = renderScene->GetRenderLightProxys();
+	int index = 0;
 	for (auto& proxy : lightProxys)
 	{
-		mainLight = dynamic_cast<LightObject*>(proxy->GetObject());
-		if (mainLight)
+		auto light = dynamic_cast<LightObject*>(proxy->GetObject());
+		if (!mainLight)
 		{
-			break;
+			mainLight = light;
 		}
+
+		m_PassUniform.Lights[index].Direction = light->GetDirection();
+		m_PassUniform.Lights[index].Strength = light->GetComponent<LightComponent>()->GetLigthStrength();
+		index++;
 	}
 
 	if (mainLight)
@@ -77,7 +83,7 @@ void RenderPassShadow::Render()
 		m_PassUniform.InvProj = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(lightProj), lightProj));
 		m_PassUniform.ViewProj = Matrix4x4_Transpose(viewProj);
 		m_PassUniform.InvViewProj = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(viewProj), viewProj));
-		m_PassUniform.EyePosW = targetPos;
+		m_PassUniform.EyePosW = lightPos;
 		m_PassUniform.RenderTargetSize =m_ShadowMapSize;
 		m_PassUniform.InvRenderTargetSize = { 1.0f / m_ShadowMapSize.x, 1.0f / m_ShadowMapSize.y };
 		m_PassUniform.NearZ = mLightNearZ;

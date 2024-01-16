@@ -13,9 +13,14 @@ public:
 
 	const Float3& GetDirection() const { return m_CurrDirection; }
 
+	const Float3& GetLigthStrength() const { return m_LightStrength; }
+
+	void SetLightStrength(const Float3& strength);
+
 private:
 	float m_Rotation;
 	Float3 m_Position;
 	Float3 m_Direction;
 	Float3 m_CurrDirection;
+	Float3 m_LightStrength;
 };

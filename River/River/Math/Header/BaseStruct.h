@@ -31,9 +31,16 @@ struct UInt4
 
 struct Float2
 {
-	float x = 0.f, y = 0.f;
+	union
+	{
+		struct
+		{
+			float x;
+			float y;
+		};
+	};
 
-	Float2() {}
+	Float2() : x(0), y(0) {}
 
 	Float2(float x, float y) : x(x), y(y) {}
 

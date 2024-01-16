@@ -70,3 +70,8 @@ MaterialBlendMode RenderProxy::GetRenderBlendMode() const
 
 	return MaterialBlendMode::Opaque;
 }
+
+void RenderProxy::AddLightObjectProxy()
+{
+	m_ProxyId = Application::Get()->GetRenderScene()->AddLightObjectProxyToScene(this);
+}
