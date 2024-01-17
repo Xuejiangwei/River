@@ -14,5 +14,6 @@ public:
 
 private:
 	HashMap<int, V_Array<int>> m_RenderBatch;
+	RenderPass::PassUniform m_PassUniform;
 };
 

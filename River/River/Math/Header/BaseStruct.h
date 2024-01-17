@@ -29,37 +29,33 @@ struct UInt4
 	};
 };
 
-struct Float2
+
+template<typename T>
+struct BaseStruct2
 {
-	union
+	T x;
+	T y;
+
+	BaseStruct2() : x(0), y(0) {}
+
+	BaseStruct2(T x, T y) : x(x), y(y) {}
+
+	BaseStruct2 operator+(const BaseStruct2& other)
 	{
-		struct
-		{
-			float x;
-			float y;
-		};
-	};
-
-	Float2() : x(0), y(0) {}
-
-	Float2(float x, float y) : x(x), y(y) {}
-
-	Float2 operator+(const Float2& other)
-	{
-		return Float2(x + other.x, y + other.y);
+		return BaseStruct2(x + other.x, y + other.y);
 	}
 
-	Float2 operator*(float other)
+	BaseStruct2 operator*(T other)
 	{
-		return Float2(x * other, y * other);
+		return BaseStruct2(x * other, y * other);
 	}
 
-	Float2 operator*(Float2 other)
+	BaseStruct2 operator*(BaseStruct2 other)
 	{
-		return Float2(x * other.x, y * other.y);
+		return BaseStruct2(x * other.x, y * other.y);
 	}
 
-	Float2& operator+=(const Float2& other)
+	BaseStruct2& operator+=(const BaseStruct2& other)
 	{
 		x += other.x;
 		y += other.y;
@@ -67,10 +63,14 @@ struct Float2
 	}
 };
 
-inline Float2 operator*(float other, Float2 v) noexcept
+template<typename T>
+inline BaseStruct2<T> operator*(T other, BaseStruct2<T> v) noexcept
 {
 	return Float2(v.x * other, v.y * other);
 }
+
+using Float2 = BaseStruct2<float>;
+using Int2 = BaseStruct2<int>;
 
 struct Float3
 {
@@ -90,23 +90,34 @@ struct Float3
 		return Float3(x - other.x, y - other.y, z - other.z);
 	}
 
-	Float3 Dot(const Float3& other)
+	bool IsZero() const
+	{
+		return x == 0.0f && y == 0.0f && z == 0.0f;
+	}
+
+	bool IsInfinit() const
+	{
+		return ((*(const uint32_t*)&(x) & 0x7FFFFFFF) == 0x7F800000) || ((*(const uint32_t*)&(y) & 0x7FFFFFFF) == 0x7F800000)
+			|| ((*(const uint32_t*)&(z) & 0x7FFFFFFF) == 0x7F800000);
+	}
+
+	Float3 Dot(const Float3& other) const
 	{
 		float fValue = x * other.x + y * other.y + z * other.z;
 		return { fValue, fValue, fValue };
 	}
 
-	Float3 LengthSq()
+	Float3 LengthSq() const
 	{
 		return Dot(*this);
 	}
 
-	Float3 Sqrt()
+	Float3 Sqrt() const
 	{
 		return { x * x, y * y, z * z };
 	}
 
-	Float3 Length()
+	Float3 Length() const
 	{
 		Float3 Result;
 
@@ -116,7 +127,7 @@ struct Float3
 		return Result;
 	}
 
-	Float3 Normalize()
+	Float3 Normalize() const
 	{
 		float fLength;
 		Float3 vResult;
@@ -175,6 +186,8 @@ struct Float4
 	Float4(unsigned int x, unsigned int y, unsigned int z, unsigned int w)
 		: ux(x), uy(y), uz(z), uw(w)
 	{}
+
+	Float4(const Float3& f3) : Float4(f3.x, f3.y, f3.z, 0.0f) {}
 
 	Float4& operator+(const Float4& v) noexcept
 	{

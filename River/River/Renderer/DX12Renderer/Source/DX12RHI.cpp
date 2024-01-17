@@ -1636,6 +1636,11 @@ Camera* DX12RHI::GetMainCamera()
 
 void DX12RHI::Pick(int x, int y)
 {
+	if (!mPickedRitem)
+	{
+		return;
+	}
+
 	DirectX::XMFLOAT4X4 P = m_PrespectiveCamera.m_Proj;
 
 	// Compute picking ray in view space.
@@ -1922,7 +1927,6 @@ void DX12RHI::UpdateMaterialCBs()
 
 void DX12RHI::UpdateMainPass(/*const RiverTime& time*/)
 {
-
 	XMMATRIX view = m_PrespectiveCamera.GetView();
 	XMMATRIX proj = m_PrespectiveCamera.GetProj();
 

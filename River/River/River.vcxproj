@@ -133,10 +133,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Component\Source\CameraComponent.cpp" />
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
     <ClCompile Include="Component\Source\RigidComponent.cpp" />
+    <ClCompile Include="Input\Source\InputManager.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
+    <ClCompile Include="Object\Source\CameraObject.cpp" />
     <ClCompile Include="Object\Source\LightObject.cpp" />
     <ClCompile Include="Object\Source\Object.cpp" />
     <ClCompile Include="Component\Source\Component.cpp" />
@@ -215,10 +218,12 @@
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Component\Header\CameraComponent.h" />
     <ClInclude Include="Component\Header\RenderMeshComponent.h" />
     <ClInclude Include="Component\Header\RigidComponent.h" />
     <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
     <ClInclude Include="Header\GameInstance.h" />
+    <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />
     <ClInclude Include="Math\Header\BaseDefine.h" />
@@ -227,6 +232,7 @@
     <ClInclude Include="Math\Header\Geometric.h" />
     <ClInclude Include="Math\Header\Probability.h" />
     <ClInclude Include="Math\Header\Trigonometric.h" />
+    <ClInclude Include="Object\Header\CameraObject.h" />
     <ClInclude Include="Object\Header\LightObject.h" />
     <ClInclude Include="Object\Header\Object.h" />
     <ClInclude Include="Component\Header\Component.h" />

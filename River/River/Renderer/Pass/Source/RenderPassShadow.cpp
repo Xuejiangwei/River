@@ -43,7 +43,7 @@ void RenderPassShadow::Render()
 		}
 
 		m_PassUniform.Lights[index].Direction = light->GetDirection();
-		m_PassUniform.Lights[index].Strength = light->GetComponent<LightComponent>()->GetLigthStrength();
+		m_PassUniform.Lights[index].Strength = light->GetComponent<LightComponent>()->GetLightStrength();
 		index++;
 	}
 

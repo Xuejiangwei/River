@@ -249,6 +249,15 @@
     <ClCompile Include="Component\Source\RigidComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Component\Source\CameraComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\Source\CameraObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\Source\InputManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -534,6 +543,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Component\Header\RigidComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\CameraComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Header\CameraObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\Header\InputManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

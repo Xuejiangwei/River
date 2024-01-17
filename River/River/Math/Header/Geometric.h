@@ -567,3 +567,65 @@ inline Matrix4x4 Matrix4x4_Inverse(Float4* pDeterminant, const Matrix4x4&  M) no
     Result.GetFloat4(3) = Float4_Multiply(R.GetFloat4(3), Reciprocal);
     return Result;
 }
+
+inline Matrix4x4 Matrix4x4_RotationNormal
+(
+    Float3 NormalAxis,
+    float     Angle
+) noexcept
+{
+    constexpr uint32_t XM_SWIZZLE_X = 0;
+    constexpr uint32_t XM_SWIZZLE_Y = 1;
+    constexpr uint32_t XM_SWIZZLE_Z = 2;
+    constexpr uint32_t XM_SWIZZLE_W = 3;
+
+    constexpr uint32_t XM_PERMUTE_0X = 0;
+    constexpr uint32_t XM_PERMUTE_0Y = 1;
+    constexpr uint32_t XM_PERMUTE_0Z = 2;
+    constexpr uint32_t XM_PERMUTE_0W = 3;
+    constexpr uint32_t XM_PERMUTE_1X = 4;
+    constexpr uint32_t XM_PERMUTE_1Y = 5;
+    constexpr uint32_t XM_PERMUTE_1Z = 6;
+    constexpr uint32_t XM_PERMUTE_1W = 7;
+
+    float    fSinAngle;
+    float    fCosAngle;
+    Matrix4x4_ScalarSinCos(&fSinAngle, &fCosAngle, Angle);
+
+    auto A = Float4(fSinAngle, fCosAngle, 1.0f - fCosAngle, 0.0f);
+
+    auto C2 = VectorSplatZ(A);
+    auto C1 = VectorSplatY(A);
+    auto C0 = VectorSplatX(A);
+
+    auto N0 = VectorSwizzle(NormalAxis, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_W);
+    auto N1 = VectorSwizzle(NormalAxis, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_W);
+
+    auto V0 = Float4_Multiply(C2, N0);
+    V0 = Float4_Multiply(V0, N1);
+
+    auto R0 = Float4_Multiply(C2, NormalAxis);
+    R0 = VectorMultiplyAdd(R0, NormalAxis, C1);
+
+    auto R1 = VectorMultiplyAdd(C0, NormalAxis, V0);
+    auto R2 = VectorNegativeMultiplySubtract(C0, NormalAxis, V0);
+
+    V0 = VectorSelect(A, R0, g_Select1110);
+    auto V1 = VectorPermute(R1, R2, XM_PERMUTE_0Z, XM_PERMUTE_1Y, XM_PERMUTE_1Z, XM_PERMUTE_0X);
+    auto V2 = VectorPermute(R1, R2, XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_0Y, XM_PERMUTE_1X);
+
+    Matrix4x4 M;
+    M.GetFloat4(0) = VectorPermute(V0, V1, XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0W);
+    M.GetFloat4(1) = VectorPermute(V0, V1, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_1W, XM_PERMUTE_0W);
+    M.GetFloat4(2) = VectorPermute(V0, V2, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z, XM_PERMUTE_0W);
+    M.GetFloat4(3) = { 0.0f, 0.0f, 0.0f, 1.0f };
+    return M;
+}
+
+inline Matrix4x4 Matrix4x4_RotationAxis(const Float3& axis, float angle)
+{
+    assert(!axis.IsZero());
+    assert(!axis.IsInfinit());
+
+    return Matrix4x4_RotationNormal(axis.Normalize(), angle);
+}

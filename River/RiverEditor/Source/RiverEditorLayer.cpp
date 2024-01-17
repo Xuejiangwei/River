@@ -45,7 +45,7 @@ void RiverEditorLayer::OnAttach()
 
 		auto img1 = MakeShare<Image>();
 		img1->SetTexture(AssetManager::Get()->GetTexture("tileNormalMap"));
-		img1->SetSize(100, 100);
+		img1->SetSize(360, 360);
 		img1->SetPosition(300, 300);
 
 		(*rootPanel)[img1];

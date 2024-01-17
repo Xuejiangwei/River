@@ -47,7 +47,8 @@ void RiverEditorApplication::Initialize()
 	auto shader = AssetManager::Get()->GetShader("opaque");
 	{
 		auto obj = ProduceObject();
-		obj->SetPosition({ 1.0f, 1.0f, 3.0f });
+		obj->SetPosition({ 1.0f, 1.0f, 0.0f });
+		obj->SetScale({ 10.f,10.f,10.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat");
@@ -59,8 +60,8 @@ void RiverEditorApplication::Initialize()
 
 	{
 		auto obj = ProduceObject();
-		obj->SetPosition({ -1.0f, 1.0f, 3.0f });
-		obj->SetScale({ 100.f,100.f,100.f });
+		obj->SetPosition({ -1.0f, 1.0f, 0.0f });
+		obj->SetScale({ 10.f,10.f,10.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat1");

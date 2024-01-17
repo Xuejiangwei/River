@@ -3,6 +3,7 @@
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Header/RenderProxy.h"
+#include "Object/Header/LightObject.h"
 #include "Application.h"
 
 RenderPassForwardRendering::RenderPassForwardRendering()
@@ -20,6 +21,17 @@ void RenderPassForwardRendering::Render()
 	auto renderScene = Application::Get()->GetRenderScene();
 
 	rhi->SetViewPort(720, 720);
+
+	//获得光源
+	auto& lightProxys = renderScene->GetRenderLightProxys();
+	for (size_t i = 0; i < lightProxys.size() && i < _countof(m_PassUniform.Lights); i++)
+	{
+		auto lightObject = dynamic_cast<LightObject*>(lightProxys[i]->GetObject());
+		m_PassUniform.Lights[i].Direction = lightObject->GetDirection();
+		m_PassUniform.Lights[i].Direction = lightObject->GetLightStrength();
+	}
+	
+	rhi->UpdatePassUniform(0, &m_PassUniform);
 
 	//先渲染非透明队列
 	auto& renderProxys = renderScene->GetRenderProxys(MaterialBlendMode::Opaque);

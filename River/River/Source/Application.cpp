@@ -8,6 +8,7 @@
 #include "RHI.h"
 #include "Camera.h"
 
+#include "Input/Header/InputManager.h"
 #include "Renderer/Header/RenderScene.h"
 
 Application* Application::s_Instance = nullptr;
@@ -16,6 +17,7 @@ Application::Application()
 	: m_Running(true)
 {
 	s_Instance = this;
+	m_InputManager = MakeUnique<InputManager>();
 	m_CurrentGameInstance = MakeUnique<GameInstance>();
 
 	m_Window = Window::Create();

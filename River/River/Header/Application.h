@@ -1,5 +1,6 @@
 #pragma once
 
+class InputManager;
 class Layer;
 class Window;
 class RenderScene;
@@ -29,6 +30,8 @@ public:
 
 	const Unique<Window>& GetWindow() const { return m_Window; }
 
+	InputManager* GetInputManager() const { return m_InputManager.get(); }
+
 	GameInstance* GetGameInstance() const { return m_CurrentGameInstance.get(); }
 
 	RenderScene* GetRenderScene() const { return m_RenderScene.get(); }
@@ -39,6 +42,7 @@ private:
 	bool m_Running;
 	RiverTime m_Time;
 	
+	Unique<InputManager> m_InputManager;
 	Unique<RenderScene> m_RenderScene;
 	Unique<Window> m_Window;
 	Unique<GameInstance> m_CurrentGameInstance;
