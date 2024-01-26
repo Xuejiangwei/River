@@ -130,10 +130,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\RiverEditorApplication.cpp" />
+    <ClCompile Include="Source\RiverEditorGameWindowLayer.cpp" />
     <ClCompile Include="Source\RiverEditorLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverEditorApplication.h" />
+    <ClInclude Include="Header\RiverEditorGameWindowLayer.h" />
     <ClInclude Include="Header\RiverEditorLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

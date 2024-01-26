@@ -1,9 +1,11 @@
 #pragma once
+#include "KeyCode.h"
 
 class Layer
 {
 public:
 	Layer();
+
 	virtual ~Layer();
 
 	virtual void OnAttach() = 0;
@@ -18,5 +20,16 @@ public:
 
 	virtual bool IsUILayer() const { return true; }
 
+	//Event
+	virtual bool OnMousePresse() { return false; }
+
+	virtual bool OnMouseRelease() { return false; }
+	
+	virtual bool OnMouseDrag() { return false; }
+
+	virtual bool OnKeyDown() { return false; }
+
+	virtual bool OnKeyRelease() { return false; }
+	
 private:
 };

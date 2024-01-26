@@ -21,12 +21,18 @@
     <ClCompile Include="Source\RiverEditorApplication.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Source\RiverEditorGameWindowLayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverEditorLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\RiverEditorApplication.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\RiverEditorGameWindowLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

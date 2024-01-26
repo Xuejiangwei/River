@@ -107,6 +107,7 @@ void Application::RemoveLayer(Share<Layer> layer)
 
 void Application::OnEvent(Event& e)
 {
+	m_InputManager->OnEvent(e, m_Layers);
 	for (auto& layer : m_Layers)
 	{
 		if (layer->OnEvent(e))
@@ -142,7 +143,7 @@ void Application::OnEvent(Event& e)
 		[this](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<MouseMovedEvent&>(e);
-			RHI::Get()->GetMainCamera()->OnMouseMoved((int)ce.GetX(), (int)ce.GetY());
+			RHI::Get()->GetMainCamera()->OnMouseMoved((int)ce.GetMouseX(), (int)ce.GetMouseX());
 		});
 
 	dispatcher.DispatchDirect<KeyPressedEvent>(
