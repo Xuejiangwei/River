@@ -10,6 +10,10 @@ UILayer::~UILayer()
 {
 }
 
+void UILayer::OnInitialize()
+{
+}
+
 void UILayer::OnAttach()
 {
 	

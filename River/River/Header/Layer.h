@@ -8,6 +8,8 @@ public:
 
 	virtual ~Layer();
 
+	virtual void OnInitialize() = 0;
+
 	virtual void OnAttach() = 0;
 
 	virtual void OnDetach() = 0;
@@ -21,13 +23,13 @@ public:
 	virtual bool IsUILayer() const { return true; }
 
 	//Event
-	virtual bool OnMousePresse() { return false; }
+	virtual bool OnMousePress() { return false; }
 
 	virtual bool OnMouseRelease() { return false; }
 	
 	virtual bool OnMouseDrag() { return false; }
 
-	virtual bool OnKeyDown() { return false; }
+	virtual bool OnKeyPress() { return false; }
 
 	virtual bool OnKeyRelease() { return false; }
 	

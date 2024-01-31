@@ -5,12 +5,14 @@
 
 class UIWindow;
 
-class RiverEditorLayer : public Layer
+class RiverEditorMenuLayer : public Layer
 {
 public:
-	RiverEditorLayer();
+	RiverEditorMenuLayer();
 
-	virtual ~RiverEditorLayer() override;
+	virtual ~RiverEditorMenuLayer() override;
+
+	virtual void OnInitialize() override;
 
 	virtual void OnAttach() override;
 

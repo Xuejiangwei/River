@@ -130,13 +130,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\RiverEditorApplication.cpp" />
-    <ClCompile Include="Source\RiverEditorGameWindowLayer.cpp" />
-    <ClCompile Include="Source\RiverEditorLayer.cpp" />
+    <ClCompile Include="Source\RiverEditorMainLayer.cpp" />
+    <ClCompile Include="Source\RiverEditorMenuLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverEditorApplication.h" />
-    <ClInclude Include="Header\RiverEditorGameWindowLayer.h" />
-    <ClInclude Include="Header\RiverEditorLayer.h" />
+    <ClInclude Include="Header\RiverEditorMainLayer.h" />
+    <ClInclude Include="Header\RiverEditorMenuLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

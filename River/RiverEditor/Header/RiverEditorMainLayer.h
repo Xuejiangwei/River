@@ -1,17 +1,15 @@
 #pragma once
-
 #include "RiverHead.h"
 #include "Layer.h"
-#include "Renderer/Mesh/Header/Mesh.h"
 
-class UIWindow;
+class Object;
 
-class UILayer : public Layer
+class RiverEditorMainLayer : public Layer
 {
 public:
-	UILayer();
+	RiverEditorMainLayer();
 
-	virtual ~UILayer() override;
+	virtual ~RiverEditorMainLayer() override;
 
 	virtual void OnInitialize() override;
 
@@ -23,9 +21,8 @@ public:
 
 	virtual bool OnEvent(const class Event& e) override;
 
-private:
-	GreaterRBTreeMap<int, Unique<UIWindow>> m_UIWindows;
+	virtual void OnRender() override;
 
-	V_Array<UIVertex> m_RenderVertices;
-	V_Array<uint32_t> m_RenderIndices;
+private:
+	V_Array<Share<Object>> m_EditorObjects;
 };

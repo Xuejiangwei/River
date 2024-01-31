@@ -1,5 +1,5 @@
 ﻿#include "RiverPch.h"
-#include "RiverEditorLayer.h"
+#include "RiverEditorMenuLayer.h"
 #include "Application.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/AssetManager.h"
@@ -11,15 +11,19 @@
 #include "RiverUI/Header/Text.h"
 #include "RiverUI/Header/UIWindow.h"
 
-RiverEditorLayer::RiverEditorLayer()
+RiverEditorMenuLayer::RiverEditorMenuLayer()
 {
 }
 
-RiverEditorLayer::~RiverEditorLayer()
+RiverEditorMenuLayer::~RiverEditorMenuLayer()
 {
 }
 
-void RiverEditorLayer::OnAttach()
+void RiverEditorMenuLayer::OnInitialize()
+{
+}
+
+void RiverEditorMenuLayer::OnAttach()
 {
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(false);
@@ -54,17 +58,17 @@ void RiverEditorLayer::OnAttach()
 	m_UIWindows[0] = MakeUnique<UIWindow>(rootPanel);
 }
 
-void RiverEditorLayer::OnDetach()
+void RiverEditorMenuLayer::OnDetach()
 {
 
 }
 
-void RiverEditorLayer::OnUpdate(float deltaTime)
+void RiverEditorMenuLayer::OnUpdate(float deltaTime)
 {
 
 }
 
-bool RiverEditorLayer::OnEvent(const Event& e)
+bool RiverEditorMenuLayer::OnEvent(const Event& e)
 {
 	for (auto& it : m_UIWindows)
 	{
@@ -77,7 +81,7 @@ bool RiverEditorLayer::OnEvent(const Event& e)
 	return false;
 }
 
-void RiverEditorLayer::OnRender()
+void RiverEditorMenuLayer::OnRender()
 {
 	auto uiRenderPass = Application::Get()->GetRenderScene()->GetUIRenderPass();
 	auto& renderVertices = uiRenderPass->GetRenderVertices();

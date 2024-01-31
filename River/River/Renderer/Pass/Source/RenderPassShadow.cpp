@@ -84,7 +84,7 @@ void RenderPassShadow::Render()
 		m_PassUniform.ViewProj = Matrix4x4_Transpose(viewProj);
 		m_PassUniform.InvViewProj = Matrix4x4_Transpose(Matrix4x4_Inverse(&Matrix4x4_Determinant(viewProj), viewProj));
 		m_PassUniform.EyePosW = lightPos;
-		m_PassUniform.RenderTargetSize =m_ShadowMapSize;
+		m_PassUniform.RenderTargetSize = m_ShadowMapSize;
 		m_PassUniform.InvRenderTargetSize = { 1.0f / m_ShadowMapSize.x, 1.0f / m_ShadowMapSize.y };
 		m_PassUniform.NearZ = mLightNearZ;
 		m_PassUniform.FarZ = mLightFarZ;

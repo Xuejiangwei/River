@@ -38,7 +38,7 @@ public:
 
 	static Application* Get() { return s_Instance; }
 
-private:
+protected:
 	bool m_Running;
 	RiverTime m_Time;
 	

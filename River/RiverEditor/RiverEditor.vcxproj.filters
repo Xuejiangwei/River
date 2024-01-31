@@ -15,24 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\RiverEditorLayer.cpp">
+    <ClCompile Include="Source\RiverEditorMenuLayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Source\RiverEditorApplication.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RiverEditorGameWindowLayer.cpp">
+    <ClCompile Include="Source\RiverEditorMainLayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Header\RiverEditorLayer.h">
+    <ClInclude Include="Header\RiverEditorMenuLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\RiverEditorApplication.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Header\RiverEditorGameWindowLayer.h">
+    <ClInclude Include="Header\RiverEditorMainLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
