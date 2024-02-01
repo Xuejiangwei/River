@@ -3,6 +3,7 @@
 
 #include "Application.h"
 #include "GameInstance.h"
+#include "Input/Header/InputManager.h"
 
 #include "GameInstance.h"
 #include "Object/Header/ObjectUtils.h"
@@ -113,5 +114,37 @@ bool RiverEditorMainLayer::OnEvent(const Event& e)
 
 void RiverEditorMainLayer::OnRender()
 {
+}
+
+bool RiverEditorMainLayer::OnMousePress()
+{
+	return false;
+}
+
+bool RiverEditorMainLayer::OnMouseRelease()
+{
+	//ÏÔÊ¾¿ì½Ý²Ëµ¥
+	return false;
+}
+
+bool RiverEditorMainLayer::OnMouseDrag()
+{
+	return false;
+}
+
+bool RiverEditorMainLayer::OnKeyPress()
+{
+	auto state = Application::Get()->GetInputManager()->GetKeyState({ KeyCode::Space });
+	if (state == KeyState::Press)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool RiverEditorMainLayer::OnKeyRelease()
+{
+	return false;
 }
 

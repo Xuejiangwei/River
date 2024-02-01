@@ -11,6 +11,13 @@ enum class MouseState
 	Drag
 };
 
+enum class KeyState
+{
+	None,
+	Press,
+	Release
+};
+
 class InputManager
 {
 public:
@@ -22,8 +29,10 @@ public:
 
 	void OnEvent(Event& e, V_Array<Share<Layer>>& layers);
 
+	KeyState GetKeyState(V_Array<KeyCode> keys);
+
 private:
-	HashSet<KeyCode> m_PressKeys;
+	HashMap<KeyCode, KeyState> m_KeyState;
 	HashMap<MouseCode, MouseState> m_MouseState;
 	Int2 m_LastMousePositon;
 };

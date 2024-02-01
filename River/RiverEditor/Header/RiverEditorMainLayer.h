@@ -23,6 +23,17 @@ public:
 
 	virtual void OnRender() override;
 
+	//Event
+	virtual bool OnMousePress() override;
+
+	virtual bool OnMouseRelease() override;
+
+	virtual bool OnMouseDrag() override;
+
+	virtual bool OnKeyPress() override;
+
+	virtual bool OnKeyRelease() override;
+
 private:
 	V_Array<Share<Object>> m_EditorObjects;
 };
