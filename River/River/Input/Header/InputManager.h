@@ -29,6 +29,8 @@ public:
 
 	void OnEvent(Event& e, V_Array<Share<Layer>>& layers);
 
+	KeyState GetKeyState(KeyCode key);
+	
 	KeyState GetKeyState(V_Array<KeyCode> keys);
 
 private:

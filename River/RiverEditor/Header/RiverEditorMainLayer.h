@@ -3,6 +3,7 @@
 #include "Layer.h"
 
 class Object;
+class CameraObject;
 
 class RiverEditorMainLayer : public Layer
 {
@@ -24,16 +25,17 @@ public:
 	virtual void OnRender() override;
 
 	//Event
-	virtual bool OnMousePress() override;
+	virtual bool OnMousePress(MouseCode mouseCode, Int2 mousePosition) override;
 
-	virtual bool OnMouseRelease() override;
+	virtual bool OnMouseRelease(MouseCode mouseCode, Int2 mousePosition) override;
 
-	virtual bool OnMouseDrag() override;
+	virtual bool OnMouseMove(int x, int y) override;
 
-	virtual bool OnKeyPress() override;
+	virtual bool OnKeyPress(KeyCode key) override;
 
-	virtual bool OnKeyRelease() override;
+	virtual bool OnKeyRelease(KeyCode key) override;
 
 private:
 	V_Array<Share<Object>> m_EditorObjects;
+	Share<CameraObject> m_MainCamera;
 };

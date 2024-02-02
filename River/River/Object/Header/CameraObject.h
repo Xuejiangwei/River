@@ -11,7 +11,7 @@ enum class CameraType
 class CameraObject : public Object
 {
 public:
-	CameraObject(CameraType type);
+	CameraObject(CameraType type = CameraType::Perspective);
 	
 	virtual ~CameraObject() override;
 	
@@ -23,19 +23,27 @@ public:
 	
 	void RotateY(float angle);
 	
-	void OnMousePressed(int x, int y);
-	
-	void OnMouseReleased(int x, int y);
-	
-	void OnMouseMoved(int x, int y);
-	
-	void OnKeyPressed(KeyCode code, float time);
-	
+	void MoveForward(float value);
+
+	void MoveRight(float value);
+
+	void MoveUp(float value);
+
+	void StartRotate(int x, int y);
+
+	void EndRotate();
+
+	void Rotate(float roll, float pitch, float yaw);
 	//void SetLens(float fovY, float aspect, float nearZ, float farZ);
+
+	bool IsStartRotate() const { return m_StartRotate; }
+
+	Int2 GetLastMousePosition() const { return m_LastMousePosition; }
 
 private:
 	CameraType m_CameraType;
 	Share<CameraComponent> m_CameraComponent;
 
-	bool m_Dirty;
+	Int2 m_LastMousePosition;
+	bool m_StartRotate;
 };

@@ -23,15 +23,15 @@ public:
 	virtual bool IsUILayer() const { return true; }
 
 	//Event
-	virtual bool OnMousePress() { return false; }
+	virtual bool OnMousePress(MouseCode mouseCode, Int2 mousePosition) { return false; }
 
-	virtual bool OnMouseRelease() { return false; }
+	virtual bool OnMouseRelease(MouseCode mouseCode, Int2 mousePosition) { return false; }
 	
-	virtual bool OnMouseDrag() { return false; }
+	virtual bool OnMouseMove(int x, int y) { return false; }
 
-	virtual bool OnKeyPress() { return false; }
+	virtual bool OnKeyPress(KeyCode key) { return false; }
 
-	virtual bool OnKeyRelease() { return false; }
+	virtual bool OnKeyRelease(KeyCode key) { return false; }
 	
 private:
 };

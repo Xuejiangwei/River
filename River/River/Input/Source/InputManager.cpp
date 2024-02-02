@@ -25,7 +25,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{
-				if (layers[i]->OnMousePress())
+				if (layers[i]->OnMousePress(ce.GetMouseButton(), m_LastMousePositon))
 				{
 					return;
 				}
@@ -42,7 +42,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{
-				if (layers[i]->OnMouseRelease())
+				if (layers[i]->OnMouseRelease(ce.GetMouseButton(), m_LastMousePositon))
 				{
 					return;
 				}
@@ -62,6 +62,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 					isDrag = true;
 				}
 			}
+
 			m_LastMousePositon.x = (int)ce.GetMouseX();
 			m_LastMousePositon.y = (int)ce.GetMouseY();
 
@@ -69,7 +70,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 			{
 				for (int i = (int)layers.size() - 1; i >= 0; i--)
 				{
-					if (layers[i]->OnMouseDrag())
+					if (layers[i]->OnMouseMove(m_LastMousePositon.x, m_LastMousePositon.y))
 					{
 						return;
 					}
@@ -86,7 +87,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 			m_KeyState[ce.GetKeyCode()] = KeyState::Press;
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{
-				if (layers[i]->OnKeyPress())
+				if (layers[i]->OnKeyPress(ce.GetKeyCode()))
 				{
 					return;
 				}
@@ -101,7 +102,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{
-				if (layers[i]->OnKeyRelease())
+				if (layers[i]->OnKeyRelease(ce.GetKeyCode()))
 				{
 					return;
 				}
@@ -109,6 +110,11 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 
 			m_KeyState[ce.GetKeyCode()] = KeyState::None;
 		});
+}
+
+KeyState InputManager::GetKeyState(KeyCode key)
+{
+	return m_KeyState[key];
 }
 
 KeyState InputManager::GetKeyState(V_Array<KeyCode> keys)

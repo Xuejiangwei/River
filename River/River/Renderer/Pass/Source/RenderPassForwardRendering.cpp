@@ -31,7 +31,7 @@ void RenderPassForwardRendering::Render()
 		m_PassUniform.Lights[i].Direction = lightObject->GetLightStrength();
 	}
 	
-	rhi->UpdatePassUniform(0, &m_PassUniform);
+	//rhi->UpdatePassUniform(0, &m_PassUniform);
 
 	//先渲染非透明队列
 	auto& renderProxys = renderScene->GetRenderProxys(MaterialBlendMode::Opaque);

@@ -8,6 +8,7 @@
 #include "GameInstance.h"
 #include "Object/Header/ObjectUtils.h"
 #include "Object/Header/LightObject.h"
+#include "Object/Header/CameraObject.h"
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/MeshComponent.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
@@ -33,6 +34,13 @@ void RiverEditorMainLayer::OnInitialize()
 	obj->GetComponent<RenderMeshComponent>()->SetMeshData(RawPolyhedron::GetRawPlane());
 
 	/*obj = ProduceObject();*/
+
+	//相机
+	{
+		m_MainCamera = ProduceObject<CameraObject>();
+		m_MainCamera->SetPosition({ 0.0f, 2.0f, -15.0f });
+
+	}
 
 	{
 		V_Array<Float3> lights = { {0.57735f, -0.57735f, 0.57735f}, {-0.57735f, -0.57735f, 0.57735f}, {0.0f, -0.707f, -0.707f} };
@@ -105,6 +113,36 @@ void RiverEditorMainLayer::OnDetach()
 
 void RiverEditorMainLayer::OnUpdate(float deltaTime)
 {
+	auto application = Application::Get();
+	auto inputManager = application->GetInputManager();
+
+	float cameraSpeed = 1.0f;
+	if (inputManager->GetKeyState(KeyCode::W) == KeyState::Press)
+	{
+		m_MainCamera->MoveForward(cameraSpeed);
+	}
+	else if (inputManager->GetKeyState(KeyCode::S) == KeyState::Press)
+	{
+		m_MainCamera->MoveForward(-cameraSpeed);
+	}
+
+	if (inputManager->GetKeyState(KeyCode::D) == KeyState::Press)
+	{
+		m_MainCamera->MoveRight(cameraSpeed);
+	}
+	else if (inputManager->GetKeyState(KeyCode::A) == KeyState::Press)
+	{
+		m_MainCamera->MoveRight(-cameraSpeed);
+	}
+
+	if (inputManager->GetKeyState(KeyCode::Q) == KeyState::Press)
+	{
+		m_MainCamera->MoveUp(cameraSpeed);
+	}
+	else if (inputManager->GetKeyState(KeyCode::E) == KeyState::Press)
+	{
+		m_MainCamera->MoveUp(-cameraSpeed);
+	}
 }
 
 bool RiverEditorMainLayer::OnEvent(const Event& e)
@@ -116,34 +154,38 @@ void RiverEditorMainLayer::OnRender()
 {
 }
 
-bool RiverEditorMainLayer::OnMousePress()
+bool RiverEditorMainLayer::OnMousePress(MouseCode mouseCode, Int2 mousePosition)
 {
+
+	m_MainCamera->StartRotate(mousePosition.x, mousePosition.y);
 	return false;
 }
 
-bool RiverEditorMainLayer::OnMouseRelease()
+bool RiverEditorMainLayer::OnMouseRelease(MouseCode mouseCode, Int2 mousePosition)
 {
 	//显示快捷菜单
 	return false;
 }
 
-bool RiverEditorMainLayer::OnMouseDrag()
+bool RiverEditorMainLayer::OnMouseMove(int x, int y)
 {
-	return false;
-}
-
-bool RiverEditorMainLayer::OnKeyPress()
-{
-	auto state = Application::Get()->GetInputManager()->GetKeyState({ KeyCode::Space });
-	if (state == KeyState::Press)
+	if (m_MainCamera->IsStartRotate())
 	{
+		auto lastPos = m_MainCamera->GetLastMousePosition();
+		float dx = DegreeToRadians(0.25f * static_cast<float>(x - lastPos.x));
+		float dy = DegreeToRadians(0.25f * static_cast<float>(y - lastPos.y));
+		m_MainCamera->Rotate(0.0f, dx, dy);
 		return true;
 	}
-
 	return false;
 }
 
-bool RiverEditorMainLayer::OnKeyRelease()
+bool RiverEditorMainLayer::OnKeyPress(KeyCode key)
+{
+	return false;
+}
+
+bool RiverEditorMainLayer::OnKeyRelease(KeyCode key)
 {
 	return false;
 }

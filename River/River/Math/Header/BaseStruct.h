@@ -80,12 +80,14 @@ struct Float3
 
 	Float3(float x, float y, float z) : x(x), y(y), z(z) {}
 
-	Float3 operator+(const Float3& other)
+	Float3(const struct Float4& other);
+
+	Float3 operator+(const Float3& other) const
 	{
 		return Float3(x + other.x, y + other.y, z + other.z);
 	}
 
-	Float3 operator-(const Float3& other)
+	Float3 operator-(const Float3& other) const
 	{
 		return Float3(x - other.x, y - other.y, z - other.z);
 	}
@@ -229,7 +231,14 @@ inline Float4 Float4_Divide(const Float4& v1, const Float4& v2) noexcept
 	return Float4(v1[0] / v2[0], v1[1] / v2[1], v1[2] / v2[2], v1[3] / v2[3]);
 }
 
-inline Float3& Float3::operator=(const struct Float4& other) noexcept
+inline Float3::Float3(const Float4& other)
+{
+	x = other.x;
+	y = other.y;
+	z = other.z;
+}
+
+inline Float3& Float3::operator=(const Float4& other) noexcept
 {
 	x = other.x;
 	y = other.y;
