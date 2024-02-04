@@ -116,8 +116,7 @@ static D3D12_PRIMITIVE_TOPOLOGY GetRenderItemPrimtiveType(PrimitiveType type)
 
 
 DX12RHI::DX12RHI()
-	: m_CurrentFence(1), m_CurrFrameResourceIndex(0), m_CurrBackBufferIndex(0),
-	m_PrespectiveCamera(CameraType::Perspective), m_OrthoGraphicCamera(CameraType::OrthoGraphic)
+	: m_CurrentFence(1), m_CurrFrameResourceIndex(0), m_CurrBackBufferIndex(0)
 {
 }
 
@@ -146,8 +145,6 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 	InitializeBase(param);
 
 	ThrowIfFailed(m_CommandList->Reset(m_CommandAllocator.Get(), nullptr));
-
-	m_PrespectiveCamera.SetPosition(0.0f, 2.0f, -15.0f);
 
 	{
 		m_ShadowMap = std::make_unique<ShadowMap>(m_Device.Get(), 2048, 2048);
@@ -237,9 +234,7 @@ void DX12RHI::EndFrame()
 
 void DX12RHI::OnUpdate(const RiverTime& time)
 {
-	m_PrespectiveCamera.OnUpdate();
-
-	mLightRotationAngle += 0.1f * time.DeltaTime();
+	/*mLightRotationAngle += 0.1f * time.DeltaTime();
 
 	XMMATRIX R = XMMatrixRotationY(mLightRotationAngle);
 	for (int i = 0; i < 3; ++i)
@@ -249,17 +244,17 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 		XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
 	}
 
-	UpdateShadowTransform(time);
+	UpdateShadowTransform(time);*/
 
 	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 	WaitFence();
 
-	UpdateObjectCBs();
+	//UpdateObjectCBs();
 	//UpdateSkinnedCBs(time);
 	//UpdateMaterialCBs();
 	//UpdateShadowTransform(time);
-	UpdateMainPass();
+	//UpdateMainPass();
 	//UpdateShadowPass(time);
 	//UpdateSsaoCBs(time);
 }
@@ -1139,7 +1134,6 @@ void DX12RHI::Resize(const RHIInitializeParam& param)
 
 	m_ScissorRect = { 0, 0, param.WindowWidth, param.WindowHeight };
 
-	m_PrespectiveCamera.SetLens(0.25f * MATH_PI, (float)param.WindowWidth / param.WindowHeight, 1.0f, 1000.0f);
 	if (m_Ssao != nullptr)
 	{
 		m_Ssao->OnResize(param.WindowWidth, param.WindowHeight);
@@ -1629,11 +1623,6 @@ void DX12RHI::CreateSwapChain()
 	ThrowIfFailed(m_Factory->CreateSwapChain(m_CommandQueue.Get(), &sd, m_SwapChain.GetAddressOf()));
 }
 
-Camera* DX12RHI::GetMainCamera()
-{
-	return &m_PrespectiveCamera;
-}
-
 void DX12RHI::Pick(int x, int y)
 {
 	if (!mPickedRitem)
@@ -1641,7 +1630,7 @@ void DX12RHI::Pick(int x, int y)
 		return;
 	}
 
-	DirectX::XMFLOAT4X4 P = m_PrespectiveCamera.m_Proj;
+	DirectX::XMFLOAT4X4 P;// = m_PrespectiveCamera.m_Proj;
 
 	// Compute picking ray in view space.
 	float vx = (+2.0f * x / m_InitParam.WindowWidth - 1.0f) / P(0, 0);
@@ -1651,7 +1640,7 @@ void DX12RHI::Pick(int x, int y)
 	DirectX::XMVECTOR rayOrigin = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	DirectX::XMVECTOR rayDir = DirectX::XMVectorSet(vx, vy, 1.0f, 0.0f);
 
-	DirectX::XMMATRIX V = m_PrespectiveCamera.GetView();
+	DirectX::XMMATRIX V = IdentityMatrix();// = m_PrespectiveCamera.GetView();
 	auto dv = XMMatrixDeterminant(V);
 	DirectX::XMMATRIX invView = XMMatrixInverse(&dv, V);
 
@@ -1925,80 +1914,6 @@ void DX12RHI::UpdateMaterialCBs()
 	}
 }
 
-void DX12RHI::UpdateMainPass(/*const RiverTime& time*/)
-{
-	XMMATRIX view = m_PrespectiveCamera.GetView();
-	XMMATRIX proj = m_PrespectiveCamera.GetProj();
-
-	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
-	XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
-	XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
-
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-	XMMATRIX T(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f);
-
-	XMMATRIX viewProjTex = XMMatrixMultiply(viewProj, T);
-	XMMATRIX shadowTransform = XMLoadFloat4x4(&mShadowTransform);
-
-	//XMStoreFloat4x4(&m_MainPassCB.View, XMMatrixTranspose(view));
-	//XMStoreFloat4x4(&m_MainPassCB.InvView, XMMatrixTranspose(invView));
-	//XMStoreFloat4x4(&m_MainPassCB.Proj, XMMatrixTranspose(proj));
-	//XMStoreFloat4x4(&m_MainPassCB.InvProj, XMMatrixTranspose(invProj));
-	//XMStoreFloat4x4(&m_MainPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	//XMStoreFloat4x4(&m_MainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	//XMStoreFloat4x4(&m_MainPassCB.ViewProjTex, XMMatrixTranspose(viewProjTex));
-	//XMStoreFloat4x4(&m_MainPassCB.ShadowTransform, XMMatrixTranspose(shadowTransform));
-
-	//m_MainPassCB.EyePosW = m_PrespectiveCamera.GetPosition();
-	//m_MainPassCB.RenderTargetSize = (XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight));
-	//m_MainPassCB.InvRenderTargetSize = (XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight));
-	//m_MainPassCB.NearZ = 1.0f;
-	//m_MainPassCB.FarZ = 1000.0f;
-	//m_MainPassCB.TotalTime = 0;//time.TotalTime();
-	//m_MainPassCB.DeltaTime = 0;//time.DeltaTime();
-	//m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	//m_MainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
-	//m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
-	//m_MainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
-	//m_MainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	//m_MainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
-	//m_MainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
-
-	m_MainPassCB.View = Matrix4x4_Transpose(*(Matrix4x4*)&view);
-	m_MainPassCB.InvView = Matrix4x4_Transpose(*(Matrix4x4*)&invView);
-	m_MainPassCB.Proj = Matrix4x4_Transpose(*(Matrix4x4*)&proj);
-	m_MainPassCB.InvProj = Matrix4x4_Transpose(*(Matrix4x4*)&invProj);
-	m_MainPassCB.ViewProj = Matrix4x4_Transpose(*(Matrix4x4*)&viewProj);
-	m_MainPassCB.InvViewProj = Matrix4x4_Transpose(*(Matrix4x4*)&invViewProj);
-	m_MainPassCB.ViewProjTex = Matrix4x4_Transpose(*(Matrix4x4*)&viewProjTex);
-	m_MainPassCB.ShadowTransform = Matrix4x4_Transpose(*(Matrix4x4*)&shadowTransform);
-
-	m_MainPassCB.EyePosW = *(Float3*)&m_PrespectiveCamera.GetPosition();
-	m_MainPassCB.RenderTargetSize = *(Float2*)&(XMFLOAT2((float)m_InitParam.WindowWidth, (float)m_InitParam.WindowHeight));
-	m_MainPassCB.InvRenderTargetSize = *(Float2*)&(XMFLOAT2(1.0f / m_InitParam.WindowWidth, 1.0f / m_InitParam.WindowHeight));
-	m_MainPassCB.NearZ = 1.0f;
-	m_MainPassCB.FarZ = 1000.0f;
-	m_MainPassCB.TotalTime = 0;//time.TotalTime();
-	m_MainPassCB.DeltaTime = 0;//time.DeltaTime();
-	m_MainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	m_MainPassCB.Lights[0].Direction = *(Float3*)&mRotatedLightDirections[0];
-	m_MainPassCB.Lights[0].Strength = { 0.9f, 0.9f, 0.7f };
-	m_MainPassCB.Lights[1].Direction = *(Float3*)&mRotatedLightDirections[1];
-	m_MainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-	m_MainPassCB.Lights[2].Direction = *(Float3*)&mRotatedLightDirections[2];
-	m_MainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
-
-	
-
-	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(0, m_MainPassCB);
-}
-
 void DX12RHI::UpdateShadowPass(const RiverTime& time)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mLightView);
@@ -2045,7 +1960,7 @@ void DX12RHI::UpdateSsaoCBs(const RiverTime& time)
 {
 	SsaoUniform ssaoCB;
 
-	XMMATRIX P = m_PrespectiveCamera.GetProj();
+	XMMATRIX P;// = m_PrespectiveCamera.GetProj();
 
 	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
 	XMMATRIX T(

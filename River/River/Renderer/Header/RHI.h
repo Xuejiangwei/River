@@ -89,8 +89,6 @@ public:
 
 	virtual Unique<Shader> CreateShader(const char* name, const char* path, ShaderParam* param = nullptr) = 0;
 
-	virtual class Camera* GetMainCamera() = 0;
-
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) = 0;
 
 	virtual void UpdatePassUniform(int index, RenderPass::PassUniform* uniform) = 0;

@@ -2,6 +2,8 @@
 #include "Input/Header/InputManager.h"
 #include "Layer.h"
 
+#include "Log/Header/Log.h"
+
 InputManager::InputManager()
 {
 }
@@ -19,7 +21,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 		[this, &layers](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<MouseButtonPressedEvent&>(e);
-			m_MouseState[ce.GetMouseButton()] = MouseState::Press;
+			this->m_MouseState[ce.GetMouseButton()] = MouseState::Press;
 			m_LastMousePositon.x = ce.GetMouseX();
 			m_LastMousePositon.y = ce.GetMouseY();
 
@@ -36,7 +38,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 		[this, &layers](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
-			m_MouseState[ce.GetMouseButton()] = MouseState::Release;
+			this->m_MouseState[ce.GetMouseButton()] = MouseState::Release;
 			m_LastMousePositon.x = ce.GetMouseX();
 			m_LastMousePositon.y = ce.GetMouseY();
 
@@ -52,16 +54,16 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 	dispatcher.DispatchDirect<MouseMovedEvent>(
 		[this, &layers](auto e) -> decltype(auto)
 		{
-			bool isDrag = false;
+			bool isDrag = true;
 			auto& ce = dynamic_cast<MouseMovedEvent&>(e);
-			for (auto& state : m_MouseState)
+			/*for (auto& state : this->m_MouseState)
 			{
 				if (state.second == MouseState::Press)
 				{
 					state.second = MouseState::Drag;
 					isDrag = true;
 				}
-			}
+			}*/
 
 			m_LastMousePositon.x = (int)ce.GetMouseX();
 			m_LastMousePositon.y = (int)ce.GetMouseY();
@@ -84,7 +86,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 		[this, &layers](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<KeyPressedEvent&>(e);
-			m_KeyState[ce.GetKeyCode()] = KeyState::Press;
+			this->m_KeyState[ce.GetKeyCode()] = KeyState::Press;
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{
 				if (layers[i]->OnKeyPress(ce.GetKeyCode()))
@@ -98,7 +100,7 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 		[this, &layers](auto e) -> decltype(auto)
 		{
 			auto& ce = dynamic_cast<KeyReleasedEvent&>(e);
-			m_KeyState[ce.GetKeyCode()] = KeyState::Release;
+			this->m_KeyState[ce.GetKeyCode()] = KeyState::Release;
 
 			for (int i = (int)layers.size() - 1; i >= 0; i--)
 			{

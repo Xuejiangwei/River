@@ -126,30 +126,5 @@ void Application::OnEvent(Event& e)
 			{
 				RHI::Get()->Pick(ce.GetMouseX(), ce.GetMouseY());
 			}
-			else
-			{
-				RHI::Get()->GetMainCamera()->OnMousePressed(ce.GetMouseX(), ce.GetMouseY());
-			}
-		});
-
-	dispatcher.DispatchDirect<MouseButtonReleasedEvent>(
-		[this](auto e) -> decltype(auto)
-		{
-			auto& ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
-			RHI::Get()->GetMainCamera()->OnMouseReleased(ce.GetMouseX(), ce.GetMouseY());
-		});
-
-	dispatcher.DispatchDirect<MouseMovedEvent>(
-		[this](auto e) -> decltype(auto)
-		{
-			auto& ce = dynamic_cast<MouseMovedEvent&>(e);
-			RHI::Get()->GetMainCamera()->OnMouseMoved((int)ce.GetMouseX(), (int)ce.GetMouseX());
-		});
-
-	dispatcher.DispatchDirect<KeyPressedEvent>(
-		[this](auto e) -> decltype(auto)
-		{
-			auto& ce = dynamic_cast<KeyPressedEvent&>(e);
-			RHI::Get()->GetMainCamera()->OnKeyPressed(ce.GetKeyCode(), m_Time);
 		});
 }

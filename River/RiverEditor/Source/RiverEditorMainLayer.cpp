@@ -16,6 +16,8 @@
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/AssetManager.h"
 
+#include "Log/Header/Log.h"
+
 RiverEditorMainLayer::RiverEditorMainLayer()
 {
 }
@@ -39,7 +41,6 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		m_MainCamera = ProduceObject<CameraObject>();
 		m_MainCamera->SetPosition({ 0.0f, 2.0f, -15.0f });
-
 	}
 
 	{
@@ -116,7 +117,7 @@ void RiverEditorMainLayer::OnUpdate(float deltaTime)
 	auto application = Application::Get();
 	auto inputManager = application->GetInputManager();
 
-	float cameraSpeed = 1.0f;
+	float cameraSpeed = 10.0f * deltaTime;
 	if (inputManager->GetKeyState(KeyCode::W) == KeyState::Press)
 	{
 		m_MainCamera->MoveForward(cameraSpeed);
@@ -163,6 +164,7 @@ bool RiverEditorMainLayer::OnMousePress(MouseCode mouseCode, Int2 mousePosition)
 
 bool RiverEditorMainLayer::OnMouseRelease(MouseCode mouseCode, Int2 mousePosition)
 {
+	m_MainCamera->EndRotate();
 	//ÏÔÊ¾¿ì½Ý²Ëµ¥
 	return false;
 }
@@ -174,7 +176,9 @@ bool RiverEditorMainLayer::OnMouseMove(int x, int y)
 		auto lastPos = m_MainCamera->GetLastMousePosition();
 		float dx = DegreeToRadians(0.25f * static_cast<float>(x - lastPos.x));
 		float dy = DegreeToRadians(0.25f * static_cast<float>(y - lastPos.y));
-		m_MainCamera->Rotate(0.0f, dx, dy);
+
+		m_MainCamera->Rotate(0.0f, dy, dx);
+		m_MainCamera->StartRotate(x, y);
 		return true;
 	}
 	return false;

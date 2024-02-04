@@ -81,9 +81,6 @@
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12IndexBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\DX12Renderer\Source\DX12Camera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\DX12Renderer\Source\DX12GeometryGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -347,9 +344,6 @@
     <ClInclude Include="Header\KeyCode.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\DX12Renderer\Header\DX12Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12GeometryGenerator.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -552,6 +546,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Input\Header\InputManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Log\Header\Log.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

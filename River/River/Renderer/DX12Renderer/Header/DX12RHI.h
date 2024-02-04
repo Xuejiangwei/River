@@ -13,7 +13,6 @@
 #include "Event.h"
 #include "Material.h"
 #include "Renderer/DX12Renderer/Header/DX12RenderItem.h"
-#include "Renderer/DX12Renderer/Header/DX12Camera.h"
 #include "Renderer/DX12Renderer/Header/UploadBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12UniformBuffer.h"
 #include "Renderer/DX12Renderer/Header/DX12FrameBuffer.h"
@@ -100,8 +99,6 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
-	virtual Camera* GetMainCamera() override;
-
 	virtual void Pick(int x, int y) override;
 
 	void WaitFence();
@@ -148,8 +145,6 @@ private:
 	void UpdateSkinnedCBs(const RiverTime& time);
 
 	void UpdateMaterialCBs();
-
-	void UpdateMainPass(/*const RiverTime& time*/);
 
 	void UpdateShadowPass(const RiverTime& time);
 	
@@ -217,9 +212,6 @@ private:
 
 	D3D12_VIEWPORT m_ScreenViewport;
 	D3D12_RECT m_ScissorRect;
-
-	DX12Camera m_PrespectiveCamera;
-	DX12Camera m_OrthoGraphicCamera;
 
 	DX12FrameBuffer* m_CurrFrameResource = nullptr;
 

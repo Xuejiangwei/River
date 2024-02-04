@@ -19,7 +19,9 @@ public:
 
 	const Float3& GetLookVector() const { return m_Look; }
 
-	const Float3& GetPosition() const;
+	Float3 GetPosition() const;
+
+	void LookAt(const Float3& pos, const Float3& target, const Float3& up);
 
 	void SetCameraRightVector(const Float3& right);
 

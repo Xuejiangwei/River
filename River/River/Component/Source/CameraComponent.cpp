@@ -59,9 +59,23 @@ void CameraComponent::Tick(float deltaTime)
 	}
 }
 
-const Float3& CameraComponent::GetPosition() const
+Float3 CameraComponent::GetPosition() const
 {
 	return m_Owner ? m_Owner->GetTransform().Position : Float3(0, 0, 0);
+}
+
+void CameraComponent::LookAt(const Float3& pos, const Float3& target, const Float3& up)
+{
+	auto l = VectorNormalize(target - pos);
+	auto r = VectorNormalize(VectorCross(up, l));
+	auto u = VectorCross(l, r);
+
+	m_Owner->SetPosition(pos);
+	m_Look = l;
+	m_Right = r;
+	m_Up = u;
+	
+	m_Dirty = true;
 }
 
 void CameraComponent::SetCameraRightVector(const Float3& right)
@@ -129,7 +143,8 @@ void CameraComponent::MoveForward(float value)
 
 void CameraComponent::MoveRight(float value)
 {
-	m_Owner->SetPosition(VectorMultiplyAdd(Float3(value, value, value), m_Right, GetPosition()));
+	auto pos = VectorMultiplyAdd(Float3(value, value, value), m_Right, GetPosition());
+	m_Owner->SetPosition(pos);
 
 	m_Dirty = true;
 }
