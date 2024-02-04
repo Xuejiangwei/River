@@ -1,12 +1,13 @@
 #pragma once
 #include "Component.h"
 
-class Object;
+class CameraObject;
 
 class CameraComponent : public Component
 {
+	friend class CameraObject;
 public:
-	CameraComponent(Object* owner);
+	CameraComponent(CameraObject* owner);
 
 	virtual ~CameraComponent() override;
 
@@ -39,7 +40,7 @@ public:
 	void MoveUp(float value);
 
 private:
-	Object* m_Owner;
+	CameraObject* m_Owner;
 	Float3 m_Right;
 	Float3 m_Up;
 	Float3 m_Look;
@@ -50,6 +51,7 @@ private:
 	float m_NearWindowHeight;
 	float m_FarWindowHeight;
 	Matrix4x4 m_ViewMatrix;
+	Matrix4x4 m_ProjectMatrix;
 
 	bool m_Dirty;
 };

@@ -14,6 +14,8 @@ public:
 
 	Texture* GetShadowMapTexture() { return m_ShadowMapTexture; }
 
+	const Matrix4x4& GetShadowTransform() const { return m_PassUniform.ShadowTransform; }
+
 private:
 	Float2 m_ShadowMapSize;
 	Texture* m_ShadowMapTexture;

@@ -17,6 +17,12 @@ public:
 
 	const Transform& GetTransform() const { return m_Transform; }
 
+	const Float3& GetPosition() const { return m_Transform.Position; }
+
+	const Float3& GetRotation() const { return m_Transform.Rotation; }
+	
+	const Float3& GetScale() const { return m_Transform.Scale; }
+
 	void SetPosition(const Float3& position);
 
 	void SetRotation(const Float4& rotation);

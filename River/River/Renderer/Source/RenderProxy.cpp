@@ -75,3 +75,8 @@ void RenderProxy::AddLightObjectProxy()
 {
 	m_ProxyId = Application::Get()->GetRenderScene()->AddLightObjectProxyToScene(this);
 }
+
+void RenderProxy::AddCameraObjectProxy()
+{
+	m_ProxyId = Application::Get()->GetRenderScene()->AddCameraObjectProxyToScene(this);
+}

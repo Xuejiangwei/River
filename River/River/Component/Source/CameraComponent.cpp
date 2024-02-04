@@ -1,9 +1,9 @@
 #include "RiverPch.h"
 #include "Component/Header/CameraComponent.h"
-#include "Object/Header/Object.h"
+#include "Object/Header/CameraObject.h"
 #include "Math/Header/Geometric.h"
 
-CameraComponent::CameraComponent(Object* owner)
+CameraComponent::CameraComponent(CameraObject* owner)
 	: m_Owner(owner), m_Right({ 1.0f, 0.0f, 0.0f }), m_Up({ 0.0f, 1.0f, 0.0f }), m_Look({ 0.0f, 0.0f, 1.0f }), m_Dirty(true),
 	m_NearZ(0.0f), m_FarZ(0.0f), m_Aspect(0.0f), m_FovY(0.0f), m_NearWindowHeight(0.0f), m_FarWindowHeight(0.0f)
 {
@@ -88,6 +88,15 @@ void CameraComponent::SetLens(float fovY, float aspect, float nearZ, float farZ)
 
 	m_NearWindowHeight = 2.0f * m_NearZ * tanf(0.5f * m_FovY);
 	m_FarWindowHeight = 2.0f * m_FarZ * tanf(0.5f * m_FovY);
+
+	if (m_Owner->GetCameraType() == CameraType::Perspective)
+	{
+		m_ProjectMatrix = Matrix4x4_PerspectiveFovLH(m_FovY, m_Aspect, m_NearZ, m_FarZ);
+	}
+	else if (m_Owner->GetCameraType() == CameraType::OrthoGraphic)
+	{
+		m_ProjectMatrix = Matrix4x4_OrthographicLH(10, 10, m_NearZ, m_FarZ);
+	}
 }
 
 void CameraComponent::OnPitch(float angle)
@@ -107,19 +116,27 @@ void CameraComponent::OnRotationY(float angle)
 	m_Right = Vector3TransformNormal(m_Right, r);
 	m_Up = Vector3TransformNormal(m_Up, r);
 	m_Look = Vector3TransformNormal(m_Look, r);
+	
+	m_Dirty = true;
 }
 
 void CameraComponent::MoveForward(float value)
 {
 	m_Owner->SetPosition(VectorMultiplyAdd(Float3(value, value, value), m_Look, GetPosition()));
+
+	m_Dirty = true;
 }
 
 void CameraComponent::MoveRight(float value)
 {
 	m_Owner->SetPosition(VectorMultiplyAdd(Float3(value, value, value), m_Right, GetPosition()));
+
+	m_Dirty = true;
 }
 
 void CameraComponent::MoveUp(float value)
 {
 	m_Owner->SetPosition(GetPosition() + Float3(0.0, value, 0.0f));
+	
+	m_Dirty = true;
 }

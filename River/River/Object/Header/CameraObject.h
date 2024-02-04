@@ -5,7 +5,9 @@
 enum class CameraType
 {
 	OrthoGraphic,
-	Perspective
+	Perspective,
+	OrthoGraphicRenderer,
+	PerspectiveRenderer,
 };
 
 class CameraObject : public Object
@@ -39,6 +41,10 @@ public:
 	bool IsStartRotate() const { return m_StartRotate; }
 
 	Int2 GetLastMousePosition() const { return m_LastMousePosition; }
+
+	const Matrix4x4& GetViewMatrix() const;
+
+	const Matrix4x4& GetProjectMatrix() const;
 
 private:
 	CameraType m_CameraType;

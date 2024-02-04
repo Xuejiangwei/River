@@ -34,6 +34,8 @@ public:
 
 	void AddLightObjectProxy();
 
+	void AddCameraObjectProxy();
+
 private:
 	Object* m_RenderObject;
 	

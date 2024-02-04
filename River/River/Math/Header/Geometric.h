@@ -629,3 +629,72 @@ inline Matrix4x4 Matrix4x4_RotationAxis(const Float3& axis, float angle)
 
     return Matrix4x4_RotationNormal(axis.Normalize(), angle);
 }
+
+inline Matrix4x4 Matrix4x4_PerspectiveFovLH(float FovAngleY,
+    float AspectRatio,
+    float NearZ,
+    float FarZ)
+{
+    float    SinFov;
+    float    CosFov;
+    Matrix4x4_ScalarSinCos(&SinFov, &CosFov, 0.5f * FovAngleY);
+
+    float Height = CosFov / SinFov;
+    float Width = Height / AspectRatio;
+    float fRange = FarZ / (FarZ - NearZ);
+
+    Matrix4x4 M;
+    M.m[0][0] = Width;
+    M.m[0][1] = 0.0f;
+    M.m[0][2] = 0.0f;
+    M.m[0][3] = 0.0f;
+
+    M.m[1][0] = 0.0f;
+    M.m[1][1] = Height;
+    M.m[1][2] = 0.0f;
+    M.m[1][3] = 0.0f;
+
+    M.m[2][0] = 0.0f;
+    M.m[2][1] = 0.0f;
+    M.m[2][2] = fRange;
+    M.m[2][3] = 1.0f;
+
+    M.m[3][0] = 0.0f;
+    M.m[3][1] = 0.0f;
+    M.m[3][2] = -fRange * NearZ;
+    M.m[3][3] = 0.0f;
+    return M;
+}
+
+inline Matrix4x4 Matrix4x4_OrthographicLH
+(
+    float ViewWidth,
+    float ViewHeight,
+    float NearZ,
+    float FarZ
+) noexcept
+{
+    float fRange = 1.0f / (FarZ - NearZ);
+
+    Matrix4x4 M;
+    M.m[0][0] = 2.0f / ViewWidth;
+    M.m[0][1] = 0.0f;
+    M.m[0][2] = 0.0f;
+    M.m[0][3] = 0.0f;
+
+    M.m[1][0] = 0.0f;
+    M.m[1][1] = 2.0f / ViewHeight;
+    M.m[1][2] = 0.0f;
+    M.m[1][3] = 0.0f;
+
+    M.m[2][0] = 0.0f;
+    M.m[2][1] = 0.0f;
+    M.m[2][2] = fRange;
+    M.m[2][3] = 0.0f;
+
+    M.m[3][0] = 0.0f;
+    M.m[3][1] = 0.0f;
+    M.m[3][2] = -fRange * NearZ;
+    M.m[3][3] = 1.0f;
+    return M;
+}

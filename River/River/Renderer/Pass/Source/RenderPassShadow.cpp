@@ -89,6 +89,8 @@ void RenderPassShadow::Render()
 		m_PassUniform.NearZ = mLightNearZ;
 		m_PassUniform.FarZ = mLightFarZ;
 
+		m_PassUniform.ShadowTransform = shadowTransform; //留给forwardpass 复制使用
+
 		rhi->UpdatePassUniform(1, &m_PassUniform);
 	}
 	

@@ -108,6 +108,12 @@ int RenderScene::AddLightObjectProxyToScene(RenderProxy* proxy)
 	return (int)m_Lights.size();
 }
 
+int RenderScene::AddCameraObjectProxyToScene(RenderProxy* proxy)
+{
+	m_Cameras.push_back(proxy);
+	return (int)m_Cameras.size();
+}
+
 void RenderScene::RemoveObjectProxyFromScene(RenderProxy* proxy)
 {
 	if (proxy->HasRenderData())
@@ -129,6 +135,20 @@ void RenderScene::AddUILayer(Share<Layer>& layer)
 			uiPass->AddUILayer(layer);
 		}
 	}
+}
+
+RenderPassShadow* RenderScene::GetShadowRenderPass()
+{
+	for (auto& pass : m_RenderPasses)
+	{
+		auto shadowPass = dynamic_cast<RenderPassShadow*>(pass.get());
+		if (shadowPass)
+		{
+			return shadowPass;
+		}
+	}
+
+	return nullptr;
 }
 
 RenderPassUI* RenderScene::GetUIRenderPass()
