@@ -19,8 +19,8 @@ enum class ShaderLayotClassification
 enum class CullMode
 {
 	None = 1,
-	Back,
 	Front,
+	Back,
 };
 
 enum class ComparisonFunc

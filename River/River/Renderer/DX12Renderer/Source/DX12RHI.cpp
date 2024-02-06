@@ -627,7 +627,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				}
 			}
 
-			//commandList->SetGraphicsRootDescriptorTable(3, )
+			commandList->SetGraphicsRootShaderResourceView(3, matCB->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
 
@@ -1250,7 +1250,7 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
-	Texture::CreateTexture("ShadowMap", 2048, 2048);
+	Texture::CreateTexture("ShadowMap", 720, 720);
 }
 
 void DX12RHI::InitBaseShaders()

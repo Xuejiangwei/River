@@ -58,7 +58,7 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 1.0f, 1.0f, 0.0f });
-		obj->SetScale({ 10.f,10.f,10.f });
+		obj->SetScale({ 2.f,2.f,2.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat");
@@ -71,7 +71,7 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ -1.0f, 1.0f, 0.0f });
-		obj->SetScale({ 10.f,10.f,10.f });
+		obj->SetScale({ 2.f,2.f,2.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
 		auto mat = Material::CreateMaterial("MyMat1");
@@ -84,6 +84,7 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, -1.0f, 3.0f });
+		obj->SetScale({ 10.0f, 10.0f, 10.0f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
 		auto mat = Material::GetMaterial("MyMat");
@@ -94,7 +95,7 @@ void RiverEditorMainLayer::OnInitialize()
 		shader = AssetManager::Get()->GetShader("sky");
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, 0.0f, 0.0f });
-		obj->SetScale({ 100.f,100.f,100.f });
+		obj->SetScale({ 100.f,100.f,10.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultSphere"));
 		auto mat = Material::CreateMaterial("MySkyMat");
@@ -136,11 +137,11 @@ void RiverEditorMainLayer::OnUpdate(float deltaTime)
 		m_MainCamera->MoveRight(-cameraSpeed);
 	}
 
-	if (inputManager->GetKeyState(KeyCode::Q) == KeyState::Press)
+	if (inputManager->GetKeyState(KeyCode::E) == KeyState::Press)
 	{
 		m_MainCamera->MoveUp(cameraSpeed);
 	}
-	else if (inputManager->GetKeyState(KeyCode::E) == KeyState::Press)
+	else if (inputManager->GetKeyState(KeyCode::Q) == KeyState::Press)
 	{
 		m_MainCamera->MoveUp(-cameraSpeed);
 	}
