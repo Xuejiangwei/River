@@ -81,7 +81,9 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
-	virtual Material* CreateMaterial(const char* name) = 0;
+	void AddMaterial(const char* name, Unique<Material>& material);
+	
+	Material* GetMaterial(const char* name);
 
 	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) = 0;
 
@@ -106,8 +108,6 @@ public:
 	constexpr int GetRenderItemMaxCount() { return m_RenderItemAllocator.MaxCount; }
 
 	constexpr int GetMaterialMaxCount() { return m_UIRenderItemAllocator.MaxCount; }
-
-	Material* GetMaterial(const char* name);
 
 	RenderItem* AddRenderItem();
 

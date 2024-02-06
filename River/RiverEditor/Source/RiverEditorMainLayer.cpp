@@ -86,7 +86,7 @@ void RiverEditorMainLayer::OnInitialize()
 		obj->SetPosition({ 0.0f, -1.0f, 3.0f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
-		auto mat = AssetManager::Get()->GetMaterial("MyMat");
+		auto mat = Material::GetMaterial("MyMat");
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
 	}
 

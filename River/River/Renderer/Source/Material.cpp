@@ -1,6 +1,6 @@
 #include "RiverPch.h"
 #include "Material.h"
-#include "AssetManager.h"
+#include "Renderer/Header/RHI.h"
 
 Material::Material(String& name)
 	: m_Name(std::move(name)), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
@@ -22,9 +22,14 @@ Material* Material::CreateMaterial(const char* name, const char* shaderName)
 	auto material = MakeUnique<Material>(name);
 	auto ret = material.get();
 
-	AssetManager::Get()->AddCacheMaterial(name, material);
+	RHI::Get()->AddMaterial(name, material);
 
 	return ret;
+}
+
+Material* Material::GetMaterial(const char* name)
+{
+	return RHI::Get()->GetMaterial(name);
 }
 
 void Material::InitBaseParam(MaterialBlendMode blendMode, Shader* shader, const Float4& diffuseAlbedo, const Float3& fresnelR0, float roughness, int cbIndx,

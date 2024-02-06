@@ -40,6 +40,19 @@ public:
 		Light Lights[MaxLights];
 	};
 
+	struct MaterialUniform
+	{
+		Float4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+		Float3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+		float Roughness = 0.25f;
+		Matrix4x4 MatTransform = Matrix4x4::UnitMatrix();
+
+		uint32 DiffuseMapIndex = 0;
+		uint32 NormalMapIndex = 0;
+		uint32 MaterialPad1;
+		uint32 MaterialPad2;
+	};
+
 public:
 	RenderPass();
 

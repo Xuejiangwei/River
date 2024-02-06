@@ -74,11 +74,6 @@ Shader* AssetManager::GetShader(const char* name)
 	return nullptr;
 }
 
-Material* AssetManager::GetMaterial(const char* name)
-{
-	return m_CacheMaterials[name].get();
-}
-
 void AssetManager::AddCacheTexture(const char* name, Unique<Texture>& texture)
 {
 	m_CacheTextures[name] = River::Move(texture);
@@ -87,11 +82,6 @@ void AssetManager::AddCacheTexture(const char* name, Unique<Texture>& texture)
 void AssetManager::AddCacheShader(const char* name, Unique<Shader>& shader)
 {
 	m_CacheShaders[name] = River::Move(shader);
-}
-
-void AssetManager::AddCacheMaterial(const char* name, Unique<Material>& material)
-{
-	m_CacheMaterials[name] = River::Move(material);
 }
 
 AssetManager* AssetManager::Get()

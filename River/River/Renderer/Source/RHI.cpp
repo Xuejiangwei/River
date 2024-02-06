@@ -57,17 +57,6 @@ FontAtlas* RHI::GetFont(const char* name) const
 	return iter->second.get();
 }
 
-Material* RHI::GetMaterial(const char* name)
-{
-	auto iter = m_Materials.find(name);
-	if (iter != m_Materials.end())
-	{
-		return iter->second.get();
-	}
-
-	return nullptr;
-}
-
 RenderItem* RHI::AddRenderItem()
 {
 	auto id = m_RenderItemAllocator.Alloc();
@@ -103,4 +92,20 @@ void RHI::UpdateRenderItem(int id, RenderItem* renderItem)
 void RHI::AddUIRenderItem(UIRenderItem& renderItem)
 {
 	m_UIRenderItemAllocator.m_Containor.push_back(renderItem);
+}
+
+void RHI::AddMaterial(const char* name, Unique<Material>& material)
+{
+	m_Materials[name] = River::Move(material);
+}
+
+Material* RHI::GetMaterial(const char* name)
+{
+	auto iter = m_Materials.find(name);
+	if (iter != m_Materials.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
 }

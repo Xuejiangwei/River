@@ -56,5 +56,4 @@ private:
 	HashMap<String, Unique<StaticMesh>> m_CacheStaticMeshes;
 	HashMap<String, Unique<Texture>> m_CacheTextures;
 	HashMap<String, Unique<Shader>> m_CacheShaders;
-	HashMap<String, Unique<Material>> m_CacheMaterials;
 };

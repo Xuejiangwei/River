@@ -195,6 +195,8 @@ void DX12RHI::Exit()
 
 void DX12RHI::BeginFrame()
 {
+	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
+	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
 	WaitFence();
 
 	//添加与删除Uniform数据
@@ -205,16 +207,45 @@ void DX12RHI::BeginFrame()
 		{
 			renderItem.NumFramesDirty--;
 
-			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.World));
-			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.TexTransform));
+			DirectX::XMMATRIX world = DirectX::XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.World));
+			DirectX::XMMATRIX texTransform = DirectX::XMLoadFloat4x4((const XMFLOAT4X4*)(&renderItem.TexTransform));
 
 			ObjectUniform objConstants;
-			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			objConstants.MaterialIndex = 2;
+			DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+			DirectX::XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+
+			if (renderItem.Material)
+			{
+				objConstants.MaterialIndex = renderItem.Material->MatCBIndex;
+			}
+			else
+			{
+				objConstants.MaterialIndex = 2;
+			}
 
 			currObjectCB->CopyData(renderItem.ObjCBIndex, objConstants);
 
+		}
+	}
+
+	auto& currMatrialCB = m_CurrFrameResource->m_MaterialUniform;
+	for (auto&  mat : m_Materials)
+	{
+		auto& material = mat.second;
+		if (material->MatCBIndex >= 0 && material->NumFramesDirty > 0)
+		{
+			material->NumFramesDirty--;
+
+			RenderPass::MaterialUniform matConstants;
+			matConstants.DiffuseAlbedo = material->DiffuseAlbedo;
+			matConstants.FresnelR0 =material->FresnelR0;
+			matConstants.Roughness = material->Roughness;
+			matConstants.MatTransform = Matrix4x4_Transpose(material->MatTransform);
+			matConstants.DiffuseMapIndex = 0;//mat->m_DiffuseTexture->GetTextureId(); //mat->DiffuseSrvHeapIndex;
+			matConstants.NormalMapIndex = 1;// mat->m_NormalTexture->GetTextureId(); //mat->NormalSrvHeapIndex;
+
+
+			currMatrialCB->CopyData(material->MatCBIndex, matConstants);
 		}
 	}
 
@@ -246,9 +277,9 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 	UpdateShadowTransform(time);*/
 
-	m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
+	/*m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
 	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
-	WaitFence();
+	WaitFence();*/
 
 	//UpdateObjectCBs();
 	//UpdateSkinnedCBs(time);
@@ -374,18 +405,6 @@ Pair<void*, void*> DX12RHI::GetStaticMeshBuffer(const char* name)
 	return { nullptr, nullptr };
 }
 
-Material* DX12RHI::CreateMaterial(const char* name)
-{
-	auto iter = m_Materials.find(name);
-	if (iter != m_Materials.end())
-	{
-		return iter->second.get();
-	}
-
-	m_Materials[name] = MakeUnique<Material>(name);
-	return m_Materials[name].get();
-}
-
 void DX12RHI::SetViewPort(uint32 w, uint32 h, uint32 xOffset, uint32 yOffset)
 {
 	m_ScreenViewport.Width = (float)w;
@@ -468,10 +487,6 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 	//m_CommandList->SetGraphicsRootSignature(m_RootSignatures["default"]->GetRootSignature());
 
-	//绑定材质缓冲数据
-	/*auto matBuffer = m_CurrFrameResource->m_MaterialUniform->Resource();
-	m_CommandList->SetGraphicsRootShaderResourceView(3, matBuffer->GetGPUVirtualAddress());*/
-
 	commandList->RSSetViewports(1, &m_ScreenViewport);
 	commandList->RSSetScissorRects(1, &m_ScissorRect);
 
@@ -480,6 +495,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
+	auto matCB = m_CurrFrameResource->m_MaterialUniform->Resource();
 
 	DrawRenderPassBegin(renderPass, frameBufferType);
 
@@ -683,6 +699,9 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
 				commandList->SetPipelineState(shader->GetPipelineState());
 			}
+
+			//绑定材质缓冲数据
+			commandList->SetGraphicsRootShaderResourceView(3, matCB->GetGPUVirtualAddress());
 
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
@@ -1884,34 +1903,6 @@ void DX12RHI::UpdateSkinnedCBs(const RiverTime& time)
 		&skinnedConstants.BoneTransforms[0]);
 
 	currSkinnedCB->CopyData(0, skinnedConstants);
-}
-
-void DX12RHI::UpdateMaterialCBs()
-{
-	auto currMaterialCB = m_CurrFrameResource->m_MaterialUniform.get();
-	for (auto& e : m_Materials)
-	{
-		// Only update the cbuffer data if the constants have changed.  If the cbuffer
-		// data changes, it needs to be updated for each FrameResource.
-		auto mat = e.second.get();
-		if (mat->NumFramesDirty > 0)
-		{
-			XMMATRIX matTransform = DirectX::XMLoadFloat4x4((DirectX::XMFLOAT4X4*)(&mat->MatTransform));
-
-			MaterialUniform matData;
-			matData.DiffuseAlbedo = *(DirectX::XMFLOAT4*)(&mat->DiffuseAlbedo);
-			matData.FresnelR0 = *(DirectX::XMFLOAT3*)(&mat->FresnelR0);
-			matData.Roughness = mat->Roughness;
-			DirectX::XMStoreFloat4x4((DirectX::XMFLOAT4X4*)(&mat->MatTransform), XMMatrixTranspose(matTransform));
-			matData.DiffuseMapIndex = mat->m_DiffuseTexture->GetTextureId(); //mat->DiffuseSrvHeapIndex;
-			matData.NormalMapIndex = mat->m_NormalTexture->GetTextureId(); //mat->NormalSrvHeapIndex;
-
-			currMaterialCB->CopyData(mat->MatCBIndex, matData);
-
-			// Next FrameResource need to be updated too.
-			mat->NumFramesDirty--;
-		}
-	}
 }
 
 void DX12RHI::UpdateShadowPass(const RiverTime& time)

@@ -60,8 +60,6 @@ public:
 
 	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) override;
 
-	virtual Material* CreateMaterial(const char* name) override;
-
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) override;
 	
 	virtual void UpdatePassUniform(int index, RenderPass::PassUniform* uniform) override;

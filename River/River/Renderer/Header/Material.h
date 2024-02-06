@@ -23,6 +23,8 @@ public:
 
 	static Material* CreateMaterial(const char* name, const char* shaderName = nullptr);
 
+	static Material* GetMaterial(const char* name);
+
 	void InitBaseParam(MaterialBlendMode blendMode, Shader* shader, const Float4& diffuseAlbedo, const Float3& fresnelR0, float roughness, int cbIndx,
 		Texture* diffuseSrvIndex, Texture* normalSrvIndex);
 

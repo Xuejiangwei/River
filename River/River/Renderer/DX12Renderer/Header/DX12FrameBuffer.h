@@ -144,7 +144,7 @@ public:
 private:
 	Unique<DX12UniformBuffer<RenderPass::PassUniform>> m_PassUniform;
 	Unique<DX12UniformBuffer<ObjectUniform>> m_ObjectUniform;
-	Unique<DX12UniformBuffer<MaterialUniform>> m_MaterialUniform;
+	Unique<DX12UniformBuffer<RenderPass::MaterialUniform>> m_MaterialUniform;
 	Unique<DX12UniformBuffer<SkinnedUniform>> m_SkinnedUniform;
 	Unique<DX12UniformBuffer<SsaoUniform>> m_SsaoUniform;
 
