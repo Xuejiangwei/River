@@ -57,7 +57,7 @@ void RiverEditorMainLayer::OnInitialize()
 	auto shader = AssetManager::Get()->GetShader("opaque");
 	{
 		auto obj = ProduceObject();
-		obj->SetPosition({ 1.0f, 1.0f, 0.0f });
+		obj->SetPosition({ 2.0f, 1.0f, 0.0f });
 		obj->SetScale({ 2.f,2.f,2.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
@@ -70,7 +70,7 @@ void RiverEditorMainLayer::OnInitialize()
 
 	{
 		auto obj = ProduceObject();
-		obj->SetPosition({ -1.0f, 1.0f, 0.0f });
+		obj->SetPosition({ -2.0f, 1.0f, 0.0f });
 		obj->SetScale({ 2.f,2.f,2.f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
@@ -84,7 +84,7 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, -1.0f, 3.0f });
-		obj->SetScale({ 10.0f, 10.0f, 10.0f });
+		obj->SetScale({ 1.0f, 1.0f, 1.0f });
 		obj->AddComponent(MakeShare<StaticMeshComponent>());
 		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
 		auto mat = Material::GetMaterial("MyMat");
@@ -92,7 +92,7 @@ void RiverEditorMainLayer::OnInitialize()
 	}
 
 	{
-		shader = AssetManager::Get()->GetShader("sky");
+		/*shader = AssetManager::Get()->GetShader("sky");
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, 0.0f, 0.0f });
 		obj->SetScale({ 100.f,100.f,10.f });
@@ -101,7 +101,7 @@ void RiverEditorMainLayer::OnInitialize()
 		auto mat = Material::CreateMaterial("MySkyMat");
 		auto texture = AssetManager::Get()->GetTexture("skyCubeMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.1f, 0.1f, 0.1f }, 1.0f, 3, texture, nullptr);
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });*/
 	}
 }
 
