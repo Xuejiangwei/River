@@ -2,8 +2,6 @@
 #include "Input/Header/InputManager.h"
 #include "Layer.h"
 
-#include "Log/Header/Log.h"
-
 InputManager::InputManager()
 {
 }
@@ -80,6 +78,23 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 			}
 		});
 
+	dispatcher.DispatchDirect<MouseLeaveEvent>(
+		[this, &layers](auto e) -> decltype(auto)
+		{
+			auto& ce = dynamic_cast<MouseLeaveEvent&>(e);
+
+			m_LastMousePositon.x = 0;
+			m_LastMousePositon.y = 0;
+
+			for (int i = (int)layers.size() - 1; i >= 0; i--)
+			{
+				if (layers[i]->OnMouseLeave())
+				{
+					return;
+				}
+			}
+		});
+
 
 	//Key code
 	dispatcher.DispatchDirect<KeyPressedEvent>(
@@ -138,4 +153,9 @@ KeyState InputManager::GetKeyState(V_Array<KeyCode> keys)
 	}
 
 	return state;
+}
+
+MouseState InputManager::GetMouseState(MouseCode code)
+{
+	return m_MouseState[code];
 }

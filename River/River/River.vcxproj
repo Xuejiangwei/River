@@ -225,7 +225,6 @@
     <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />
-    <ClInclude Include="Log\Header\Log.h" />
     <ClInclude Include="Math\Header\BaseDefine.h" />
     <ClInclude Include="Math\Header\BaseFunction.h" />
     <ClInclude Include="Math\Header\BaseStruct.h" />

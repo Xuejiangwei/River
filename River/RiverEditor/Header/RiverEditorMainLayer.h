@@ -31,6 +31,8 @@ public:
 
 	virtual bool OnMouseMove(int x, int y) override;
 
+	virtual bool OnMouseLeave() override;
+
 	virtual bool OnKeyPress(KeyCode key) override;
 
 	virtual bool OnKeyRelease(KeyCode key) override;

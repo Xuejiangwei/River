@@ -6,6 +6,7 @@ class Layer;
 
 enum class MouseState
 {
+	None,
 	Press,
 	Release,
 	Drag
@@ -32,6 +33,8 @@ public:
 	KeyState GetKeyState(KeyCode key);
 	
 	KeyState GetKeyState(V_Array<KeyCode> keys);
+
+	MouseState GetMouseState(MouseCode key);
 
 private:
 	HashMap<KeyCode, KeyState> m_KeyState;

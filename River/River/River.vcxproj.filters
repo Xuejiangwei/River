@@ -548,9 +548,6 @@
     <ClInclude Include="Input\Header\InputManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Log\Header\Log.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -28,6 +28,8 @@ public:
 
 	virtual void Initialize() = 0;
 
+	const RiverTime& GetTime() const { return m_Time; }
+
 	const Unique<Window>& GetWindow() const { return m_Window; }
 
 	InputManager* GetInputManager() const { return m_InputManager.get(); }

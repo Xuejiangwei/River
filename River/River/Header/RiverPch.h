@@ -16,3 +16,10 @@
 #include "Event.h"
 #include "RiverHead.h"
 #include "Math/Header/BaseStruct.h"
+
+
+#if defined(DEBUG) || defined(_DEBUG)
+	#define LOG(fmt, ...) std::printf(fmt "\n", __VA_ARGS__) 
+#else
+	#define LOG(fmt, ...)
+#endif

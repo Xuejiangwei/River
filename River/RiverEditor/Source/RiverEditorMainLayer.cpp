@@ -16,8 +16,6 @@
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/AssetManager.h"
 
-#include "Log/Header/Log.h"
-
 RiverEditorMainLayer::RiverEditorMainLayer()
 {
 }
@@ -158,7 +156,6 @@ void RiverEditorMainLayer::OnRender()
 
 bool RiverEditorMainLayer::OnMousePress(MouseCode mouseCode, Int2 mousePosition)
 {
-
 	m_MainCamera->StartRotate(mousePosition.x, mousePosition.y);
 	return false;
 }
@@ -182,6 +179,12 @@ bool RiverEditorMainLayer::OnMouseMove(int x, int y)
 		m_MainCamera->StartRotate(x, y);
 		return true;
 	}
+	return false;
+}
+
+bool RiverEditorMainLayer::OnMouseLeave()
+{
+	m_MainCamera->EndRotate();
 	return false;
 }
 

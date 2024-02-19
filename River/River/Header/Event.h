@@ -11,7 +11,7 @@ enum class EventType
 	WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
 	AppTick, AppUpdate, AppRender,
 	KeyPressed, KeyReleased, KeyTyped,
-	MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
+	MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled, MouseLeave
 };
 
 enum EventCategory
@@ -167,6 +167,23 @@ public:
 private:
 	float m_MouseX, m_MouseY;
 };
+
+class MouseLeaveEvent : public Event
+{
+public:
+	MouseLeaveEvent() {}
+
+	std::string ToString() const override
+	{
+		std::stringstream ss;
+		ss << "MouseLeaveEvent: ";
+		return ss.str();
+	}
+
+	EVENT_CLASS_TYPE(MouseLeave)
+		EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
+};
+
 
 class MouseScrolledEvent : public Event
 {

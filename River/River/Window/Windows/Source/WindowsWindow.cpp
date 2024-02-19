@@ -4,25 +4,31 @@
 
 #include "Application.h"
 #include "KeyCode.h"
+#include <CommCtrl.h>
+
+#pragma comment(lib, "comctl32.lib")
 
 LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	static bool bTrack = false;
+
 	switch (msg)
 	{
 		// WM_ACTIVATE is sent when the window is activated or deactivated.
 		// We pause the game when the window is deactivated and unpause it
 		// when it becomes active.
 	case WM_ACTIVATE:
-		/*if (LOWORD(wParam) == WA_INACTIVE)
+		//点击窗口外的其他窗口时
+		if (LOWORD(wParam) == WA_INACTIVE)
 		{
-			mAppPaused = true;
-			mTimer.Stop();
+			//mAppPaused = true;
+			//mTimer.Stop();
 		}
 		else
 		{
-			mAppPaused = false;
-			mTimer.Start();
-		}*/
+			//mAppPaused = false;
+			//mTimer.Start();
+		}
 		return 0;
 
 		// WM_SIZE is sent when the user resizes the window.
@@ -133,10 +139,32 @@ LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		Application::Get()->OnEvent(e);
 	}
 	return 0;
+	case WM_MOUSELEAVE:
+	{
+		MouseLeaveEvent e;
+		Application::Get()->OnEvent(e);
+		bTrack = false;
+		LOG("mouse leave");
+	}
+	return 0;
 	case WM_MOUSEMOVE:
 	{
 		MouseMovedEvent e((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
 		Application::Get()->OnEvent(e);
+
+
+		if (!bTrack)
+		{
+			bTrack = true;
+			TRACKMOUSEEVENT tme = { 0 };
+			tme.cbSize = sizeof(tme);
+			tme.hwndTrack = hwnd;
+			tme.dwFlags = /*TME_HOVER | */TME_LEAVE;
+			tme.dwHoverTime = HOVER_DEFAULT;
+			_TrackMouseEvent(&tme);
+			LOG("mouse track");
+		}
+
 	}
 	return 0;
 	case WM_KEYUP:

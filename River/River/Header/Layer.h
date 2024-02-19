@@ -29,6 +29,8 @@ public:
 	
 	virtual bool OnMouseMove(int x, int y) { return false; }
 
+	virtual bool OnMouseLeave() { return false; }
+
 	virtual bool OnKeyPress(KeyCode key) { return false; }
 
 	virtual bool OnKeyRelease(KeyCode key) { return false; }
