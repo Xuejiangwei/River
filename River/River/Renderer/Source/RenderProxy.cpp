@@ -9,6 +9,7 @@
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/MeshComponent.h"
 #include "Application.h"
+#include "Math/Header/Geometric.h"
 
 RenderProxy::RenderProxy(Object* object)
 	: m_RenderObject(object), m_IsDirty(true), m_RenderItemId(-1)
@@ -51,6 +52,7 @@ void RenderProxy::GetRenderData(RenderItem* renderItem)
 		auto buffer = RHI::Get()->GetStaticMeshBuffer(staticMeshComp->GetStaticMesh()->GetName().c_str());
 		renderItem->VertexBuffer = buffer.first;
 		renderItem->IndexBuffer = buffer.second;
+		renderItem->TexTransform = Matrix4x4_Scaling(8, 8, 1);
 		m_RenderItemId = renderItem->ObjCBIndex;
 	}
 }

@@ -698,3 +698,33 @@ inline Matrix4x4 Matrix4x4_OrthographicLH
     M.m[3][3] = 1.0f;
     return M;
 }
+
+inline Matrix4x4 Matrix4x4_Scaling
+(
+    float ScaleX,
+    float ScaleY,
+    float ScaleZ
+) noexcept
+{
+    Matrix4x4 M;
+    M.m[0][0] = ScaleX;
+    M.m[0][1] = 0.0f;
+    M.m[0][2] = 0.0f;
+    M.m[0][3] = 0.0f;
+
+    M.m[1][0] = 0.0f;
+    M.m[1][1] = ScaleY;
+    M.m[1][2] = 0.0f;
+    M.m[1][3] = 0.0f;
+
+    M.m[2][0] = 0.0f;
+    M.m[2][1] = 0.0f;
+    M.m[2][2] = ScaleZ;
+    M.m[2][3] = 0.0f;
+
+    M.m[3][0] = 0.0f;
+    M.m[3][1] = 0.0f;
+    M.m[3][2] = 0.0f;
+    M.m[3][3] = 1.0f;
+    return M;
+}

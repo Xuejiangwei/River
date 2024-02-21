@@ -50,6 +50,8 @@ void RiverEditorMainLayer::OnInitialize()
 			obj->SetPosition({ 0.0f, 0.0f, 0.0f });
 			obj->GetComponent<LightComponent>()->SetLightStrength(lightStrenght[i]);
 		}
+
+		//Common shader中的gShadowMap可能没有shaderResourceView
 	}
 
 	auto shader = AssetManager::Get()->GetShader("opaque");

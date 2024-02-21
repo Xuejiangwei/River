@@ -648,7 +648,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
-			
+
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
 			/*if (it.first == "sky")
@@ -700,9 +700,16 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				commandList->SetPipelineState(shader->GetPipelineState());
 			}
 
+			{
+				//设置ShadowMapTexture，因为shader中为第二个寄存器，所以往前偏移一个Texture。
+				CD3DX12_GPU_DESCRIPTOR_HANDLE shadowDescriptor(dynamicHeaps->GetGpuHeapStart());
+				shadowDescriptor.Offset(11, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				commandList->SetGraphicsRootDescriptorTable(4, shadowDescriptor);
+			}
+
 			//绑定材质缓冲数据
 			commandList->SetGraphicsRootShaderResourceView(3, matCB->GetGPUVirtualAddress());
-
+			
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
