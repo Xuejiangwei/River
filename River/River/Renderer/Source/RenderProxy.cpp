@@ -82,3 +82,8 @@ void RenderProxy::AddCameraObjectProxy()
 {
 	m_ProxyId = Application::Get()->GetRenderScene()->AddCameraObjectProxyToScene(this);
 }
+
+void RenderProxy::AddSkyBoxObjectProxy()
+{
+	m_ProxyId = Application::Get()->GetRenderScene()->AddSkyBoxObjectProxyToScene(this);
+}

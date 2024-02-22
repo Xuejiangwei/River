@@ -28,6 +28,8 @@ public:
 
 	int AddCameraObjectProxyToScene(RenderProxy* proxy);
 
+	int AddSkyBoxObjectProxyToScene(RenderProxy* proxy);
+
 	void RemoveObjectProxyFromScene(RenderProxy* proxy);
 
 	V_Array<RenderProxy*>& GetRenderProxys(MaterialBlendMode blendMode) { return m_Proxys[blendMode]; }
@@ -35,6 +37,8 @@ public:
 	V_Array<RenderProxy*>& GetRenderLightProxys() { return m_Lights; }
 
 	V_Array<RenderProxy*>& GetRenderCameraProxys() { return m_Cameras; }
+
+	V_Array<RenderProxy*>& GetRenderSkyBoxProxys() { return m_SkyBoxs; }
 
 	void AddUILayer(Share<Layer>& layer);
 
@@ -47,5 +51,6 @@ private:
 	HashMap<MaterialBlendMode, V_Array<RenderProxy*>> m_Proxys;
 	V_Array<RenderProxy*> m_Lights;
 	V_Array<RenderProxy*> m_Cameras;
+	V_Array<RenderProxy*> m_SkyBoxs;
 	V_Array<Share<RenderPass>> m_RenderPasses;
 };

@@ -255,6 +255,12 @@
     <ClCompile Include="Input\Source\InputManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Object\Source\SkyBoxObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Source\SkyBoxComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -546,6 +552,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Input\Header\InputManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Object\Header\SkyBoxObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\SkyBoxComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

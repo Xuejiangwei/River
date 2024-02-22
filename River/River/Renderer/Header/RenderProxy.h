@@ -36,6 +36,8 @@ public:
 
 	void AddCameraObjectProxy();
 
+	void AddSkyBoxObjectProxy();
+
 private:
 	Object* m_RenderObject;
 	

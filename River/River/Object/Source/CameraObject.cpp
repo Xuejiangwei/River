@@ -1,8 +1,9 @@
 #include "RiverPch.h"
 #include "Object/Header/CameraObject.h"
+#include "Renderer/Header/RenderProxy.h"
+
 #include "Application.h"
 #include "Input/Header/InputManager.h"
-#include "Renderer/Header/RenderProxy.h"
 
 CameraObject::CameraObject(CameraType type) : m_CameraType(type), m_StartRotate(false)
 {

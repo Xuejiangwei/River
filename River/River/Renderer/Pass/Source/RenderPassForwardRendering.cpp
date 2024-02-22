@@ -31,7 +31,7 @@ void RenderPassForwardRendering::Render()
 	{
 		auto lightObject = dynamic_cast<LightObject*>(lightProxys[i]->GetObject());
 		m_PassUniform.Lights[i].Direction = lightObject->GetDirection();
-		m_PassUniform.Lights[i].Direction = lightObject->GetLightStrength();
+		m_PassUniform.Lights[i].Strength = lightObject->GetLightStrength();
 	}
 	
 	//获得相机

@@ -114,6 +114,12 @@ int RenderScene::AddCameraObjectProxyToScene(RenderProxy* proxy)
 	return (int)m_Cameras.size();
 }
 
+int RenderScene::AddSkyBoxObjectProxyToScene(RenderProxy* proxy)
+{
+	m_SkyBoxs.push_back(proxy);
+	return (int)m_SkyBoxs.size();
+}
+
 void RenderScene::RemoveObjectProxyFromScene(RenderProxy* proxy)
 {
 	if (proxy->HasRenderData())
