@@ -2,7 +2,6 @@
 
 #include "RiverHead.h"
 
-
 struct UIVertex
 {
 	UIVertex() = default;
@@ -61,26 +60,65 @@ struct Vertex
 	Float3 Normal;
 	Float2 TexC;
 	Float3 TangentU;
-
 };
 
-class StaticMesh;
+struct SkeletalVertex
+{
+	SkeletalVertex() = default;
+
+	SkeletalVertex(Float3 pos, Float3 normal, Float3 tangent, Float2 tex, Float3 weights, uint8 boneIndices[4])
+		: Pos(pos), Normal(normal), TangentU(tangent), TexC(tex), BoneWeights(weights)
+	{
+		memcpy(BoneIndices, boneIndices, sizeof(BoneIndices));
+	}
+
+	Float3 Pos;
+	Float3 Normal;
+	Float2 TexC;
+	Float3 TangentU;
+	Float3 BoneWeights;
+	uint8 BoneIndices[4];
+};
+
+struct StaticMeshData
+{
+	V_Array<Vertex> Vertices;
+	V_Array<uint32> Indices;
+	V_Array<class Material*> Materials;
+};
+
+struct SkeletalMeshData
+{
+	V_Array<SkeletalVertex> Vertices;
+	V_Array<uint32> Indices;
+	V_Array<class Material*> Materials;
+};
+
 
 class Mesh
 {
 public:
-	Mesh(const char* name, V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials);
+	Mesh(String& name, String& path);
 
-	~Mesh();
+	virtual ~Mesh();
 
 	const String& GetName() const { return m_Name; }
 
-	const V_Array<Vertex>& GetVertices() const { return m_Vertices; }
+	const V_Array<Vertex>& GetVertices() const { return m_StaticMeshData->Vertices; }
 
-	const V_Array<uint32>& GetIndices() const { return m_Indices; }
+	const V_Array<SkeletalVertex>& GetSkeletalVertices() const { return m_SkeletalMeshData->Vertices; }
+
+	const V_Array<uint32>& GetIndices() const { return m_StaticMeshData->Indices; }
+
+	const V_Array<uint32>& GetSkeletalIndices() const { return m_SkeletalMeshData->Indices; }
 
 protected:
 	String m_Name;
-	V_Array<Vertex> m_Vertices;
-	V_Array<uint32> m_Indices;
+	String m_Path;
+	
+	union
+	{
+		Unique<StaticMeshData> m_StaticMeshData;
+		Unique<SkeletalMeshData> m_SkeletalMeshData;
+	};
 };

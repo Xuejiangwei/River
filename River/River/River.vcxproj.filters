@@ -261,6 +261,12 @@
     <ClCompile Include="Component\Source\SkyBoxComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Mesh\Source\SkeletalMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Mesh\Source\MeshUtility.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -558,6 +564,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Component\Header\SkyBoxComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Mesh\Header\SkeletalMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Mesh\Header\MeshUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\MeshAnimation\Header\MeshAnimationData.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

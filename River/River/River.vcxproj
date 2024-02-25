@@ -176,6 +176,8 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\Mesh\Source\MeshUtility.cpp" />
+    <ClCompile Include="Renderer\Mesh\Source\SkeletalMesh.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPass.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPassForwardRendering.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPassShadow.cpp" />
@@ -289,6 +291,7 @@
     <ClInclude Include="Renderer\Header\Material.h" />
     <ClInclude Include="Renderer\Header\RenderProxy.h" />
     <ClInclude Include="Renderer\Header\RenderScene.h" />
+    <ClInclude Include="Renderer\MeshAnimation\Header\MeshAnimationData.h" />
     <ClInclude Include="Renderer\Mesh\Header\Mesh.h" />
     <ClInclude Include="Renderer\Header\PipelineState.h" />
     <ClInclude Include="Renderer\Header\RawPolyhedron.h" />
@@ -301,6 +304,8 @@
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
     <ClInclude Include="Renderer\Header\AssetManager.h" />
+    <ClInclude Include="Renderer\Mesh\Header\MeshUtility.h" />
+    <ClInclude Include="Renderer\Mesh\Header\SkeletalMesh.h" />
     <ClInclude Include="Renderer\Mesh\Header\StaticMesh.h" />
     <ClInclude Include="Renderer\Parse\Header\ParseObj.h" />
     <ClInclude Include="Renderer\Pass\Header\RenderPass.h" />

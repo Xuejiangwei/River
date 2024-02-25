@@ -29,7 +29,6 @@ struct UInt4
 	};
 };
 
-
 template<typename T>
 struct BaseStruct2
 {

@@ -1,9 +1,8 @@
 #include "RiverPch.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
-#include "Renderer/Header/Material.h"
 
-Mesh::Mesh(const char* name, V_Array<Vertex>& vertices, V_Array<uint32>& indices, V_Array<class Material*>& materials)
-	: m_Name(name), m_Vertices(River::Move(vertices)), m_Indices(River::Move(indices))
+Mesh::Mesh(String& name, String& path)
+	: m_Name(River::Move(name)), m_Path(River::Move(path))
 {
 }
 
