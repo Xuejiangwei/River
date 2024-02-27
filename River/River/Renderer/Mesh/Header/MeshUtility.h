@@ -6,8 +6,8 @@ struct Subset
     uint32 Id = -1;
     uint32 VertexStart = 0;
     uint32 VertexCount = 0;
-    uint32 FaceStart = 0;
-    uint32 FaceCount = 0;
+    uint32 IndexStart = 0;
+    uint32 IndexCount = 0;
 };
 
 struct M3dMaterial

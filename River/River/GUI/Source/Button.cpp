@@ -1,5 +1,5 @@
 #include "RiverPch.h"
-#include "RiverUI/Header/Button.h"
+#include "GUI/Header/Button.h"
 
 Button::Button()
 	: m_ClickCall(nullptr), m_MouseButtonClickDetectTime(0.3f), m_MouseButtonClickTimer(0.0f)

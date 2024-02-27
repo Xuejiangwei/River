@@ -68,6 +68,7 @@ void RenderPassShadow::Render()
 		float mLightFarZ = f;
 		auto lightProj = Matrix4x4_OrthographicOffCenterLH(l, r, b, t, n, f);
 
+		// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
 		Matrix4x4 T(
 			0.5f, 0.0f, 0.0f, 0.0f,
 			0.0f, -0.5f, 0.0f, 0.0f,

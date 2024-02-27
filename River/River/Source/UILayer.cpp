@@ -1,6 +1,6 @@
 #include "RiverPch.h"
 #include "UILayer.h"
-#include "RiverUI/Header/UIWindow.h"
+#include "GUI/Header/UIWindow.h"
 
 UILayer::UILayer()
 {

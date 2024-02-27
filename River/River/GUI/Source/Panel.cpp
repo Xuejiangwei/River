@@ -1,7 +1,7 @@
 #include "RiverPch.h"
-#include "RiverUI/Header/Panel.h"
-#include "RiverUI/Header/Image.h"
-#include "RiverUI/Header/Button.h"
+#include "GUI/Header/Panel.h"
+#include "GUI/Header/Image.h"
+#include "GUI/Header/Button.h"
 
 #include "Renderer/Header/Texture.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"

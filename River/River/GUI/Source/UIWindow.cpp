@@ -1,6 +1,6 @@
 #include "RiverPch.h"
-#include "RiverUI/Header/UIWindow.h"
-#include "RiverUI/Header/Panel.h"
+#include "GUI/Header/UIWindow.h"
+#include "GUI/Header/Panel.h"
 
 UIWindow::UIWindow(Unique<Panel>& rootPanel)
 	: m_RootPanel(std::move(rootPanel))

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
+#include "Renderer/MeshAnimation/Header/MeshAnimationData.h"
 
 struct UIVertex
 {
@@ -92,6 +93,10 @@ struct SkeletalMeshData
 	V_Array<SkeletalVertex> Vertices;
 	V_Array<uint32> Indices;
 	V_Array<class Material*> Materials;
+
+	std::vector<int> BoneHierarchy;
+	std::vector<Matrix4x4> BoneOffsets;
+	HashMap<String, AnimationClip> AnimClips;
 };
 
 

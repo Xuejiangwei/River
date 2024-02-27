@@ -1,14 +1,17 @@
 #include "RiverPch.h"
 #include "Renderer/Mesh/Header/MeshUtility.h"
 #include "Renderer/MeshAnimation/Header/MeshAnimationData.h"
+#include "Renderer/Header/Material.h"
+#include "Renderer/Header/Texture.h"
+#include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
 
 #include <fstream>
 
-void ReadMaterials(std::ifstream& fin, uint32 numMaterials, std::vector<M3dMaterial>& mats);
+void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& mats);
 void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<Subset>& subsets);
 void ReadVertices(std::ifstream& fin, uint32 numVertices, std::vector<Vertex>& vertices);
 void ReadSkinnedVertices(std::ifstream& fin, uint32 numVertices, std::vector<SkeletalVertex>& vertices);
-void ReadTriangles(std::ifstream& fin, uint32 numTriangles, std::vector<uint16>& indices);
+void ReadTriangles(std::ifstream& fin, uint32 numTriangles, std::vector<uint32>& indices);
 void ReadBoneOffsets(std::ifstream& fin, uint32 numBones, std::vector<Matrix4x4>& boneOffsets);
 void ReadBoneHierarchy(std::ifstream& fin, uint32 numBones, std::vector<int>& boneIndexToParentIndex);
 void ReadAnimationClips(std::ifstream& fin, uint32 numBones, uint32 numAnimationClips, 
@@ -41,26 +44,21 @@ bool LoadSkeletalMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 		fin >> ignore >> numBones;
 		fin >> ignore >> numAnimationClips;
 
-		std::vector<Matrix4x4> boneOffsets;
-		std::vector<int> boneIndexToParentIndex;
-		std::unordered_map<std::string, AnimationClip> animations;
-
-		/*ReadMaterials(fin, numMaterials, mats);
+		std::vector<Subset> subsets;
+		ReadMaterials(fin, numMaterials, skeletalMeshData->Materials);
 		ReadSubsetTable(fin, numMaterials, subsets);
-		ReadSkinnedVertices(fin, numVertices, vertices);
-		ReadTriangles(fin, numTriangles, indices);
-		ReadBoneOffsets(fin, numBones, boneOffsets);
-		ReadBoneHierarchy(fin, numBones, boneIndexToParentIndex);
-		ReadAnimationClips(fin, numBones, numAnimationClips, animations);
-
-		skinInfo.Set(boneIndexToParentIndex, boneOffsets, animations);*/
+		ReadSkinnedVertices(fin, numVertices, skeletalMeshData->Vertices);
+		ReadTriangles(fin, numTriangles, skeletalMeshData->Indices);
+		ReadBoneOffsets(fin, numBones, skeletalMeshData->BoneOffsets);
+		ReadBoneHierarchy(fin, numBones, skeletalMeshData->BoneHierarchy);
+		ReadAnimationClips(fin, numBones, numAnimationClips, skeletalMeshData->AnimClips);
 
 		return true;
 	}
 	return false;
 }
 
-void ReadMaterials(std::ifstream& fin, uint32 numMaterials, std::vector<M3dMaterial>& mats)
+void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& mats)
 {
 	std::string ignore;
 	mats.resize(numMaterials);
@@ -71,14 +69,22 @@ void ReadMaterials(std::ifstream& fin, uint32 numMaterials, std::vector<M3dMater
 	fin >> ignore; // materials header text
 	for (uint32 i = 0; i < numMaterials; ++i)
 	{
-		fin >> ignore >> mats[i].m_Name;
-		fin >> ignore >> mats[i].DiffuseAlbedo.x >> mats[i].DiffuseAlbedo.y >> mats[i].DiffuseAlbedo.z;
-		fin >> ignore >> mats[i].FresnelR0.x >> mats[i].FresnelR0.y >> mats[i].FresnelR0.z;
-		fin >> ignore >> mats[i].Roughness;
-		fin >> ignore >> mats[i].AlphaClip;
-		fin >> ignore >> mats[i].MaterialTypeName;
-		fin >> ignore >> mats[i].DiffuseMapName;
-		fin >> ignore >> mats[i].NormalMapName;
+		fin >> ignore >> mats[i]->m_Name;
+		fin >> ignore >> mats[i]->DiffuseAlbedo.x >> mats[i]->DiffuseAlbedo.y >> mats[i]->DiffuseAlbedo.z;
+		fin >> ignore >> mats[i]->FresnelR0.x >> mats[i]->FresnelR0.y >> mats[i]->FresnelR0.z;
+		fin >> ignore >> mats[i]->Roughness;
+		fin >> ignore >> ignore;//mats[i]->AlphaClip;
+		fin >> ignore >> ignore;//mats[i]->MaterialTypeName;
+
+		String textureName;
+		fin >> ignore >> textureName;
+		auto texture = Texture::CreateTexture(textureName.c_str(), (DEFAULT_TEXTURE_PATH + textureName).c_str());
+		mats[i]->m_DiffuseTexture = texture;
+
+		textureName.clear();
+		fin >> ignore >> textureName;
+		texture = Texture::CreateTexture(textureName.c_str(), (DEFAULT_TEXTURE_PATH + textureName).c_str());
+		mats[i]->m_NormalTexture = texture;
 	}
 }
 
@@ -93,8 +99,10 @@ void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<Subset>&
 		fin >> ignore >> subsets[i].Id;
 		fin >> ignore >> subsets[i].VertexStart;
 		fin >> ignore >> subsets[i].VertexCount;
-		fin >> ignore >> subsets[i].FaceStart;
-		fin >> ignore >> subsets[i].FaceCount;
+		fin >> ignore >> subsets[i].IndexStart;
+		fin >> ignore >> subsets[i].IndexCount;
+
+		subsets[i].IndexCount *= 3;
 	}
 }
 
@@ -144,7 +152,7 @@ void ReadSkinnedVertices(std::ifstream& fin, uint32 numVertices, std::vector<Ske
 	}
 }
 
-void ReadTriangles(std::ifstream& fin, uint32 numTriangles, std::vector<uint16>& indices)
+void ReadTriangles(std::ifstream& fin, uint32 numTriangles, std::vector<uint32>& indices)
 {
 	std::string ignore;
 	indices.resize(numTriangles * 3);

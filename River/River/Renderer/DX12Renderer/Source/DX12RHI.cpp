@@ -19,7 +19,6 @@
 #include "Renderer/DX12Renderer/Header/DX12ShadowMap.h"
 #include "Renderer/DX12Renderer/Header/DX12Ssao.h"
 #include "Renderer/DX12Renderer/Header/Waves.h"
-#include "Renderer/DX12Renderer/Header/DX12LoadM3d.h"
 #include "Renderer/DX12Renderer/Header/DDSTextureLoader.h"
 #include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 
@@ -48,58 +47,9 @@ extern Unique<DX12DescriptorAllocator> s_DescriptorAllocators[D3D12_DESCRIPTOR_H
 using Microsoft::WRL::ComPtr;
 
 DirectX::BoundingSphere mSceneBounds;
-float mLightNearZ = 0.0f;
-float mLightFarZ = 0.0f;
-DirectX::XMFLOAT3 mLightPosW;
-DirectX::XMFLOAT4X4 mLightView = Identity4x4();
-DirectX::XMFLOAT4X4 mLightProj = Identity4x4();
-DirectX::XMFLOAT4X4 mShadowTransform = Identity4x4();
 
 DirectX::BoundingFrustum mCamFrustum;
 DX12RenderItem* mPickedRitem = nullptr;
-UINT mShadowMapHeapIndex;
-UINT mSsaoHeapIndexStart = 0;
-UINT mSsaoAmbientMapIndex = 0;
-UINT mNullCubeSrvIndex = 0;
-UINT mNullTexSrvIndex1 = 0;
-UINT mNullTexSrvIndex2 = 0;
-CD3DX12_GPU_DESCRIPTOR_HANDLE mNullSrv;
-
-float mLightRotationAngle = 0.0f;
-DirectX::XMFLOAT3 mBaseLightDirections[3] = {
-	DirectX::XMFLOAT3(0.57735f, -0.57735f, 0.57735f),
-	DirectX::XMFLOAT3(-0.57735f, -0.57735f, 0.57735f),
-	DirectX::XMFLOAT3(0.0f, -0.707f, -0.707f)
-};
-DirectX::XMFLOAT3 mRotatedLightDirections[3];
-struct SkinnedModelInstance
-{
-	SkinnedData* SkinnedInfo = nullptr;
-	std::vector<DirectX::XMFLOAT4X4> FinalTransforms;
-	std::string ClipName;
-	float TimePos = 0.0f;
-
-	// Called every frame and increments the time position, interpolates the 
-	// animations for each bone based on the current animation clip, and 
-	// generates the final transforms which are ultimately set to the effect
-	// for processing in the vertex shader.
-	void UpdateSkinnedAnimation(float dt)
-	{
-		TimePos += dt;
-
-		// Loop animation
-		if (TimePos > SkinnedInfo->GetClipEndTime(ClipName))
-			TimePos = 0.0f;
-
-		SkinnedInfo->GetFinalTransforms(ClipName, TimePos, FinalTransforms);
-	}
-};
-
-std::unique_ptr<SkinnedModelInstance> mSkinnedModelInst;
-SkinnedData mSkinnedInfo;
-std::vector<M3DLoader::Subset> mSkinnedSubsets;
-std::vector<M3DLoader::M3dMaterial> mSkinnedMats;
-std::vector<std::string> mSkinnedTextureNames;
 
 static D3D12_PRIMITIVE_TOPOLOGY GetRenderItemPrimtiveType(PrimitiveType type)
 {
@@ -817,7 +767,7 @@ void DX12RHI::DrawRenderItem(int renderItemId)
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
 {
-	auto nullSrv = DX12DescriptorAllocator::CpuOffset(m_SrvDescriptorHeap, mNullTexSrvIndex2);
+	auto srv = DX12DescriptorAllocator::Allocate(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -827,7 +777,7 @@ void DX12RHI::AddDescriptor(DX12Texture* texture)
 
 	srvDesc.Format = texture->GetResource()->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = texture->GetResource()->GetDesc().MipLevels;
-	m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, nullSrv);
+	m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, srv);
 }
 
 Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
@@ -1833,45 +1783,6 @@ void DX12RHI::CheckQualityLevel()
 	assert(m4xMsaaQuality > 0 && "Unexpected MSAA quality level.");
 }
 
-void DX12RHI::UpdateShadowTransform(const RiverTime& time)
-{
-	// Only the first "main" light casts a shadow.
-	XMVECTOR lightDir = XMLoadFloat3(&mRotatedLightDirections[0]);
-	XMVECTOR lightPos = -2.0f * mSceneBounds.Radius * lightDir;
-	XMVECTOR targetPos = XMLoadFloat3(&mSceneBounds.Center);
-	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
-
-	XMStoreFloat3(&mLightPosW, lightPos);
-
-	// Transform bounding sphere to light space.
-	XMFLOAT3 sphereCenterLS;
-	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
-
-	// Ortho frustum in light space encloses scene.
-	float l = sphereCenterLS.x - mSceneBounds.Radius;
-	float b = sphereCenterLS.y - mSceneBounds.Radius;
-	float n = sphereCenterLS.z - mSceneBounds.Radius;
-	float r = sphereCenterLS.x + mSceneBounds.Radius;
-	float t = sphereCenterLS.y + mSceneBounds.Radius;
-	float f = sphereCenterLS.z + mSceneBounds.Radius;
-
-	mLightNearZ = n;
-	mLightFarZ = f;
-	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
-
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-	XMMATRIX T(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f);
-
-	XMMATRIX S = lightView * lightProj * T;
-	XMStoreFloat4x4(&mLightView, lightView);
-	XMStoreFloat4x4(&mLightProj, lightProj);
-	XMStoreFloat4x4(&mShadowTransform, S);
-}
 void DX12RHI::UpdateObjectCBs()
 {
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
@@ -1901,7 +1812,7 @@ void DX12RHI::UpdateSkinnedCBs(const RiverTime& time)
 	auto currSkinnedCB = m_CurrFrameResource->m_SkinnedUniform.get();
 
 	// We only have one skinned model being animated.
-	mSkinnedModelInst->UpdateSkinnedAnimation(time.DeltaTime());
+	/*mSkinnedModelInst->UpdateSkinnedAnimation(time.DeltaTime());
 
 	SkinnedUniform skinnedConstants;
 	std::copy(
@@ -1909,49 +1820,7 @@ void DX12RHI::UpdateSkinnedCBs(const RiverTime& time)
 		std::end(mSkinnedModelInst->FinalTransforms),
 		&skinnedConstants.BoneTransforms[0]);
 
-	currSkinnedCB->CopyData(0, skinnedConstants);
-}
-
-void DX12RHI::UpdateShadowPass(const RiverTime& time)
-{
-	XMMATRIX view = XMLoadFloat4x4(&mLightView);
-	XMMATRIX proj = XMLoadFloat4x4(&mLightProj);
-
-	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
-	XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
-	XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
-
-	UINT w = m_ShadowMap->Width();
-	UINT h = m_ShadowMap->Height();
-
-	/*XMStoreFloat4x4(&m_ShadowPassCB.View, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&m_ShadowPassCB.InvView, XMMatrixTranspose(invView));
-	XMStoreFloat4x4(&m_ShadowPassCB.Proj, XMMatrixTranspose(proj));
-	XMStoreFloat4x4(&m_ShadowPassCB.InvProj, XMMatrixTranspose(invProj));
-	XMStoreFloat4x4(&m_ShadowPassCB.ViewProj, XMMatrixTranspose(viewProj));
-	XMStoreFloat4x4(&m_ShadowPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	m_ShadowPassCB.EyePosW = mLightPosW;
-	m_ShadowPassCB.RenderTargetSize = (XMFLOAT2((float)w, (float)h));
-	m_ShadowPassCB.InvRenderTargetSize = (XMFLOAT2(1.0f / w, 1.0f / h));
-	m_ShadowPassCB.NearZ = mLightNearZ;
-	m_ShadowPassCB.FarZ = mLightFarZ;*/
-
-	/*m_ShadowPassCB.View = *(Matrix4x4*)&view;
-	m_ShadowPassCB.InvView = *(Matrix4x4*)&invView;
-	m_ShadowPassCB.Proj = *(Matrix4x4*)&proj;
-	m_ShadowPassCB.InvProj = *(Matrix4x4*)&invProj;
-	m_ShadowPassCB.ViewProj = *(Matrix4x4*)&viewProj;
-	m_ShadowPassCB.InvViewProj = *(Matrix4x4*)&invViewProj;
-
-	m_ShadowPassCB.EyePosW = *(Float3*)&mLightPosW;
-	m_ShadowPassCB.RenderTargetSize = *(Float2*)&(XMFLOAT2((float)w, (float)h));
-	m_ShadowPassCB.InvRenderTargetSize = *(Float2*)&(XMFLOAT2(1.0f / w, 1.0f / h));
-	m_ShadowPassCB.NearZ = mLightNearZ;
-	m_ShadowPassCB.FarZ = mLightFarZ;
-
-	auto currPassCB = m_CurrFrameResource->m_PassUniform.get();
-	currPassCB->CopyData(1, m_ShadowPassCB);*/
+	currSkinnedCB->CopyData(0, skinnedConstants);*/
 }
 
 void DX12RHI::UpdateSsaoCBs(const RiverTime& time)

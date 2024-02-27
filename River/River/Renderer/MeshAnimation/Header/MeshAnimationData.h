@@ -4,8 +4,8 @@
 
 struct Keyframe
 {
-	Keyframe();
-	~Keyframe();
+	//Keyframe() {};
+	//~Keyframe() {};
 
 	float TimePos;
 	Float3 Translation;

@@ -1,5 +1,5 @@
 #include "RiverPch.h"
-#include "RiverUI/Header/Image.h"
+#include "GUI/Header/Image.h"
 #include "Application.h"
 #include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"

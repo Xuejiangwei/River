@@ -136,16 +136,12 @@ private:
 
 	void DrawRenderPassEnd(RenderPass* renderPass, FrameBufferType frameBufferType);
 
-	void UpdateShadowTransform(const RiverTime& time);
-
 	void UpdateObjectCBs();
 
 	void UpdateSkinnedCBs(const RiverTime& time);
 
 	void UpdateMaterialCBs();
 
-	void UpdateShadowPass(const RiverTime& time);
-	
 	void UpdateSsaoCBs(const RiverTime& time);
 
 	void FlushCommandQueue();

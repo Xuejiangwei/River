@@ -5,11 +5,11 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
-#include "RiverUI/Header/Panel.h"
-#include "RiverUI/Header/Button.h"
-#include "RiverUI/Header/Image.h"
-#include "RiverUI/Header/Text.h"
-#include "RiverUI/Header/UIWindow.h"
+#include "GUI/Header/Panel.h"
+#include "GUI/Header/Button.h"
+#include "GUI/Header/Image.h"
+#include "GUI/Header/Text.h"
+#include "GUI/Header/UIWindow.h"
 
 RiverEditorMenuLayer::RiverEditorMenuLayer()
 {
