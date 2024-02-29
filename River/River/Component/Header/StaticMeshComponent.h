@@ -1,10 +1,11 @@
 #pragma once
-#include "Component.h"
+#include "BaseMeshComponent.h"
 #include "Renderer/Header/Material.h"
+#include "Physics/Header/PhysicsDefine.h"
 
 class StaticMesh;
 
-class StaticMeshComponent : public Component
+class StaticMeshComponent : public BaseMeshComponent
 {
 public:
 	StaticMeshComponent();

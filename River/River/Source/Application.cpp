@@ -10,6 +10,7 @@
 
 #include "Input/Header/InputManager.h"
 #include "Renderer/Header/RenderScene.h"
+#include "Physics/Header/PhyScene.h"
 
 Application* Application::s_Instance = nullptr;
 

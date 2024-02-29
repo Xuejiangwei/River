@@ -147,6 +147,36 @@ struct Float3
 		return vResult;
 	}
 
+	float Len() const
+	{
+		return sqrtf(x * x + y * y + z * z);
+	}
+
+	float LenSquared() const
+	{
+		return x * x + y * y + z * z;
+	}
+
+	Float3 operator+ (float n) const
+	{
+		return Float3(x + n, y + n, z + n);
+	}
+
+	Float3 operator- (float n) const
+	{
+		return Float3(x - n, y - n, z - n);
+	}
+
+	Float3 operator/ (float n) const
+	{
+		return Float3(x / n, y / n, z / n);
+	}
+
+	Float3 operator* (float n) const
+	{
+		return Float3(x * n, y * n, z * n);
+	}
+
 	inline Float3& operator=(const struct Float4& other) noexcept;
 };
 

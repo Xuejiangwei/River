@@ -168,10 +168,7 @@
     <ClCompile Include="Utils\Source\FileUtils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Component\Source\MeshComponent.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\Source\SkinMeshComponent.cpp">
+    <ClCompile Include="Component\Source\StaticMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Level\Source\Level.cpp">
@@ -262,6 +259,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\Mesh\Source\MeshUtility.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Source\SkeletalMeshComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Source\BaseMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -443,10 +446,7 @@
     <ClInclude Include="Renderer\DX12Renderer\Header\DX12DefaultConfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Component\Header\MeshComponent.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\Header\SkinMeshComponent.h">
+    <ClInclude Include="Component\Header\StaticMeshComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Level\Header\Level.h">
@@ -567,6 +567,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\MeshAnimation\Header\MeshAnimationData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\SkeletalMeshComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Header\BaseMeshComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

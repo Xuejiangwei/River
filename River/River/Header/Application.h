@@ -4,6 +4,7 @@ class InputManager;
 class Layer;
 class Window;
 class RenderScene;
+class PhyScene;
 class GameInstance;
 
 #include "Event.h"
@@ -46,6 +47,7 @@ protected:
 	
 	Unique<InputManager> m_InputManager;
 	Unique<RenderScene> m_RenderScene;
+	Unique<PhyScene> m_PhyScene;
 	Unique<Window> m_Window;
 	Unique<GameInstance> m_CurrentGameInstance;
 	V_Array<Share<Layer>> m_Layers;

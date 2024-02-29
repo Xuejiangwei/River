@@ -1,7 +1,7 @@
 #include "RiverPch.h"
+#include "Component/Header/StaticMeshComponent.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
-#include "Component/Header/MeshComponent.h"
 
 StaticMeshComponent::StaticMeshComponent()
 	: m_StaticMesh(nullptr)

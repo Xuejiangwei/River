@@ -1,8 +1,8 @@
 #include "RiverPch.h"
 #include "Object/Header/Object.h"
 #include "Component/Header/RenderMeshComponent.h"
-#include "Component/Header/MeshComponent.h"
-#include "Component/Header/SkinMeshComponent.h"
+#include "Component/Header/BaseMeshComponent.h"
+#include "Component/Header/SkeletalMeshComponent.h"
 #include "Component/Header/RigidComponent.h"
 #include "Renderer/Header/RenderProxy.h"
 
@@ -83,11 +83,11 @@ RenderProxy* Object::GetRenderProxy()
 		{
 			createProxy = true;
 		}
-		else if (GetComponent<StaticMeshComponent>())
+		else if (GetComponent<BaseMeshComponent>())
 		{
 			createProxy = true;
 		}
-		else if (GetComponent<SkinMeshComponent>())
+		else if (GetComponent<SkeletalMeshComponent>())
 		{
 			createProxy = true;
 		}

@@ -7,7 +7,7 @@
 #include "Renderer/Header/Material.h"
 #include "Object/Header/Object.h"
 #include "Component/Header/RenderMeshComponent.h"
-#include "Component/Header/MeshComponent.h"
+#include "Component/Header/StaticMeshComponent.h"
 #include "Application.h"
 #include "Math/Header/Geometric.h"
 

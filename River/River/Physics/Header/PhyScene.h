@@ -21,7 +21,10 @@ public:
 	void AddObject(Object* object);
 
 private:
+	void AddBoundingVolume(const BoundingSphere& volume, RigidBody* rigidBody);
+
+private:
 	HashMap<Object*, RigidBody*> m_ObjectRigids;
-	BVH_Tree<RigidBody>* m_BVH_Tree;
+	Unique<BVH_Tree<RigidBody>> m_BVH_Tree;
 };
 

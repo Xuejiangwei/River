@@ -10,7 +10,7 @@
 #include "Object/Header/LightObject.h"
 #include "Object/Header/CameraObject.h"
 #include "Component/Header/RenderMeshComponent.h"
-#include "Component/Header/MeshComponent.h"
+#include "Component/Header/StaticMeshComponent.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
 #include "Renderer/Header/Material.h"
 #include "Renderer/Header/RHI.h"
@@ -59,36 +59,46 @@ void RiverEditorMainLayer::OnInitialize()
 		auto obj = ProduceObject();
 		obj->SetPosition({ 2.0f, 1.0f, 0.0f });
 		obj->SetScale({ 2.f,2.f,2.f });
-		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
+		auto staticMeshComponent = MakeShare<StaticMeshComponent>();
+		obj->AddComponent(staticMeshComponent);
+		staticMeshComponent->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
+		staticMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box, new ColliderBox({ 2.f, 2.f, 2.f })));
+
 		auto mat = Material::CreateMaterial("MyMat");
 		auto texture = AssetManager::Get()->GetTexture("tileDiffuseMap");
 		auto normalTexture = AssetManager::Get()->GetTexture("tileNormalMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+		staticMeshComponent->SetStaticMeshMaterials({ mat });
 	}
 
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ -2.0f, 1.0f, 0.0f });
 		obj->SetScale({ 2.f,2.f,2.f });
-		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
+		auto staticMeshComponent = MakeShare<StaticMeshComponent>();
+		obj->AddComponent(staticMeshComponent);
+		staticMeshComponent->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultBox"));
+		staticMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box, new ColliderBox({ 2.f, 2.f, 2.f })));
+
 		auto mat = Material::CreateMaterial("MyMat1");
 		auto texture = AssetManager::Get()->GetTexture("bricksDiffuseMap");
 		auto normalTexture = AssetManager::Get()->GetTexture("bricksNormalMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+		staticMeshComponent->SetStaticMeshMaterials({ mat });
 	}
 
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.0f, -1.0f, 3.0f });
 		obj->SetScale({ 1.0f, 1.0f, 1.0f });
-		obj->AddComponent(MakeShare<StaticMeshComponent>());
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
+		auto staticMeshComponent = MakeShare<StaticMeshComponent>();
+		obj->AddComponent(staticMeshComponent);
+		staticMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Plane, 
+			new ColliderPlane({ 0.f, 1.f, 0.f }, 1)));
+
+		staticMeshComponent->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
 		auto mat = Material::GetMaterial("MyMat");
-		obj->GetComponent<StaticMeshComponent>()->SetStaticMeshMaterials({ mat });
+		staticMeshComponent->SetStaticMeshMaterials({ mat });
 	}
 
 	{

@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Component\Source\BaseMeshComponent.cpp" />
     <ClCompile Include="Component\Source\CameraComponent.cpp" />
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
     <ClCompile Include="Component\Source\RigidComponent.cpp" />
@@ -145,8 +146,8 @@
     <ClCompile Include="Object\Source\Object.cpp" />
     <ClCompile Include="Component\Source\Component.cpp" />
     <ClCompile Include="Component\Source\LightComponent.cpp" />
-    <ClCompile Include="Component\Source\MeshComponent.cpp" />
-    <ClCompile Include="Component\Source\SkinMeshComponent.cpp" />
+    <ClCompile Include="Component\Source\StaticMeshComponent.cpp" />
+    <ClCompile Include="Component\Source\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Object\Source\ObjectUtils.cpp" />
     <ClCompile Include="Object\Source\SkyBoxObject.cpp" />
     <ClCompile Include="Physics\Source\PhyScene.cpp" />
@@ -220,6 +221,7 @@
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Component\Header\BaseMeshComponent.h" />
     <ClInclude Include="Component\Header\CameraComponent.h" />
     <ClInclude Include="Component\Header\RenderMeshComponent.h" />
     <ClInclude Include="Component\Header\RigidComponent.h" />
@@ -240,8 +242,8 @@
     <ClInclude Include="Object\Header\Object.h" />
     <ClInclude Include="Component\Header\Component.h" />
     <ClInclude Include="Component\Header\LightComponent.h" />
-    <ClInclude Include="Component\Header\MeshComponent.h" />
-    <ClInclude Include="Component\Header\SkinMeshComponent.h" />
+    <ClInclude Include="Component\Header\StaticMeshComponent.h" />
+    <ClInclude Include="Component\Header\SkeletalMeshComponent.h" />
     <ClInclude Include="Header\Application.h" />
     <ClInclude Include="Header\Event.h" />
     <ClInclude Include="Header\RiverTime.h" />
