@@ -46,9 +46,10 @@ inline BoundingSphere::~BoundingSphere()
 }
 
 template<typename NodeData>
-inline BVH_Node<NodeData>::BVH_Node(NodeData* node, const BoundingSphere& volume)
-	: m_NodeData(node), m_BoundingVolume(volume)
+inline BVH_Node<NodeData>::BVH_Node(BVH_Node<NodeData>* parent, NodeData* node, const BoundingSphere& volume)
+	: m_Parent(parent), m_NodeData(node), m_BoundingVolume(volume)
 {
+	m_Children[0] = m_Children[1] = nullptr;
 }
 
 template<typename NodeData>
@@ -98,6 +99,30 @@ inline BVH_Node<NodeData>::~BVH_Node()
 }
 
 template<typename NodeData>
+inline void BVH_Node<NodeData>::AddNode(NodeData* node, const BoundingSphere& volume)
+{
+	if (IsLeaf())
+	{
+		m_Children[0] = new BVH_Node<NodeData>(this, m_NodeData, m_BoundingVolume);
+		m_Children[1] = new BVH_Node<NodeData>(this, node, volume);;
+
+		m_NodeData = nullptr;
+		UpdateBoundingVolume();
+	}
+	else
+	{
+		if (m_Children[0]->m_BoundingVolume.GetGrowth(volume) < m_Children[1]->m_BoundingVolume.GetGrowth(volume))
+		{
+			m_Children[0]->AddNode(node, volume);
+		}
+		else
+		{
+			m_Children[1]->AddNode(node, volume);
+		}
+	}
+}
+
+template<typename NodeData>
 inline void BVH_Node<NodeData>::UpdateBoundingVolume(bool recurse)
 {
 	// 叶子节点只包含一个刚体，目前的物理系统默认刚体不会变，所以无需重新计算BV大小
@@ -125,6 +150,7 @@ inline BVH_Tree<NodeData>::~BVH_Tree()
 }
 
 template<typename NodeData>
-inline void BVH_Tree<NodeData>::AddNode(BVH_Node<NodeData>* node)
+inline void BVH_Tree<NodeData>::AddNode(NodeData* node, const BoundingSphere& volume)
 {
+	m_Root->AddNode(node, volume);
 }

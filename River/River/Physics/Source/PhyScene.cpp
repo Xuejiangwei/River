@@ -81,10 +81,11 @@ void PhyScene::AddBoundingVolume(const BoundingSphere& volume, RigidBody* rigidB
 {
 	if (m_BVH_Tree)
 	{
-		m_BVH_Tree->AddNode(new BVH_Node(rigidBody, volume));
+		m_BVH_Tree->AddNode(rigidBody, volume);
 	}
 	else
 	{
-		m_BVH_Tree = MakeUnique<BVH_Tree<RigidBody>>(new BVH_Node(rigidBody, volume));
+		BVH_Node<RigidBody>* parent = nullptr;
+		m_BVH_Tree = MakeUnique<BVH_Tree<RigidBody>>(new BVH_Node(parent, rigidBody, volume));
 	}
 }
