@@ -219,6 +219,7 @@
     <ClCompile Include="Utils\Source\StringUtils.cpp" />
     <ClCompile Include="Window\Source\Window.cpp" />
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
+    <ClCompile Include="XJson\XJson.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Component\Header\BaseMeshComponent.h" />
@@ -323,6 +324,7 @@
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
+    <ClInclude Include="XJson\XJson.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DataStructure\Header\BVH_Tree.inl" />
