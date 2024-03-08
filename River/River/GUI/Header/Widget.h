@@ -38,6 +38,8 @@ public:
 
 	virtual void SetPosition(float x, float y);
 
+	void SetWidgetName(const char* name) { m_Name = name; }
+
 	WidgetAnchors GetWidgetAlign() const { return m_WidgetAlign; }
 
 	Float2 GetSize() const { return m_Size; }
@@ -55,5 +57,6 @@ protected:
 	Float2 m_Position;
 
 	Widget* m_Parent;
+	String m_Name;
 };
 

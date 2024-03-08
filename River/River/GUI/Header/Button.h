@@ -21,6 +21,12 @@ public:
 
 	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override;
 
+	static const String& GetWidgetTypeName()
+	{
+		static String typeName("Button");
+		return typeName;
+	}
+
 private:
 	ClickCall m_ClickCall;
 	bool m_IsMouseButtonDown;

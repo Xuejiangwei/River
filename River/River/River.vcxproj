@@ -138,6 +138,7 @@
     <ClCompile Include="Component\Source\RenderMeshComponent.cpp" />
     <ClCompile Include="Component\Source\RigidComponent.cpp" />
     <ClCompile Include="Component\Source\SkyBoxComponent.cpp" />
+    <ClCompile Include="GUI\Source\GuiDecode.cpp" />
     <ClCompile Include="Input\Source\InputManager.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
@@ -219,6 +220,7 @@
     <ClCompile Include="Utils\Source\StringUtils.cpp" />
     <ClCompile Include="Window\Source\Window.cpp" />
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
+    <ClCompile Include="XJson\openjson.cpp" />
     <ClCompile Include="XJson\XJson.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +230,7 @@
     <ClInclude Include="Component\Header\RigidComponent.h" />
     <ClInclude Include="Component\Header\SkyBoxComponent.h" />
     <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
+    <ClInclude Include="GUI\Header\GuiDecode.h" />
     <ClInclude Include="Header\GameInstance.h" />
     <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />
@@ -324,6 +327,7 @@
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
+    <ClInclude Include="XJson\openjson.h" />
     <ClInclude Include="XJson\XJson.h" />
   </ItemGroup>
   <ItemGroup>

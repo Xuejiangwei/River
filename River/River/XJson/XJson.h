@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 
-//ÐÞ¸Ä×ÔOpenJson
 enum class JsonType
 {
 	None,
@@ -15,16 +14,14 @@ enum class JsonType
 
 class XJson
 {
-	using int64 = long long;
-
 private:
-	class HazeJsonList
+	class XJsonList
 	{
 		friend class XJson;
 	public:
-		HazeJsonList() {}
+		XJsonList() {}
 
-		~HazeJsonList() {}
+		~XJsonList() {}
 
 		void Clear() { m_Childs.clear(); }
 
@@ -152,13 +149,17 @@ public:
 
 	XJson& operator[](const std::string& str) { return SetObject(str.c_str()); }
 
-	size_t Size() { return m_JsonValue ? m_JsonValue->Size() : 0; }
+	unsigned long long Size() { return m_JsonValue ? m_JsonValue->Size() : 0; }
 
 	bool Empty() { return m_JsonValue ? m_JsonValue->Empty() : true; }
 
 	std::unique_ptr<XJson> CreateNode(char code);
 
+	bool MakeReadContext();
+
 	void AddNode(std::unique_ptr<XJson>& node);
+
+	void Clear();
 
 	void TrimSpace();
 
@@ -181,6 +182,12 @@ public:
 	const std::string& Encode();
 
 	bool Decode(const std::string& buffer);
+
+	bool DecodeFromFile(const std::string& filePath);
+
+	int StringToInt32();
+	long long StringToInt64();
+	double StringToDouble();
 
 private:
 	void Read(std::shared_ptr<JsonBuffer> context, bool isRoot = false);
@@ -213,7 +220,7 @@ private:
 	unsigned long long m_Length;
 
 	std::unique_ptr<XJson> m_KeyNameNode;
-	std::unique_ptr<HazeJsonList> m_JsonValue;
+	std::unique_ptr<XJsonList> m_JsonValue;
 	std::unique_ptr<JsonNodeData> m_NodeData;
 
 	std::shared_ptr<JsonBuffer> m_DecodeContext;

@@ -6,6 +6,7 @@
 
 static XJson s_NodeNull;
 
+#define PRINTF printf
 inline int JsonSnprintf(char* buffer, unsigned long long size, const char* format, ...)
 {
 	va_list va;
@@ -295,7 +296,7 @@ void XJson::operator=(unsigned int val)
 	m_NodeData->m_Value.UIntValue = val;
 }
 
-void XJson::operator=(int64 val)
+void XJson::operator=(long long val)
 {
 	if (m_Type == JsonType::Object || m_Type == JsonType::Array)
 	{
@@ -438,7 +439,7 @@ XJson& XJson::SetArray(unsigned long long idx)
 	}
 	if (!m_JsonValue)
 	{
-		m_JsonValue = std::make_unique<HazeJsonList>();
+		m_JsonValue = std::make_unique<XJsonList>();
 	}
 	
 	if (idx >= m_JsonValue->m_Childs.size())
@@ -474,7 +475,7 @@ XJson& XJson::SetObject(const char* str)
 	
 	if (!m_JsonValue)
 	{
-		m_JsonValue = std::make_unique<HazeJsonList>();
+		m_JsonValue = std::make_unique<XJsonList>();
 	}
 
 	XJson* child = nullptr;
@@ -548,6 +549,32 @@ std::unique_ptr<XJson> XJson::CreateNode(char code)
 	return std::make_unique<XJson>(ctype);
 }
 
+bool XJson::MakeReadContext()
+{
+	if (m_Type != JsonType::None)
+	{
+		if (m_DecodeContext && m_DecodeContext->m_Root != this)
+		{
+			PRINTF("OpenJson warn:JsonNode is no root or empty!");
+			return false;
+		}
+	}
+	else
+	{
+		if (m_DecodeContext && m_DecodeContext->m_Root != this)
+		{
+			PRINTF("OpenJson warn:JsonNode is no root or empty!");
+			return false;
+		};
+	}
+	Clear();
+	m_DecodeContext = std::make_shared<JsonBuffer>();
+	m_DecodeContext->m_Root = this;
+	m_DecodeContext->m_Offset = 0;
+	m_DecodeContext->m_ReadBuffer.clear();
+	return true;
+}
+
 void XJson::AddNode(std::unique_ptr<XJson>& node)
 {
 	if (node)
@@ -560,11 +587,44 @@ void XJson::AddNode(std::unique_ptr<XJson>& node)
 
 		if (!m_JsonValue)
 		{
-			m_JsonValue = std::make_unique<HazeJsonList>();
+			m_JsonValue = std::make_unique<XJsonList>();
 		}
 
 		m_JsonValue->Add(node);
 	}
+}
+
+void XJson::Clear()
+{
+	if (m_NodeData)
+	{
+		m_NodeData.release();
+	}
+	if (m_KeyNameNode)
+	{
+		m_KeyNameNode.release();
+	}
+	if (m_JsonValue)
+	{
+		assert(m_Type == JsonType::Object || m_Type == JsonType::Array);
+		m_JsonValue.release();
+	}
+	if (m_DecodeContext && m_DecodeContext->m_Root == this)
+	{
+		m_DecodeContext->m_Root = nullptr;
+		m_DecodeContext.reset();
+	}
+	
+
+	if (m_Encodecontext != 0 && m_Encodecontext->m_Root == this)
+	{
+		m_Encodecontext->m_Root = nullptr;
+		m_Encodecontext.reset();
+	}
+	
+	m_Type = JsonType::None;
+	m_ReadIndex = 0;
+	m_Length = 0;
 }
 
 void XJson::TrimSpace()
@@ -630,7 +690,7 @@ char XJson::CheckCode(char charCode)
 unsigned long long XJson::SearchCode(char code)
 {
 	char* data = m_DecodeContext->m_Data;
-	for (size_t i = m_ReadIndex; i < m_DecodeContext->m_Size; i++)
+	for (unsigned long long i = m_ReadIndex; i < m_DecodeContext->m_Size; i++)
 	{
 		if (data[i] == code)
 		{
@@ -735,7 +795,12 @@ const std::string& XJson::Encode()
 
 bool XJson::Decode(const std::string& buffer)
 {
-	//if (!makeRContext()) return false;
+	if (!m_DecodeContext)
+	{
+		m_DecodeContext = std::make_shared<JsonBuffer>();
+		m_DecodeContext->m_Root = this;
+	}
+
 	m_DecodeContext->m_ReadBuffer = buffer;
 	m_DecodeContext->StartRead();
 	m_Type = CodeToType(GetChar());
@@ -751,6 +816,95 @@ bool XJson::Decode(const std::string& buffer)
 	//}
 
 	return true;
+}
+
+bool XJson::DecodeFromFile(const std::string& filePath)
+{
+	if (!MakeReadContext())
+	{
+		return false;
+	}
+
+	FILE* fp = 0;
+#ifdef _MSC_VER
+	fopen_s(&fp, filePath.c_str(), "rb");
+#else
+	fp = fopen(filePath.c_str(), "rb");
+#endif
+	if (fp == 0)
+	{
+#ifdef _MSC_VER
+		char buffer[1024] = { 0 };
+		strerror_s(buffer, sizeof(buffer), errno);
+		PRINTF("OpenJson warn:decodeFile error:%s,%s\n", buffer, filePath.c_str());
+#else
+		PRINTF("OpenJson warn:decodeFile error:%s,%s\n", strerror(errno), filePath.c_str());
+#endif
+		return false;
+	}
+	fseek(fp, 0, SEEK_END);
+	size_t size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	size_t ret = 0;
+	char buff[1024 * 8] = { 0 };
+	while (true)
+	{
+		ret = fread(buff, 1, sizeof(buff), fp);
+		if (ret < 0)
+		{
+#ifdef _MSC_VER
+			char buffer[1024] = { 0 };
+			strerror_s(buffer, sizeof(buffer), errno);
+			PRINTF("OpenJson warn:decodeFile error:%s,%s\n", buffer, filePath.c_str());
+#else
+			PRINTF("OpenJson warn:decodeFile error:%s,%s\n", strerror(errno), filePath.c_str());
+#endif
+			fclose(fp);
+			return false;
+		}
+		else if (ret == 0) break;
+		m_DecodeContext->m_ReadBuffer.append(buff, ret);
+	}
+	fclose(fp);
+
+	m_DecodeContext->StartRead();
+	m_Type = CodeToType(GetChar());
+	try {
+		Read(m_DecodeContext, true);
+	}
+	catch (const char* error)
+	{
+		PRINTF("OpenJson warn:decodeFile catch exception %s", error);
+	}
+	return true;
+}
+
+double XJson::StringToDouble()
+{
+	const char* str = Data();
+	double dval = 0;
+	if (!str || strlen(str) == 0)
+		dval = (float)(1e+300 * 1e+300) * 0.0F;
+	else if (strcmp(str, "true") == 0)
+		dval = 1.0;
+	else if (strcmp(str, "false") == 0)
+		dval = 0.0;
+	else
+		dval = atof(str);
+	return dval;
+}
+
+int XJson::StringToInt32()
+{
+	int ret = atoi(Data());
+	return ret;
+}
+
+long long XJson::StringToInt64()
+{
+	long long ret = atoll(Data());
+	return ret;
 }
 
 void XJson::Read(std::shared_ptr<JsonBuffer> context, bool isRoot)
@@ -836,8 +990,8 @@ void XJson::ReadString()
 			return;
 		}
 	}
-	size_t sidx = m_ReadIndex;
-	size_t eidx = SearchCode(code);
+	unsigned long long sidx = m_ReadIndex;
+	unsigned long long eidx = SearchCode(code);
 	if (eidx < 0)
 	{
 		//HAZE_LOG_ERR_W("¶ªÊ§<'\"'>»ò<\"'\">!\n");

@@ -18,7 +18,13 @@ public:
 	virtual bool OnMouseButtonDown(const class Event& e);
 
 	virtual bool OnMouseButtonRelease(const class Event& e);
-
+	
+	static const String& GetWidgetTypeName()
+	{
+		static String typeName("Panel");
+		return typeName;
+	}
+	
 	Panel& operator[](Share<Widget> widget)
 	{
 		widget.get()->m_Parent = this;

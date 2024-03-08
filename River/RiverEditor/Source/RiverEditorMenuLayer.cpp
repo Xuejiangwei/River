@@ -5,6 +5,7 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
+#include "GUI/Header/GuiDecode.h"
 #include "GUI/Header/Panel.h"
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"
@@ -27,6 +28,8 @@ void RiverEditorMenuLayer::OnAttach()
 {
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(false);
+
+	DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json");
 
 	auto rootPanel = MakeUnique<Panel>();
 	rootPanel->SetSize(720 / 2, 720 / 2);

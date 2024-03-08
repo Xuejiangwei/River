@@ -20,6 +20,12 @@ public:
 
 	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override { return true; }
 
+	static const String& GetWidgetTypeName()
+	{
+		static String typeName("Image");
+		return typeName;
+	}
+
 	void SetTexture(Texture* texture);
 
 private:
