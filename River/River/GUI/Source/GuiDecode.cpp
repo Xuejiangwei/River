@@ -6,40 +6,58 @@
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Button.h"
 
+static void InitWidgetSetting(Share<Widget>& widget, XJson& json);
+static Share<Widget> CreateWidgetByJson(XJson& json);
+
 Share<Widget> DecodeGUI_File(const char* filePath)
 {
 	XJson json;
 	json.DecodeFromFile(filePath);
 	
-	auto& w = json["Root"];
-	auto type = w["Type"].NodeDataString();
-	auto rootPanel = CreateWidget(type);
-
-	auto name = w["Name"].NodeDataString();
-	auto size = w["Size"][0].StringToInt32();
-	auto pos = w["Position"][0].StringToInt32();
-
-	return rootPanel;
+	return CreateWidgetByJson(json["Root"]);
 }
 
-Share<Widget> CreateWidget(const char* typeName)
+Share<Widget> CreateWidgetByJson(XJson& json)
 {
+	Share<Widget> widget = nullptr;
+	auto typeName = json["Type"].Data();
+
 	if (typeName == Panel::GetWidgetTypeName())
 	{
-		return MakeShare<Panel>();
+		widget = MakeShare<Panel>();
 	}
 	else if (typeName == Text::GetWidgetTypeName())
 	{
-		return MakeShare<Text>();
+		widget = MakeShare<Text>();
 	}
 	else if (typeName == Image::GetWidgetTypeName())
 	{
-		return MakeShare<Image>();
+		widget = MakeShare<Image>();
 	}
 	else if (typeName == Button::GetWidgetTypeName())
 	{
-		return MakeShare<Button>();
+		widget = MakeShare<Button>();
 	}
 
-	return nullptr;
+	if (widget)
+	{
+		InitWidgetSetting(widget, json);
+
+		if (!json["ChildWidgets"].Empty() && typeName == Panel::GetWidgetTypeName())
+		{
+			for (size_t i = 0; i < json["ChildWidgets"].Size(); i++)
+			{
+				(*((Panel*)(widget.get())))[CreateWidgetByJson(json["ChildWidgets"][i])];
+			}
+		}
+	}
+	
+	return widget;
+}
+
+void InitWidgetSetting(Share<Widget>& widget, XJson& json)
+{
+	widget->SetWidgetName(json["Name"].Data());
+	widget->SetSize(json["Size"][0].StringToInt32(), json["Size"][1].StringToInt32());
+	widget->SetPosition(json["Position"][0].StringToInt32(), json["Position"][1].StringToInt32());
 }

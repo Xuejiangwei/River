@@ -220,7 +220,6 @@
     <ClCompile Include="Utils\Source\StringUtils.cpp" />
     <ClCompile Include="Window\Source\Window.cpp" />
     <ClCompile Include="Window\Windows\Source\WindowsWindow.cpp" />
-    <ClCompile Include="XJson\openjson.cpp" />
     <ClCompile Include="XJson\XJson.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -327,7 +326,6 @@
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />
     <ClInclude Include="Window\Windows\Header\WindowsWindow.h" />
-    <ClInclude Include="XJson\openjson.h" />
     <ClInclude Include="XJson\XJson.h" />
   </ItemGroup>
   <ItemGroup>

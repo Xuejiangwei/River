@@ -90,6 +90,32 @@ namespace River
 	}
 }
 
+template <class _Ty1, class _Ty2>
+Share<_Ty1> DynamicCast(const Share<_Ty2>& other) noexcept
+{
+	const auto ptr = dynamic_cast<typename Share<_Ty1>::element_type*>(other.get());
+
+	if (ptr)
+	{
+		return Share<_Ty1>(other, ptr);
+	}
+
+	return {};
+}
+
+template <class _Ty1, class _Ty2>
+Share<_Ty1> DynamicCast(Share<_Ty2>&& other) noexcept
+{
+	const auto ptr = dynamic_cast<typename Share<_Ty1>::element_type*>(other.get());
+
+	if (ptr)
+	{
+		return Share<_Ty1>(River::Move(other), ptr);
+	}
+
+	return {};
+}
+
 using BitArray = std::vector<bool>;
 
 using int8 = char;

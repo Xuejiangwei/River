@@ -28,37 +28,8 @@ void RiverEditorMenuLayer::OnAttach()
 {
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(false);
-
-	DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json");
-
-	auto rootPanel = MakeUnique<Panel>();
-	rootPanel->SetSize(720 / 2, 720 / 2);
-	rootPanel->SetPosition(0.0f, 0.0f);
-	{
-		/*auto text = MakeShare<Text>();
-		text->SetSize(1, 1);
-		text->SetFont(AssetManager::Get()->GetTexture("font"));
-		text->SetFontSize(30.0f);
-		text->SetPosition(100, 200);
-		text->SetText(u8"齐鸟 This.aabbaabbaabb哈哈哈");
-		(*rootPanel)[text];
-
-		auto img = MakeShare<Image>();
-		img->SetTexture(AssetManager::Get()->GetTexture("bricksNormalMap"));
-		img->SetSize(100, 100);
-		img->SetPosition(100, 100);
-
-		(*rootPanel)[img];*/
-
-		auto img1 = MakeShare<Image>();
-		img1->SetTexture(AssetManager::Get()->GetTexture("tileNormalMap"));
-		img1->SetSize(360, 360);
-		img1->SetPosition(300, 300);
-
-		(*rootPanel)[img1];
-	}
-
-	m_UIWindows[0] = MakeUnique<UIWindow>(rootPanel);
+	m_UIWindows[0] = MakeUnique<UIWindow>(DynamicCast<Panel>(
+		DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json")));
 }
 
 void RiverEditorMenuLayer::OnDetach()

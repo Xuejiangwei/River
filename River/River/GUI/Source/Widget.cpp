@@ -8,7 +8,8 @@
 #define OUTLINE_THICJKNESS 0.001f
 
 Widget::Widget()
-    : m_WidgetAlign(WidgetAnchors::LeftTop), m_Alignment(0.0f, 0.0f)
+    : m_WidgetAlign(WidgetAnchors::LeftTop), m_Alignment(0.0f, 0.0f),
+    m_Size({ 0, 0 }), m_Position({ 0, 0 }), m_Parent(nullptr), m_Name("")
 {
 }
 

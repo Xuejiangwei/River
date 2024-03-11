@@ -267,13 +267,10 @@
     <ClCompile Include="Component\Source\BaseMeshComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="XJson\XJson.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="XJson\openjson.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GUI\Source\GuiDecode.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XJson\XJson.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -584,13 +581,10 @@
     <ClInclude Include="Component\Header\BaseMeshComponent.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="XJson\XJson.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="XJson\openjson.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GUI\Header\GuiDecode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XJson\XJson.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

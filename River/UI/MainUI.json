@@ -16,7 +16,7 @@
                 "Type" : "Button",
                 "Name" : "BtnTest",
                 "Size" : [100, 100],
-                "Position" : [100, 100]
+                "Position" : [0, 0]
             }
         ]
     }

@@ -8,7 +8,7 @@ class Panel;
 class UIWindow
 {
 public:
-	UIWindow(Unique<Panel>& rootPanel);
+	UIWindow(Share<Panel>&& rootPanel);
 
 	~UIWindow();
 
@@ -18,7 +18,7 @@ public:
 
 	void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16>& indices);
 
-	void AddPanel(int orderLevel, Unique<Panel>& panel);
+	void AddPanel(int orderLevel, Share<Panel>& panel);
 
 	Panel* GetRootPanel() const { return m_RootPanel.get(); }
 
@@ -29,8 +29,8 @@ private:
 
 private:
 	//层级最低
-	Unique<Panel> m_RootPanel;
+	Share<Panel> m_RootPanel;
 
 	//同一数组下的Panel，虽然实际层级相同，但越靠后层级越偏高。
-	LessRBTreeMap<int, V_Array<Unique<Panel>>> m_Panels;
+	LessRBTreeMap<int, V_Array<Share<Panel>>> m_Panels;
 };

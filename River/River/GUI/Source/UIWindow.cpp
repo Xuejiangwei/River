@@ -2,7 +2,7 @@
 #include "GUI/Header/UIWindow.h"
 #include "GUI/Header/Panel.h"
 
-UIWindow::UIWindow(Unique<Panel>& rootPanel)
+UIWindow::UIWindow(Share<Panel>&& rootPanel)
 	: m_RootPanel(std::move(rootPanel))
 {
 }
@@ -52,9 +52,9 @@ void UIWindow::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16>& indices)
 	}
 }
 
-void UIWindow::AddPanel(int orderLevel, Unique<Panel>& panel)
+void UIWindow::AddPanel(int orderLevel, Share<Panel>& panel)
 {
-	m_Panels[orderLevel].push_back(std::move(panel));
+	m_Panels[orderLevel].push_back(River::Move(panel));
 }
 
 bool UIWindow::OnMouseButtonDown(const Event& e)
