@@ -27,7 +27,7 @@ void RiverEditorMenuLayer::OnInitialize()
 void RiverEditorMenuLayer::OnAttach()
 {
 	//initialize
-	RHI::Get()->SetShowUIDebugOutline(false);
+	RHI::Get()->SetShowUIDebugOutline(true);
 	m_UIWindows[0] = MakeUnique<UIWindow>(DynamicCast<Panel>(
 		DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json")));
 }

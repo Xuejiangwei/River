@@ -507,7 +507,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
 
-			/*if (renderItem.RenderTexture)
+			if (renderItem.RenderTexture)
 			{
 				m_Device->CopyDescriptorsSimple(1, dynamicHandle, 
 					{ renderItem.RenderTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -515,7 +515,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 			}
-			else*/
+			else
 			{
 				auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
 				m_Device->CopyDescriptorsSimple(1, dynamicHandle,

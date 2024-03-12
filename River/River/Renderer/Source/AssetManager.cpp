@@ -60,7 +60,7 @@ Texture* AssetManager::GetOrCreateTexture(const char* name, const char* path)
 		return iter->second.get();
 	}
 
-	return Texture::CreateTexture(name, path);
+	return Texture::CreateTexture(name, path, true);
 }
 
 Shader* AssetManager::GetShader(const char* name)

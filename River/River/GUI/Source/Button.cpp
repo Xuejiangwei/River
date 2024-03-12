@@ -50,3 +50,8 @@ bool Button::OnMouseButtonClick(int mouseX, int mouseY)
 	}
 	return true;
 }
+
+void Button::AddChildWidget(Share<Widget>&& widget)
+{
+	m_Child = widget;
+}

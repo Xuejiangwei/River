@@ -21,6 +21,8 @@ public:
 
 	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override;
 
+	virtual void AddChildWidget(Share<Widget>&& widget);
+
 	static const String& GetWidgetTypeName()
 	{
 		static String typeName("Button");
@@ -33,4 +35,5 @@ private:
 	float m_MouseButtonClickTimer;
 	float m_MouseButtonClickDetectTime;
 	
+	Share<Widget> m_Child;
 };

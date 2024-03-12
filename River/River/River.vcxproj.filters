@@ -273,6 +273,9 @@
     <ClCompile Include="XJson\XJson.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\Source\ListWidget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -585,6 +588,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="XJson\XJson.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Header\ListWidget.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,13 +10,15 @@
                 "Type" : "Image",
                 "Name" : "ImgDepth",
                 "Size" : [240, 240],
-                "Position" : [400, 400]
+                "Position" : [400, 400],
+                "Texture" : "F:\\GitHub\\River\\River\\Textures\\checkboard.dds"
             },
             {
                 "Type" : "Button",
                 "Name" : "BtnTest",
                 "Size" : [100, 100],
-                "Position" : [0, 0]
+                "Position" : [100, 100],
+                "Texture" : "F:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
             }
         ]
     }

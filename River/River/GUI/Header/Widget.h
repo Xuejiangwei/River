@@ -38,6 +38,8 @@ public:
 
 	virtual void SetPosition(float x, float y);
 
+	virtual void AddChildWidget(Share<Widget>&& widget) {}
+
 	void SetWidgetName(const char* name) { m_Name = name; }
 
 	WidgetAnchors GetWidgetAlign() const { return m_WidgetAlign; }

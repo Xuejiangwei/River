@@ -5,7 +5,7 @@
 #include "Renderer/Header/RHI.h"
 
 #define OUTLINE_COLOR 0, 255, 0, 255
-#define OUTLINE_THICJKNESS 0.001f
+#define OUTLINE_THICJKNESS 0.005f
 
 Widget::Widget()
     : m_WidgetAlign(WidgetAnchors::LeftTop), m_Alignment(0.0f, 0.0f),
@@ -37,8 +37,11 @@ void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
         float ndcStartX = startPos.x / width;
         float ndcStartY = -startPos.y / height;
-        float ndcLengthX = m_Size.x / width;
-        float ndcLengthY = -m_Size.y / height;
+        float ndcLengthX = m_Size.x / width * 2;
+        float ndcLengthY = -m_Size.y / height * 2;
+
+        ndcStartX = ndcStartX * 2 - 1;
+        ndcStartY = ndcStartY * 2 + 1;
 
         //右手坐标系朝向屏幕里面
         //ndc (0,0) (1,0)  
@@ -46,25 +49,30 @@ void Widget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
         
         //0 1
         //3 2
+        
+        //左边|
         vertices.push_back(UIVertex(ndcStartX, ndcStartY, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX + OUTLINE_THICJKNESS, ndcStartY, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX + OUTLINE_THICJKNESS, ndcStartY + ndcLengthY, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
 
+        //上边——
         vertices.push_back(UIVertex(ndcStartX, ndcStartY, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY - OUTLINE_THICJKNESS, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
         vertices.push_back(UIVertex(ndcStartX, ndcStartY - OUTLINE_THICJKNESS, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
 
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX + OUTLINE_THICJKNESS, ndcStartY, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX + OUTLINE_THICJKNESS, ndcStartY + ndcLengthY, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
+        //右边|
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX - OUTLINE_THICJKNESS / 2, ndcStartY, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX + OUTLINE_THICJKNESS / 2, ndcStartY, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX + OUTLINE_THICJKNESS / 2, ndcStartY + ndcLengthY, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX - OUTLINE_THICJKNESS / 2, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
 
-        vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY - OUTLINE_THICJKNESS, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
-        vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY - OUTLINE_THICJKNESS, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
+        //下边——
+        vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY + OUTLINE_THICJKNESS / 2, 0.0f, 0.0f, 1.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY + OUTLINE_THICJKNESS / 2, 0.0f, 0.0f, 0.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY - OUTLINE_THICJKNESS / 2, 0.0f, 1.0f, 0.0f, OUTLINE_COLOR));
+        vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY - OUTLINE_THICJKNESS / 2, 0.0f, 1.0f, 1.0f, OUTLINE_COLOR));
 
         indices.push_back(0);
         indices.push_back(1);

@@ -5,6 +5,7 @@
 #include "GUI/Header/Text.h"
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Button.h"
+#include "Renderer/Header/AssetManager.h"
 
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json);
 static Share<Widget> CreateWidgetByJson(XJson& json);
@@ -32,11 +33,17 @@ Share<Widget> CreateWidgetByJson(XJson& json)
 	}
 	else if (typeName == Image::GetWidgetTypeName())
 	{
-		widget = MakeShare<Image>();
+		auto image = MakeShare<Image>();
+		image->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+
+		widget = image;
 	}
 	else if (typeName == Button::GetWidgetTypeName())
 	{
-		widget = MakeShare<Button>();
+		auto button = MakeShare<Button>();
+		button->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+
+		widget = button;
 	}
 
 	if (widget)

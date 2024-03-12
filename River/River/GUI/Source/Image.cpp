@@ -21,32 +21,38 @@ void Image::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
     Widget::OnRender(vertices, indices);
 
-    UIRenderItem renderItem;
-    renderItem.RenderTexture = m_Texture;
-    renderItem.BaseVertexLocation = (int)vertices.size();
-    renderItem.IndexCount = 6;
-    renderItem.StartIndexLocation = (int)indices.size();
+    //if (!RHI::Get()->IsShowUIDebugOutline())
+    {
+        UIRenderItem renderItem;
+        renderItem.RenderTexture = m_Texture;
+        renderItem.BaseVertexLocation = (int)vertices.size();
+        renderItem.IndexCount = 6;
+        renderItem.StartIndexLocation = (int)indices.size();
 
-    auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
-    Float2 startPos = GetAbsoluteLeftTopPosition();
-    float ndcStartX = startPos.x / width;
-    float ndcStartY = -startPos.y / height;
-    float ndcLengthX = m_Size.x / width;
-    float ndcLengthY = -m_Size.y / height;
+        auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
+        Float2 startPos = GetAbsoluteLeftTopPosition();
+        float ndcStartX = startPos.x / width;
+        float ndcStartY = -startPos.y / height;
+        float ndcLengthX = m_Size.x / width * 2;
+        float ndcLengthY = -m_Size.y / height * 2;
 
-    vertices.push_back(UIVertex(ndcStartX, ndcStartY, 0.0f, 0.0f, 0.0f, 255, 255, 0, 255));
-    vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY, 0.0f, 1.0f, 0.0f, 255, 255, 0, 255));
-    vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY, 0.0f, 1.0f, 1.0f, 255, 255, 0, 255));
-    vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, 255, 255, 0, 255));
+        ndcStartX = ndcStartX * 2 - 1;
+        ndcStartY = ndcStartY * 2 + 1;
 
-    indices.push_back(0);
-    indices.push_back(1);
-    indices.push_back(2);
-    indices.push_back(0);
-    indices.push_back(2);
-    indices.push_back(3);
+        vertices.push_back(UIVertex(ndcStartX, ndcStartY, 0.0f, 0.0f, 0.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY, 0.0f, 1.0f, 0.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(ndcStartX + ndcLengthX, ndcStartY + ndcLengthY, 0.0f, 1.0f, 1.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(ndcStartX, ndcStartY + ndcLengthY, 0.0f, 0.0f, 1.0f, 255, 255, 0, 255));
 
-    RHI::Get()->AddUIRenderItem(renderItem);
+        indices.push_back(0);
+        indices.push_back(1);
+        indices.push_back(2);
+        indices.push_back(0);
+        indices.push_back(2);
+        indices.push_back(3);
+
+        RHI::Get()->AddUIRenderItem(renderItem);
+    }
 }
 
 bool Image::OnMouseButtonDown(const Event& e)
