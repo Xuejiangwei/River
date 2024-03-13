@@ -17,7 +17,7 @@ Text::~Text()
 
 void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
-	//Widget::OnRender(vertices, indices);
+	Widget::OnRender(vertices, indices);
 
     UIRenderItem renderItem;
     renderItem.RenderTexture = m_Font;
@@ -33,6 +33,9 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     Float2 startPos = GetAbsoluteLeftTopPosition();
     float ndcStartX = startPos.x / width;
     float ndcStartY = -startPos.y / height;
+
+    ndcStartX = ndcStartX * 2 - 1;
+    ndcStartY = ndcStartY * 2 + 1;
 
     float x = ndcStartX;//startPos.x / width;//m_Position.x;
     float y = ndcStartY;//-startPos.y / height; //m_Position.y;

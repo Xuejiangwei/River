@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Layer.h"
+#include "UILayer.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 
 class UIWindow;
 
-class RiverEditorMenuLayer : public Layer
+class RiverEditorMenuLayer : public UILayer
 {
 public:
 	RiverEditorMenuLayer();

@@ -25,17 +25,17 @@ public:
 	virtual void OnRender() override;
 
 	//Event
-	virtual bool OnMousePress(MouseCode mouseCode, Int2 mousePosition) override;
+	bool OnMousePress(const Event& e);
 
-	virtual bool OnMouseRelease(MouseCode mouseCode, Int2 mousePosition) override;
+	bool OnMouseRelease(const Event& e);
 
-	virtual bool OnMouseMove(int x, int y) override;
+	bool OnMouseMove(const Event& e);
 
-	virtual bool OnMouseLeave() override;
+	bool OnMouseLeave();
 
-	virtual bool OnKeyPress(KeyCode key) override;
+	bool OnKeyPress(const Event& e);
 
-	virtual bool OnKeyRelease(KeyCode key) override;
+	bool OnKeyRelease(const Event& e);
 
 private:
 	V_Array<Share<Object>> m_EditorObjects;

@@ -20,20 +20,7 @@ public:
 
 	virtual void OnRender() {}
 
-	virtual bool IsUILayer() const { return true; }
-
-	//Event
-	virtual bool OnMousePress(MouseCode mouseCode, Int2 mousePosition) { return false; }
-
-	virtual bool OnMouseRelease(MouseCode mouseCode, Int2 mousePosition) { return false; }
-	
-	virtual bool OnMouseMove(int x, int y) { return false; }
-
-	virtual bool OnMouseLeave() { return false; }
-
-	virtual bool OnKeyPress(KeyCode key) { return false; }
-
-	virtual bool OnKeyRelease(KeyCode key) { return false; }
+	virtual bool IsUILayer() const { return false; }
 	
 private:
 };

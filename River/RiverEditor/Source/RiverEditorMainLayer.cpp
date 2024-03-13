@@ -159,6 +159,17 @@ void RiverEditorMainLayer::OnUpdate(float deltaTime)
 
 bool RiverEditorMainLayer::OnEvent(const Event& e)
 {
+	switch (e.GetEventType())
+	{
+	case EventType::MouseButtonPressed:
+		return OnMousePress(e);
+		break;
+	case EventType::MouseButtonReleased:
+		return OnMouseRelease(e);
+		break;
+	default:
+		break;
+	}
 	return false;
 }
 
@@ -166,21 +177,25 @@ void RiverEditorMainLayer::OnRender()
 {
 }
 
-bool RiverEditorMainLayer::OnMousePress(MouseCode mouseCode, Int2 mousePosition)
+bool RiverEditorMainLayer::OnMousePress(const Event& e)
 {
-	m_MainCamera->StartRotate(mousePosition.x, mousePosition.y);
+	auto& ce = dynamic_cast<const MouseButtonPressedEvent&>(e);
+	m_MainCamera->StartRotate(ce.GetMouseX(), ce.GetMouseY());
 	return false;
 }
 
-bool RiverEditorMainLayer::OnMouseRelease(MouseCode mouseCode, Int2 mousePosition)
+bool RiverEditorMainLayer::OnMouseRelease(const Event& e)
 {
 	m_MainCamera->EndRotate();
 	//ÏÔÊ¾¿ì½Ý²Ëµ¥
 	return false;
 }
 
-bool RiverEditorMainLayer::OnMouseMove(int x, int y)
+bool RiverEditorMainLayer::OnMouseMove(const Event& e)
 {
+	auto& ce = dynamic_cast<const MouseMovedEvent&>(e);
+	auto x = ce.GetMouseX();
+	auto y = ce.GetMouseY();
 	if (m_MainCamera->IsStartRotate())
 	{
 		auto lastPos = m_MainCamera->GetLastMousePosition();
@@ -200,12 +215,12 @@ bool RiverEditorMainLayer::OnMouseLeave()
 	return false;
 }
 
-bool RiverEditorMainLayer::OnKeyPress(KeyCode key)
+bool RiverEditorMainLayer::OnKeyPress(const Event& e)
 {
 	return false;
 }
 
-bool RiverEditorMainLayer::OnKeyRelease(KeyCode key)
+bool RiverEditorMainLayer::OnKeyRelease(const Event& e)
 {
 	return false;
 }

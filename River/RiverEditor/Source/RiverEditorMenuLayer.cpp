@@ -10,6 +10,7 @@
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Text.h"
+#include "GUI/Header/ListWidget.h"
 #include "GUI/Header/UIWindow.h"
 
 RiverEditorMenuLayer::RiverEditorMenuLayer()
@@ -28,8 +29,12 @@ void RiverEditorMenuLayer::OnAttach()
 {
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(true);
-	m_UIWindows[0] = MakeUnique<UIWindow>(DynamicCast<Panel>(
-		DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json")));
+	auto panel = DynamicCast<Panel>(DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
+	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
+	list->SetChildWidgetType("Text");
+	list->SetListData<String>({ String("abcdcecefqafe"), String("abcdacece 商"), String("abcdcacec 周") });*/
+
+	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }
 
 void RiverEditorMenuLayer::OnDetach()
@@ -39,7 +44,10 @@ void RiverEditorMenuLayer::OnDetach()
 
 void RiverEditorMenuLayer::OnUpdate(float deltaTime)
 {
-
+	for (auto& it : m_UIWindows)
+	{
+		it.second->OnUpdate(deltaTime);
+	}
 }
 
 bool RiverEditorMenuLayer::OnEvent(const Event& e)

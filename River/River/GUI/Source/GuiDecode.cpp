@@ -5,6 +5,9 @@
 #include "GUI/Header/Text.h"
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Button.h"
+#include "GUI/Header/Canvas.h"
+#include "GUI/Header/ListWidget.h"
+#include "GUI/Header/TreeWidget.h"
 #include "Renderer/Header/AssetManager.h"
 
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json);
@@ -18,6 +21,41 @@ Share<Widget> DecodeGUI_File(const char* filePath)
 	return CreateWidgetByJson(json["Root"]);
 }
 
+Share<Widget> CreateWidgetByTypeName(const char* typeName)
+{
+	Share<Widget> widget = nullptr;
+	if (typeName == Panel::GetWidgetTypeName())
+	{
+		widget = MakeShare<Panel>();
+	}
+	else if (typeName == Text::GetWidgetTypeName())
+	{
+		widget = MakeShare<Text>();
+	}
+	else if (typeName == Image::GetWidgetTypeName())
+	{
+		widget = MakeShare<Image>();
+	}
+	else if (typeName == Button::GetWidgetTypeName())
+	{
+		widget = MakeShare<Button>();
+	}
+	else if (typeName == Canvas::GetWidgetTypeName())
+	{
+		widget = MakeShare<Canvas>();
+	}
+	else if (typeName == ListWidget::GetWidgetTypeName())
+	{
+		widget = MakeShare<ListWidget>();
+	}
+	else if (typeName == TreeWidget::GetWidgetTypeName())
+	{
+		widget = MakeShare<TreeWidget>();
+	}
+
+	return widget;
+}
+
 Share<Widget> CreateWidgetByJson(XJson& json)
 {
 	Share<Widget> widget = nullptr;
@@ -29,21 +67,51 @@ Share<Widget> CreateWidgetByJson(XJson& json)
 	}
 	else if (typeName == Text::GetWidgetTypeName())
 	{
-		widget = MakeShare<Text>();
+		auto text = MakeShare<Text>();
+		if (json["Text"].Data())
+		{
+			text->SetFont(AssetManager::Get()->GetTexture("font"));
+			text->SetFontSize(json["FontSize"].StringToInt32());
+			text->SetText(json["Text"].Data());
+		}
+
+		widget = text;
 	}
 	else if (typeName == Image::GetWidgetTypeName())
 	{
 		auto image = MakeShare<Image>();
-		image->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+		if (json["Texture"].Data())
+		{
+			image->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+		}
 
 		widget = image;
 	}
 	else if (typeName == Button::GetWidgetTypeName())
 	{
 		auto button = MakeShare<Button>();
-		button->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+		if (json["Texture"].Data())
+		{
+			button->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+		}
 
 		widget = button;
+	}
+	else if (typeName == Canvas::GetWidgetTypeName())
+	{
+		widget = MakeShare<Canvas>();
+	}
+	else if (typeName == ListWidget::GetWidgetTypeName())
+	{
+		auto listWidget = MakeShare<ListWidget>();
+
+		widget = listWidget;
+	}
+	else if (typeName == TreeWidget::GetWidgetTypeName())
+	{
+		auto treeWidget = MakeShare<TreeWidget>();
+
+		widget = treeWidget;
 	}
 
 	if (widget)

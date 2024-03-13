@@ -2,7 +2,7 @@
 #include "GUI/Header/Button.h"
 
 Button::Button()
-	: m_ClickCall(nullptr), m_MouseButtonClickDetectTime(0.3f), m_MouseButtonClickTimer(0.0f)
+	: m_ClickCall(nullptr), m_IsMouseButtonDown(false), m_MouseButtonClickDetectTime(0.3f), m_MouseButtonClickTimer(0.0f)
 {
 }
 
@@ -35,6 +35,7 @@ bool Button::OnMouseButtonRelease(const Event& e)
 	m_IsMouseButtonDown = false;
 	if (m_MouseButtonClickTimer > m_MouseButtonClickDetectTime)
 	{
+		m_MouseButtonClickTimer = 0.f;
 		auto& releaseEvent = (const MouseButtonReleasedEvent&)e;
 		OnMouseButtonClick(releaseEvent.GetMouseX(), releaseEvent.GetMouseY());
 	}

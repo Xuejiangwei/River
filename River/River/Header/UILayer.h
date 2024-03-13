@@ -23,7 +23,9 @@ public:
 
 	virtual bool OnEvent(const class Event& e) override;
 
-private:
+	virtual bool IsUILayer() const { return true; }
+
+protected:
 	GreaterRBTreeMap<int, Unique<UIWindow>> m_UIWindows;
 
 	V_Array<UIVertex> m_RenderVertices;

@@ -7,18 +7,20 @@
         "Position" : [0, 0],
         "ChildWidgets" : [
             {
-                "Type" : "Image",
-                "Name" : "ImgDepth",
-                "Size" : [240, 240],
-                "Position" : [400, 400],
-                "Texture" : "F:\\GitHub\\River\\River\\Textures\\checkboard.dds"
+                "Type" : "Text",
+                "Name" : "Text1",
+                "Size" : [100, 50],
+                "Position" : [0, 0],
+                "FontSize" : 40,
+                "Text" : "abcd哈哈哈"
             },
             {
-                "Type" : "Button",
-                "Name" : "BtnTest",
-                "Size" : [100, 100],
+                "Type" : "Text",
+                "Name" : "Text2",
+                "Size" : [100, 50],
                 "Position" : [100, 100],
-                "Texture" : "F:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
+                "FontSize" : 40,
+                "Text" : "zxcvbn科夫斯克"
             }
         ]
     }

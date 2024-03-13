@@ -10,3 +10,18 @@ ListWidget::ListWidget()
 ListWidget::~ListWidget()
 {
 }
+
+void ListWidget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
+{
+	Widget::OnRender(vertices, indices);
+
+	for (size_t i = 0; i < m_CacheChilds.size(); i++)
+	{
+		m_CacheChilds[i]->OnRender(vertices, indices);
+	}
+}
+
+void ListWidget::SetChildWidgetType(const char* type)
+{
+	m_ChildWidgetType = type;
+}

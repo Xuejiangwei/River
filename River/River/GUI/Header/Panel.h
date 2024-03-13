@@ -13,18 +13,16 @@ public:
 
 	virtual ~Panel() override;
 
+	virtual void OnUpdate(float deltaTime) override;
+
 	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
 
 	virtual bool OnMouseButtonDown(const class Event& e);
 
 	virtual bool OnMouseButtonRelease(const class Event& e);
 	
-	static const String& GetWidgetTypeName()
-	{
-		static String typeName("Panel");
-		return typeName;
-	}
-	
+	Share<Widget> GetChildWidgetByName(const char* name);
+
 	Panel& operator[](Share<Widget> widget)
 	{
 		widget.get()->m_Parent = this;
@@ -33,6 +31,14 @@ public:
 
 		return *this;
 	}
+
+public:
+	static const String& GetWidgetTypeName()
+	{
+		static String typeName("Panel");
+		return typeName;
+	}
+	
 
 private:
 	void AddMouseButtonDownDetector(Widget* widget);

@@ -40,6 +40,8 @@ public:
 
 	virtual void AddChildWidget(Share<Widget>&& widget) {}
 
+	const String& GetWidgetName() const { return m_Name; }
+
 	void SetWidgetName(const char* name) { m_Name = name; }
 
 	WidgetAnchors GetWidgetAlign() const { return m_WidgetAlign; }

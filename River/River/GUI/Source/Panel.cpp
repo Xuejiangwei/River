@@ -16,6 +16,16 @@ Panel::~Panel()
 {
 }
 
+void Panel::OnUpdate(float deltaTime)
+{
+	Widget::OnUpdate(deltaTime);
+
+	for (size_t i = 0; i < m_Children.size(); i++)
+	{
+		m_Children[i]->OnUpdate(deltaTime);
+	}
+}
+
 void Panel::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 {
 	Widget::OnRender(vertices, indices);
@@ -48,7 +58,34 @@ bool Panel::OnMouseButtonDown(const Event& e)
 
 bool Panel::OnMouseButtonRelease(const Event& e)
 {
+	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
+	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+	{
+		for (auto widget : m_MouseButtonDownDetector)
+		{
+			if (MouseInWidget(widget, mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+			{
+				if (widget->OnMouseButtonRelease(e))
+				{
+					return true;
+				}
+
+			}
+		}
+	}
 	return false;
+}
+
+Share<Widget> Panel::GetChildWidgetByName(const char* name)
+{
+	for (auto& widget : m_Children)
+	{
+		if (widget->GetWidgetName() ==  name)
+		{
+			return widget;
+		}
+	}
+	return nullptr;
 }
 
 void Panel::AddMouseButtonDownDetector(Widget* widget)
