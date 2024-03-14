@@ -41,6 +41,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
     float y = ndcStartY;//-startPos.y / height; //m_Position.y;
     float spaceHeight = m_FontSize / 720;
    
+    int indicesCount = 0;
     float scale = spaceHeight / font->m_Font->GetPixelSize();
     auto s = m_Text.begin();
     while (s != m_Text.end())
@@ -124,7 +125,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
                 // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                 {
-                    auto vs = (uint16)vertices.size();
+                    auto vs = indicesCount;
 
                     //0 1
                     //3 2
@@ -141,6 +142,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                     indices.push_back(vs + 3);
                 
                     renderItem.IndexCount += 6;
+                    indicesCount += 4;
                 }
             }
         }

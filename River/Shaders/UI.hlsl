@@ -34,8 +34,16 @@ float4 PS(VertexOut pin) : SV_Target
     //MaterialData matData = gMaterialData[gMaterialIndex];
     //uint diffuseMapIndex = matData.DiffuseMapIndex;
     //float3 color = gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC).rgb;
-    return gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC); //float4(color, pin.Color.a);
+    
+    if (gObjPad0 == 1 << 0)
+    {
+        return pin.Color;
+    }
+    else
+    {
+        return gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC); //float4(color, pin.Color.a);
+    }
+    
     //return float4(gSsaoMap.Sample(gsamLinearWrap, pin.TexC).rrr, 1.0f);
     //return gShadowMap.Sample(gsamLinearWrap, pin.TexC);
-    //return pin.Color;
 }

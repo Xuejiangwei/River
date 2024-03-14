@@ -33,7 +33,7 @@ public:
 				text->SetFontSize(40);
 				text->SetText(data[i].c_str());
 				text->SetSize(200, 50);
-				widget->SetPosition(0, 0);
+				widget->SetPosition(100, 200);
 				m_CacheChilds.push_back(widget);
 			}
 		}

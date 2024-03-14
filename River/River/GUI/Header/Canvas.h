@@ -8,6 +8,11 @@ public:
 
 	~Canvas();
 
+	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
+
+	void SetBackgroundColor(uint8 color[4]);
+
+
 public:
 	static const String& GetWidgetTypeName()
 	{
@@ -16,5 +21,5 @@ public:
 	}
 
 private:
-
+	uint8 m_BackgroundColor[4];
 };

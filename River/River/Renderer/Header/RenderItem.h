@@ -37,6 +37,12 @@ struct RenderItem
 
 struct UIRenderItem
 {
+	enum class RenderFlag : uint32
+	{
+		None,
+		PointColor = 1 << 0,
+	};
+
 	Matrix4x4 World;
 
 	int IndexCount;
@@ -45,10 +51,11 @@ struct UIRenderItem
 	int ObjCBIndex;
 	class Material* Material;
 	class Texture* RenderTexture;
+	uint32 RenderFlag;	//2的倍数  0 : 无   1 : 使用点的颜色
 
 	UIRenderItem()
 		: IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), ObjCBIndex(-1),
-		World(Matrix4x4::UnitMatrix()), Material(nullptr), RenderTexture(nullptr)
+		World(Matrix4x4::UnitMatrix()), Material(nullptr), RenderTexture(nullptr), RenderFlag(0)
 	{
 	}
 };

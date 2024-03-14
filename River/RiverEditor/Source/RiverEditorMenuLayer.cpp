@@ -10,6 +10,7 @@
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Text.h"
+#include "GUI/Header/Canvas.h"
 #include "GUI/Header/ListWidget.h"
 #include "GUI/Header/UIWindow.h"
 
@@ -30,9 +31,13 @@ void RiverEditorMenuLayer::OnAttach()
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(true);
 	auto panel = DynamicCast<Panel>(DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
-	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
+	auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
 	list->SetChildWidgetType("Text");
-	list->SetListData<String>({ String("abcdcecefqafe"), String("abcdacece 商"), String("abcdcacec 周") });*/
+	list->SetListData<String>({ String(u8"夏"), String(u8"商"), String(u8"周") });
+
+	auto canvas = DynamicCast<Canvas>(panel->GetChildWidgetByName("MainCanvas"));
+	uint8 color[4] = { 0, 255, 255, 255 };
+	canvas->SetBackgroundColor(color);
 
 	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }

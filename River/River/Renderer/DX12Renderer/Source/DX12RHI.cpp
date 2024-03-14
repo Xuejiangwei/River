@@ -315,11 +315,13 @@ void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices)
 	int index = (int)m_RenderItemAllocator.m_Containor.size();
 	for (size_t i = 0; i < m_UIRenderItemAllocator.m_Containor.size(); i++)
 	{
+		auto& uiRenderItem = m_UIRenderItemAllocator.m_Containor[i];
 		m_UIRenderItemAllocator.m_Containor[i].ObjCBIndex = index++;
-		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&m_UIRenderItemAllocator.m_Containor[i].World));
+		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&uiRenderItem.World));
 
 		ObjectUniform objConstants;
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+		objConstants.ObjPad0 = uiRenderItem.RenderFlag;
 
 		currObjectCB->CopyData(m_UIRenderItemAllocator.m_Containor[i].ObjCBIndex, objConstants);
 	}
@@ -517,12 +519,12 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			}
 			else
 			{
-				auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
+				/*auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
 				m_Device->CopyDescriptorsSimple(1, dynamicHandle,
 					{ shadowMapTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
-				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;*/
 			}
 
 			commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
@@ -593,8 +595,20 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
 	}
-	else
+	else if(frameBufferType == FrameBufferType::Color)
 	{
+		//Shadow map
+		int shadowMapOffset = 0;
+		bool hasSetShadowMap = false;
+		{
+			auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
+			m_Device->CopyDescriptorsSimple(1, dynamicHandle,
+				{ shadowMapTexture->GetTextureHandle() }, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+			dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+			shadowMapOffset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
+		}
+
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
@@ -650,10 +664,14 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				commandList->SetPipelineState(shader->GetPipelineState());
 			}
 
+			if (!hasSetShadowMap)
 			{
-				//设置ShadowMapTexture，因为shader中为第二个寄存器，所以往前偏移一个Texture。
+				hasSetShadowMap = true;
+
+				/*设置ShadowMapTexture，因为shader中为第二个寄存器，所以往前偏移一个Texture，可能shadowOffset之前没有设置过texture, 所以为0，但还是因该偏移1位，因为shadowMap的寄存器是第二位，
+				 但是减一后为-1，此时应该会报错，之后要注意并修改 */
 				CD3DX12_GPU_DESCRIPTOR_HANDLE shadowDescriptor(dynamicHeaps->GetGpuHeapStart());
-				shadowDescriptor.Offset(11, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+				shadowDescriptor.Offset(shadowMapOffset - 1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 				commandList->SetGraphicsRootDescriptorTable(4, shadowDescriptor);
 			}
 
