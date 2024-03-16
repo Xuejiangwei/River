@@ -1,0 +1,20 @@
+0
+GlobalDataTable
+0
+StringTable
+1
+7 游戏结束！\n
+ClassTable
+0
+FunctionTable
+1
+Function 测试函数 7
+FunctionStart 7
+
+Block Entry
+PUSH 常字符串指针 1 2 14 4 0
+PUSH RetAddress 0 9 7
+CALL 打印 22 1 8 标准流
+
+FunctionEnd 9
+

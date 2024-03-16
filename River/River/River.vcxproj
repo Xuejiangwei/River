@@ -70,6 +70,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;RIVER_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Renderer\Header;$(ProjectDir)Window\Header;$(ProjectDir);$(ProjectDir)Header;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Renderer\Header;$(ProjectDir)Window\Header;$(ProjectDir);$(ProjectDir)Haze\include;$(ProjectDir)Header;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>RiverPch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -238,6 +242,18 @@
     <ClInclude Include="GUI\Header\ListWidget.h" />
     <ClInclude Include="GUI\Header\TreeWidget.h" />
     <ClInclude Include="GUI\Header\Canvas.h" />
+    <ClInclude Include="Haze\include\Haze.h" />
+    <ClInclude Include="Haze\include\HazeCompare.h" />
+    <ClInclude Include="Haze\include\HazeDebugDefine.h" />
+    <ClInclude Include="Haze\include\HazeDefine.h" />
+    <ClInclude Include="Haze\include\HazeHeader.h" />
+    <ClInclude Include="Haze\include\HazeInstruction.h" />
+    <ClInclude Include="Haze\include\HazeLibraryType.h" />
+    <ClInclude Include="Haze\include\HazeToken.h" />
+    <ClInclude Include="Haze\include\HazeUtility.h" />
+    <ClInclude Include="Haze\include\HazeValue.h" />
+    <ClInclude Include="Haze\include\HazeVariable.h" />
+    <ClInclude Include="Haze\include\HazeVM.h" />
     <ClInclude Include="Header\GameInstance.h" />
     <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />

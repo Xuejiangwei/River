@@ -12,6 +12,10 @@
 #include "Renderer/Header/RenderScene.h"
 #include "Physics/Header/PhyScene.h"
 
+#include "Haze/include/Haze.h"
+
+#pragma comment(lib, "Haze.lib")
+
 Application* Application::s_Instance = nullptr;
 
 Application::Application()
@@ -36,6 +40,8 @@ Application::Application()
 	m_RenderScene->Initialize();
 
 	AddLayer(MakeShare<UILayer>());
+
+	
 }
 
 Application::~Application()
@@ -45,6 +51,9 @@ Application::~Application()
 void Application::Run()
 {
 	m_Time.Reset();
+
+	const char* args[4] = { "-m", "F:\\GitHub\\River\\River\\HzCode\\HazeCode.hz", "-d", "debug1" };
+	auto hazeVm = HazeMain(4, const_cast<char**>(args));
 
 	while (m_Running)
 	{
@@ -62,6 +71,8 @@ void Application::Run()
 		}
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
+
+		//hazeVm->StartFunction(HAZE_TEXT("²âÊÔº¯Êý"));
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

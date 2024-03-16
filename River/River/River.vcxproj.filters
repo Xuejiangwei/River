@@ -611,6 +611,42 @@
     <ClInclude Include="GUI\Header\Canvas.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Haze\include\Haze.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeCompare.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeDebugDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeHeader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeInstruction.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeLibraryType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeToken.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeVariable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeVM.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeValue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
