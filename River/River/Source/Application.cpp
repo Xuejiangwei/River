@@ -72,7 +72,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		//hazeVm->StartFunction(HAZE_TEXT("²âÊÔº¯Êý"));
+		//hazeVm->CallFunction(HAZE_TEXT("²âÊÔº¯Êý"), 10, 3);
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);
