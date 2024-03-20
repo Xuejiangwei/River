@@ -23,7 +23,4 @@ public:
 	virtual bool OnEvent(const class Event& e) override;
 
 	virtual void OnRender() override;
-
-private:
-	LessRBTreeMap<int, Unique<UIWindow>> m_UIWindows;
 };

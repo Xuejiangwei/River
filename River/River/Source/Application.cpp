@@ -13,8 +13,7 @@
 #include "Physics/Header/PhyScene.h"
 
 #include "Haze/include/Haze.h"
-
-#pragma comment(lib, "Haze.lib")
+#include "HazeLib/Header/RiverUiLibrary.h"
 
 Application* Application::s_Instance = nullptr;
 
@@ -52,9 +51,9 @@ void Application::Run()
 {
 	m_Time.Reset();
 
+	RiverUiLibrary::TestAddCall(1, 2);
 	const char* args[4] = { "-m", "F:\\GitHub\\River\\River\\HzCode\\HazeCode.hz", "-d", "debug1" };
 	auto hazeVm = HazeMain(4, const_cast<char**>(args));
-
 	while (m_Running)
 	{
 		m_Time.Tick();
@@ -72,7 +71,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		//hazeVm->CallFunction(HAZE_TEXT("²âÊÔº¯Êý"), 10, 3);
+		hazeVm->CallFunction(HAZE_TEXT("²âÊÔº¯Êý"), 10, 3);
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)Haze\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -147,6 +147,7 @@
     <ClCompile Include="GUI\Source\GuiManager.cpp" />
     <ClCompile Include="GUI\Source\ListWidget.cpp" />
     <ClCompile Include="GUI\Source\TreeWidget.cpp" />
+    <ClCompile Include="HazeLib\Source\RiverUiLibrary.cpp" />
     <ClCompile Include="Input\Source\InputManager.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
@@ -242,13 +243,18 @@
     <ClInclude Include="GUI\Header\ListWidget.h" />
     <ClInclude Include="GUI\Header\TreeWidget.h" />
     <ClInclude Include="GUI\Header\Canvas.h" />
+    <ClInclude Include="HazeLib\Header\RiverUiLibrary.h" />
     <ClInclude Include="Haze\include\Haze.h" />
     <ClInclude Include="Haze\include\HazeCompare.h" />
     <ClInclude Include="Haze\include\HazeDebugDefine.h" />
     <ClInclude Include="Haze\include\HazeDefine.h" />
     <ClInclude Include="Haze\include\HazeHeader.h" />
     <ClInclude Include="Haze\include\HazeInstruction.h" />
+    <ClInclude Include="Haze\include\HazeLibraryDefine.h" />
     <ClInclude Include="Haze\include\HazeLibraryType.h" />
+    <ClInclude Include="Haze\include\HazeStack.h" />
+    <ClInclude Include="Haze\include\HazeStandardLibraryBase.h" />
+    <ClInclude Include="Haze\include\HazeStrcut.h" />
     <ClInclude Include="Haze\include\HazeToken.h" />
     <ClInclude Include="Haze\include\HazeUtility.h" />
     <ClInclude Include="Haze\include\HazeValue.h" />
@@ -354,6 +360,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DataStructure\Header\BVH_Tree.inl" />
+    <None Include="Haze\include\HazeTemplate.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

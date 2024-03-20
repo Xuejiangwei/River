@@ -285,6 +285,9 @@
     <ClCompile Include="GUI\Source\Canvas.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="HazeLib\Source\RiverUiLibrary.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -647,10 +650,28 @@
     <ClInclude Include="Haze\include\HazeValue.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="HazeLib\Header\RiverUiLibrary.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeStandardLibraryBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeStrcut.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeLibraryDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Haze\include\HazeStack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="DataStructure\Header\BVH_Tree.inl">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="Haze\include\HazeTemplate.inl">
       <Filter>头文件</Filter>
     </None>
   </ItemGroup>
