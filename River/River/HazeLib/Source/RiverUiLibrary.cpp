@@ -4,11 +4,13 @@
 #include "Haze/include/HazeVM.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
+#include "GUI/Header/GuiManager.h"
+
 static HashMap<HAZE_STRING, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =
 {
-		{ HAZE_TEXT("通过名字获得UI") , &RiverUiLibrary::GetUiByName },
-		{ HAZE_TEXT("设置文本"), &RiverUiLibrary::SetText },
-		{ HAZE_TEXT("测试加法"), &RiverUiLibrary::TestAdd },
+	{ HAZE_TEXT("通过名字获得UI") , &RiverUiLibrary::GetUiByName },
+	{ HAZE_TEXT("设置文本"), &RiverUiLibrary::SetText },
+	{ HAZE_TEXT("测试加法"), &RiverUiLibrary::TestAdd },
 };
 
 static bool Z_NoUse_RiverUiLibrary = HazeStandardLibraryBase::AddStdLib(HAZE_TEXT("RiverUiLibrary"), &s_HashMap_Functions);
@@ -20,13 +22,20 @@ void RiverUiLibrary::InitializeLib()
 
 void RiverUiLibrary::GetUiByName(HAZE_STD_CALL_PARAM)
 {
-	void* widget = nullptr;
-	SET_RET(widget, stack);
+	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
+	const HAZE_CHAR* a;
+
+	GET_PARAM_START();
+	GET_PARAM(a, address);
+
+	auto widget = GetUiByNameCall(a);
+	uint64 widgetPtr = (uint64)widget;
+	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
 }
 
-void RiverUiLibrary::GetUiByNameCall(const HAZE_CHAR* name)
+Widget* RiverUiLibrary::GetUiByNameCall(const HAZE_CHAR* name)
 {
-	
+	return GuiManager::Get()->GetUiByName(WString2String(name).c_str());
 }
 
 void RiverUiLibrary::SetText(HAZE_STD_CALL_PARAM)

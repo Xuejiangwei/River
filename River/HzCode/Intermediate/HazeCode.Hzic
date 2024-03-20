@@ -2,19 +2,45 @@
 GlobalDataTable
 0
 StringTable
-1
+3
+8 MainList
+14 游戏结束 %d  %f！\n
 10 游戏结束 %d！\n
 ClassTable
 0
 FunctionTable
-1
+2
+Function 每帧更新 0
+Param 时间 8
+Variable 时间$1 8 -8 4 6
+Variable 丙$2 9 0 8 8
+Variable 丁$3 14 7 8 8 9
+FunctionStart 7
+
+Block Entry
+MOV Temp_R1 1 7 8 时间$1 2 0 8
+MUL Temp_R1 1 7 8 1000 1 1 7
+MOV 丙$2 2 0 9 Temp_R1 1 7 8
+PUSH 常字符串指针 1 2 14 4 0
+PUSH RetAddress 0 9 7
+CALL 通过名字获得UI 22 1 8 UI管理
+MOV 丁$3 2 0 14 7 Ret_R 1 4 14 0
+PUSH 时间$1 2 0 8
+PUSH 丙$2 2 0 9
+PUSH 常字符串指针 1 2 14 4 1
+PUSH RetAddress 0 9 7
+CALL 打印 22 3 20 标准流
+RET Void 0 0 0
+
+FunctionEnd 11
+
 Function 测试函数 7
 Param 甲 7
 Param 乙 7
-Variable 甲$2 7 -8 4 6
-Variable 乙$1 7 -12 4 6
-Variable 丙$3 7 0 4 8
-FunctionStart 7
+Variable 甲$2 7 -8 4 13
+Variable 乙$1 7 -12 4 13
+Variable 丙$3 7 0 4 15
+FunctionStart 14
 
 Block Entry
 PUSH 乙$1 2 0 7
@@ -23,9 +49,9 @@ PUSH RetAddress 0 9 7
 CALL 测试加法 22 2 8 UI管理
 MOV 丙$3 2 0 7 Ret_R 1 4 7
 PUSH 丙$3 2 0 7
-PUSH 常字符串指针 1 2 14 4 0
+PUSH 常字符串指针 1 2 14 4 2
 PUSH RetAddress 0 9 7
 CALL 打印 22 2 12 标准流
 
-FunctionEnd 10
+FunctionEnd 17
 

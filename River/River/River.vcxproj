@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)Haze\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -219,6 +219,7 @@
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\GameInstance.cpp" />
     <ClCompile Include="Source\Layer.cpp" />
+    <ClCompile Include="Source\RiverMainUiLayer.cpp" />
     <ClCompile Include="Source\River.cpp" />
     <ClCompile Include="Source\RiverPch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -261,6 +262,7 @@
     <ClInclude Include="Haze\include\HazeVariable.h" />
     <ClInclude Include="Haze\include\HazeVM.h" />
     <ClInclude Include="Header\GameInstance.h" />
+    <ClInclude Include="Header\RiverMainUiLayer.h" />
     <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />
     <ClInclude Include="Level\Header\World.h" />

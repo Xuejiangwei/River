@@ -43,3 +43,8 @@ bool UILayer::OnEvent(const Event& e)
 	}
 	return false;
 }
+
+Widget* UILayer::GetUiByName(const char* name)
+{
+	return nullptr;
+}

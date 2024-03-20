@@ -288,6 +288,9 @@
     <ClCompile Include="HazeLib\Source\RiverUiLibrary.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Source\RiverMainUiLayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -663,6 +666,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Haze\include\HazeStack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\RiverMainUiLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

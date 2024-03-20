@@ -6,7 +6,16 @@ StringTable
 ClassTable
 0
 FunctionTable
-1
+2
+Function 通过名字获得UI 14 0
+Param ui名字 14 4
+Variable ui名字$1 14 4 -12 8 6
+FunctionStart 0
+
+Block Entry
+
+FunctionEnd 0
+
 Function 测试加法 7
 Param 甲 7
 Param 乙 7

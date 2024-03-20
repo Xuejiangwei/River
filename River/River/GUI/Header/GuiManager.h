@@ -1,6 +1,8 @@
 #pragma once
 #include "RiverHead.h"
 
+class Widget;
+
 class GuiManager
 {
 public:
@@ -8,6 +10,7 @@ public:
 
 	~GuiManager();
 
+	Widget* GetUiByName(const char* name);
 
 public:
 	static GuiManager* Get()

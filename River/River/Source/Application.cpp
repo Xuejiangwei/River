@@ -3,7 +3,7 @@
 #include "GameInstance.h"
 #include "Layer.h"
 #include "Window.h"
-#include "UILayer.h"
+#include "RiverMainUiLayer.h"
 
 #include "RHI.h"
 #include "Camera.h"
@@ -14,6 +14,7 @@
 
 #include "Haze/include/Haze.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
+#include <cstdarg>
 
 Application* Application::s_Instance = nullptr;
 
@@ -38,9 +39,12 @@ Application::Application()
 	RHI::Get()->Initialize(rhiParam);
 	m_RenderScene->Initialize();
 
-	AddLayer(MakeShare<UILayer>());
-
+	m_MainUiLayer = MakeShare<RiverMainUiLayer>();
+	AddLayer(m_MainUiLayer);
 	
+	const char* args[4] = { "-m", "F:\\GitHub\\River\\River\\HzCode\\HazeCode.hz", "-d", "debug1" };
+	m_HazeVM = HazeMain(4, const_cast<char**>(args));
+	RiverUiLibrary::InitializeLib();
 }
 
 Application::~Application()
@@ -51,9 +55,6 @@ void Application::Run()
 {
 	m_Time.Reset();
 
-	RiverUiLibrary::TestAddCall(1, 2);
-	const char* args[4] = { "-m", "F:\\GitHub\\River\\River\\HzCode\\HazeCode.hz", "-d", "debug1" };
-	auto hazeVm = HazeMain(4, const_cast<char**>(args));
 	while (m_Running)
 	{
 		m_Time.Tick();
@@ -71,7 +72,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		hazeVm->CallFunction(HAZE_TEXT("测试函数"), 10, 3);
+		m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), 5.5f);
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

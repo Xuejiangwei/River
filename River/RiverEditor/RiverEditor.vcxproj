@@ -109,7 +109,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\River.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;$(SolutionDir)River\Haze\lib\Haze.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\River.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;$(SolutionDir)..\..\Haze\Haze\x64\Debug\Haze.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

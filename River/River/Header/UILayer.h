@@ -5,6 +5,7 @@
 #include "Renderer/Mesh/Header/Mesh.h"
 
 class UIWindow;
+class Widget;
 
 class UILayer : public Layer
 {
@@ -24,6 +25,8 @@ public:
 	virtual bool OnEvent(const class Event& e) override;
 
 	virtual bool IsUILayer() const { return true; }
+
+	Widget* GetUiByName(const char* name);
 
 protected:
 	GreaterRBTreeMap<int, Unique<UIWindow>> m_UIWindows;

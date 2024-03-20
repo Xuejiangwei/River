@@ -2,10 +2,13 @@
 
 class InputManager;
 class Layer;
+class UILayer;
 class Window;
 class RenderScene;
 class PhyScene;
 class GameInstance;
+
+class HazeVM;
 
 #include "Event.h"
 #include "RiverTime.h"
@@ -33,6 +36,8 @@ public:
 
 	const Unique<Window>& GetWindow() const { return m_Window; }
 
+	UILayer* GetMainUiLayer() { return m_MainUiLayer.get(); }
+
 	InputManager* GetInputManager() const { return m_InputManager.get(); }
 
 	GameInstance* GetGameInstance() const { return m_CurrentGameInstance.get(); }
@@ -50,7 +55,10 @@ protected:
 	Unique<PhyScene> m_PhyScene;
 	Unique<Window> m_Window;
 	Unique<GameInstance> m_CurrentGameInstance;
+	Share<UILayer> m_MainUiLayer;
 	V_Array<Share<Layer>> m_Layers;
+
+	HazeVM* m_HazeVM;
 
 	static Application* s_Instance;
 };
