@@ -11,7 +11,7 @@ GuiManager::~GuiManager()
 {
 }
 
-Widget* GuiManager::GetUiByName(const char* name)
+Widget* GuiManager::GetUiWidgetByName(const char* panelName, const char* widgetName)
 {
-	return Application::Get()->GetMainUiLayer()->GetUiByName(name);
+	return Application::Get()->GetMainUiLayer()->GetUiByName(panelName, widgetName);
 }

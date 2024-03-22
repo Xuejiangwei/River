@@ -8,45 +8,11 @@
         "ChildWidgets" : [
             {
                 "Type" : "Text",
-                "Name" : "Text1",
-                "Size" : [200, 50],
-                "Position" : [0, 0],
-                "FontSize" : 40,
-                "Text" : "abcde 哈哈哈"
-            },
-            {
-                "Type" : "Text",
                 "Name" : "Text2",
                 "Size" : [200, 50],
                 "Position" : [100, 100],
                 "FontSize" : 40,
                 "Text" : "4562 科夫斯克"
-            },
-            {
-                "Type" : "Image",
-                "Name" : "ImgDepth",
-                "Size" : [240, 240],
-                "Position" : [400, 400],
-                "Texture" : "F:\\GitHub\\River\\River\\Textures\\checkboard.dds"
-            },
-            {
-                "Type" : "Button",
-                "Name" : "BtnTest",
-                "Size" : [100, 100],
-                "Position" : [100, 100],
-                "Texture" : "F:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
-            },
-            {
-                "Type" : "Canvas",
-                "Name" : "MainCanvas",
-                "Size" : [100, 100],
-                "Position" : [520, 0]
-            },
-            {
-                "Type" : "ListWidget",
-                "Name" : "MainList",
-                "Size" : [200, 300],
-                "Position" : [100, 200]
             }
         ]
     }

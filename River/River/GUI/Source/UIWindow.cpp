@@ -57,6 +57,27 @@ void UIWindow::AddPanel(int orderLevel, Share<Panel>& panel)
 	m_Panels[orderLevel].push_back(River::Move(panel));
 }
 
+Widget* UIWindow::GetWidgetByPanel(const char* panelName, const char* widgetName)
+{
+	if (m_RootPanel->GetWidgetName() == panelName)
+	{
+		return m_RootPanel->GetChildWidgetByName(widgetName).get();
+	}
+
+	for (auto& panels : m_Panels)
+	{
+		for (auto& panel : panels.second)
+		{
+			if (panel->GetWidgetName() == panelName) 
+			{
+				return panel->GetChildWidgetByName(widgetName).get();
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 bool UIWindow::OnMouseButtonDown(const Event& e)
 {
 	for (auto& it : m_Panels)

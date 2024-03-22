@@ -26,7 +26,7 @@ public:
 
 	virtual bool IsUILayer() const { return true; }
 
-	Widget* GetUiByName(const char* name);
+	Widget* GetUiByName(const char* panelName, const char* widgetName);
 
 protected:
 	GreaterRBTreeMap<int, Unique<UIWindow>> m_UIWindows;

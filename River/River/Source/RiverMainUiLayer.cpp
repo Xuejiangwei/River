@@ -33,13 +33,13 @@ void RiverMainUiLayer::OnAttach()
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(true);
 	auto panel = DynamicCast<Panel>(DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
-	auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
+	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
 	list->SetChildWidgetType("Text");
 	list->SetListData<String>({ String(u8"од"), String(u8"ил"), String(u8"жэ") });
 
 	auto canvas = DynamicCast<Canvas>(panel->GetChildWidgetByName("MainCanvas"));
 	uint8 color[4] = { 0, 255, 255, 255 };
-	canvas->SetBackgroundColor(color);
+	canvas->SetBackgroundColor(color);*/
 
 	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }

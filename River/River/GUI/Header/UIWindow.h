@@ -3,6 +3,7 @@
 #include "RiverHead.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 
+class Widget;
 class Panel;
 
 class UIWindow
@@ -21,6 +22,8 @@ public:
 	void AddPanel(int orderLevel, Share<Panel>& panel);
 
 	Panel* GetRootPanel() const { return m_RootPanel.get(); }
+
+	Widget* GetWidgetByPanel(const char* panelName, const char* widgetName);
 
 private:
 	bool OnMouseButtonDown(const class Event& e);

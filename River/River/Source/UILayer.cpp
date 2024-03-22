@@ -44,7 +44,17 @@ bool UILayer::OnEvent(const Event& e)
 	return false;
 }
 
-Widget* UILayer::GetUiByName(const char* name)
+Widget* UILayer::GetUiByName(const char* panelName, const char* widgetName)
 {
-	return nullptr;
+	Widget* widget = nullptr;
+	for (auto& it : m_UIWindows)
+	{
+		widget = it.second->GetWidgetByPanel(panelName, widgetName);
+		if (widget)
+		{
+			break;
+		}
+	}
+
+	return widget;
 }

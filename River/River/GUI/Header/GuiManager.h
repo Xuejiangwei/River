@@ -10,7 +10,7 @@ public:
 
 	~GuiManager();
 
-	Widget* GetUiByName(const char* name);
+	Widget* GetUiWidgetByName(const char* panelName, const char* widgetName);
 
 public:
 	static GuiManager* Get()

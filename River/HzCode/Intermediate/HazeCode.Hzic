@@ -2,8 +2,11 @@
 GlobalDataTable
 0
 StringTable
-3
-8 MainList
+6
+5 Text2
+4 Root
+3 夏商周
+6 op op!
 14 游戏结束 %d  %f！\n
 10 游戏结束 %d！\n
 ClassTable
@@ -19,28 +22,48 @@ FunctionStart 7
 
 Block Entry
 MOV Temp_R1 1 7 8 时间$1 2 0 8
-MUL Temp_R1 1 7 8 1000 1 1 7
-MOV 丙$2 2 0 9 Temp_R1 1 7 8
+MUL Temp_R1 1 7 8 1000 1 1 8
+CVT Temp_R0 1 7 9 Temp_R1 1 7 8
+MOV 丙$2 2 0 9 Temp_R0 1 7 9
 PUSH 常字符串指针 1 2 14 4 0
+PUSH 常字符串指针 1 2 14 4 1
 PUSH RetAddress 0 9 7
-CALL 通过名字获得UI 22 1 8 UI管理
+CALL 通过名字获得UI 22 2 16 UI管理
 MOV 丁$3 2 0 14 7 Ret_R 1 4 14 0
+CMP 丙$2 2 0 9 1 1 1 7
+JG IfThenBlock1 ElseBlock2
+
+Block IfThenBlock1
+PUSH 常字符串指针 1 2 14 4 2
+PUSH 丁$3 2 0 14 7
+PUSH RetAddress 0 9 7
+CALL 设置控件文本 22 2 16 UI管理
+JMP DefaultBlock3
+
+Block ElseBlock2
+PUSH 常字符串指针 1 2 14 4 3
+PUSH 丁$3 2 0 14 7
+PUSH RetAddress 0 9 7
+CALL 设置控件文本 22 2 16 UI管理
+JMP DefaultBlock3
+
+Block DefaultBlock3
 PUSH 时间$1 2 0 8
 PUSH 丙$2 2 0 9
-PUSH 常字符串指针 1 2 14 4 1
+PUSH 常字符串指针 1 2 14 4 4
 PUSH RetAddress 0 9 7
 CALL 打印 22 3 20 标准流
 RET Void 0 0 0
 
-FunctionEnd 11
+FunctionEnd 19
 
 Function 测试函数 7
 Param 甲 7
 Param 乙 7
-Variable 甲$2 7 -8 4 13
-Variable 乙$1 7 -12 4 13
-Variable 丙$3 7 0 4 15
-FunctionStart 14
+Variable 甲$2 7 -8 4 21
+Variable 乙$1 7 -12 4 21
+Variable 丙$3 7 0 4 23
+FunctionStart 22
 
 Block Entry
 PUSH 乙$1 2 0 7
@@ -49,9 +72,9 @@ PUSH RetAddress 0 9 7
 CALL 测试加法 22 2 8 UI管理
 MOV 丙$3 2 0 7 Ret_R 1 4 7
 PUSH 丙$3 2 0 7
-PUSH 常字符串指针 1 2 14 4 2
+PUSH 常字符串指针 1 2 14 4 5
 PUSH RetAddress 0 9 7
 CALL 打印 22 2 12 标准流
 
-FunctionEnd 17
+FunctionEnd 25
 

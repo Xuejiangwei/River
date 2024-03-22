@@ -10,9 +10,9 @@ class RiverUiLibrary/* : public HazeStandardLibraryBase*/
 public:
 	HAZE_INIT_STANDARD_LIB();
 
-	HAZE_STD_LIB_FUNCTION(Widget*, GetUiByName, const HAZE_CHAR* name);
+	HAZE_STD_LIB_FUNCTION(Widget*, GetUiByName, const HAZE_STRING* panelName, const HAZE_STRING* widgetName);
 
-	HAZE_STD_LIB_FUNCTION(void, SetText, void* widget, const HAZE_CHAR* name);
+	HAZE_STD_LIB_FUNCTION(void, SetText, void* widget, const HAZE_STRING* text);
 
 	HAZE_STD_LIB_FUNCTION(int, TestAdd, int a, int b);
 };

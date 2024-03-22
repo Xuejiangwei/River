@@ -124,7 +124,7 @@ void StringToHazeValueNumber(const HAZE_STRING& str, HazeValueType type, HazeVal
 
 void OperatorValueByType(HazeValueType type, InstructionOpCode typeCode, const void* target);
 
-void CalculateValueByType(HazeValueType type, InstructionOpCode typeCode, const void* source, const void* target);
+void CalculateValueByType(HazeValueType type1, HazeValueType type2, InstructionOpCode typeCode, const void* source, const void* target);
 
 void CompareValueByType(HazeValueType type, struct HazeRegister* hazeRegister, const void* source, const void* target);
 
