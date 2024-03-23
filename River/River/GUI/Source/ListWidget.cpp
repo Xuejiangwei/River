@@ -2,7 +2,7 @@
 #include "GUI/Header/ListWidget.h"
 
 ListWidget::ListWidget()
-	: m_ChildNum(0), m_FrontIndex(0), m_BackIndex(0)
+	: m_ChildNum(0), m_FrontIndex(0), m_BackIndex(0), m_IsDefaultChildWidgetType(true)
 {
 	m_CacheChilds.clear();
 }
@@ -24,4 +24,5 @@ void ListWidget::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indice
 void ListWidget::SetChildWidgetType(const char* type)
 {
 	m_ChildWidgetType = type;
+	m_IsDefaultChildWidgetType = m_ChildWidgetType.find(".json") == std::string::npos;
 }

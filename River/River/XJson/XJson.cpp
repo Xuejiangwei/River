@@ -770,6 +770,12 @@ const char* XJson::NodeDataString()
 	return nullptr;
 }
 
+const std::string& XJson::NodeDataStringRef()
+{
+	const char* data = NodeDataString();
+	return m_NodeData->m_Content;
+}
+
 const char* XJson::KeyNodeName()
 {
 	if (m_KeyNameNode)

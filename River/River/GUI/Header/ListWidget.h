@@ -27,14 +27,14 @@ public:
 			}
 			else
 			{
-				widget = CreateWidgetByTypeName(m_ChildWidgetType.c_str());
+				/*widget = GuiManager::CreateWidgetByTypeName(m_ChildWidgetType.c_str());
 				auto text = DynamicCast<Text>(widget);
 				text->SetFont(AssetManager::Get()->GetTexture("font"));
 				text->SetFontSize(40);
 				text->SetText(data[i].c_str());
 				text->SetSize(200, 50);
 				widget->SetPosition(100, 200);
-				m_CacheChilds.push_back(widget);
+				m_CacheChilds.push_back(widget);*/
 			}
 		}
 	}
@@ -55,5 +55,6 @@ protected:
 	uint8 m_FrontIndex;
 	uint8 m_BackIndex;
 
+	bool m_IsDefaultChildWidgetType;
 	String m_ChildWidgetType;
 };

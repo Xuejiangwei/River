@@ -175,6 +175,8 @@ public:
 	
 	const char* NodeDataString();
 
+	const std::string& NodeDataStringRef();
+
 	const char* KeyNodeName();
 	
 	const char* Data();

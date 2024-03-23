@@ -5,7 +5,6 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
-#include "GUI/Header/GuiDecode.h"
 #include "GUI/Header/Panel.h"
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"

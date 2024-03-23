@@ -143,7 +143,6 @@
     <ClCompile Include="Component\Source\RigidComponent.cpp" />
     <ClCompile Include="Component\Source\SkyBoxComponent.cpp" />
     <ClCompile Include="GUI\Source\Canvas.cpp" />
-    <ClCompile Include="GUI\Source\GuiDecode.cpp" />
     <ClCompile Include="GUI\Source\GuiManager.cpp" />
     <ClCompile Include="GUI\Source\ListWidget.cpp" />
     <ClCompile Include="GUI\Source\TreeWidget.cpp" />
@@ -239,7 +238,6 @@
     <ClInclude Include="Component\Header\RigidComponent.h" />
     <ClInclude Include="Component\Header\SkyBoxComponent.h" />
     <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
-    <ClInclude Include="GUI\Header\GuiDecode.h" />
     <ClInclude Include="GUI\Header\GuiManager.h" />
     <ClInclude Include="GUI\Header\ListWidget.h" />
     <ClInclude Include="GUI\Header\TreeWidget.h" />

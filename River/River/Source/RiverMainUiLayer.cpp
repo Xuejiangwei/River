@@ -6,8 +6,7 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
-#include "GUI/Header/GuiDecode.h"
-#include "GUI/Header/GuiDecode.h"
+#include "GUI/Header/GuiManager.h"
 #include "GUI/Header/Panel.h"
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"
@@ -32,7 +31,7 @@ void RiverMainUiLayer::OnAttach()
 {
 	//initialize
 	RHI::Get()->SetShowUIDebugOutline(true);
-	auto panel = DynamicCast<Panel>(DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
+	auto panel = DynamicCast<Panel>(GuiManager::DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
 	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
 	list->SetChildWidgetType("Text");
 	list->SetListData<String>({ String(u8"од"), String(u8"ил"), String(u8"жэ") });
