@@ -54,6 +54,8 @@ void Application::Run()
 {
 	m_Time.Reset();
 
+	m_HazeVM->CallFunction(HAZE_TEXT("Ìí¼ÓUi"));
+
 	while (m_Running)
 	{
 		m_Time.Tick();

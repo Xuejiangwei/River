@@ -1,6 +1,7 @@
 #include "RiverPch.h"
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Renderer/Mesh/Header/SkeletalMesh.h"
 
 Unique<AssetManager> AssetManager::s_AssetManager = MakeUnique<AssetManager>();
 
@@ -34,6 +35,24 @@ StaticMesh* AssetManager::GetStaticMesh(const char* name)
 {
 	auto iter = m_CacheStaticMeshes.find(name);
 	if (iter != m_CacheStaticMeshes.end())
+	{
+		return iter->second.get();
+	}
+
+	return nullptr;
+}
+
+SkeletalMesh* AssetManager::AddSkeletalMesh(Unique<SkeletalMesh>& mesh)
+{
+	auto meshPtr = mesh.get();
+	m_CacheSkeletalMeshes[mesh->GetName()] = std::move(mesh);
+	return meshPtr;
+}
+
+SkeletalMesh* AssetManager::GetSkeletalMesh(const char* name)
+{
+	auto iter = m_CacheSkeletalMeshes.find(name);
+	if (iter != m_CacheSkeletalMeshes.end())
 	{
 		return iter->second.get();
 	}

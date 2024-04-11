@@ -51,6 +51,12 @@ struct ShaderLayout
 	ShaderLayotClassification Classification;
 };
 
+struct ShaderDefine
+{
+	const char* Name;
+	const char* Definition;
+};
+
 struct ShaderParam
 {
 	CullMode Cull;
@@ -72,7 +78,8 @@ public:
 	int GetShaderId() const { return m_ShaderId; }
 
 public:
-	static Shader* CreateShader(const char* name, const char* path, ShaderParam* param = nullptr);
+	static Shader* CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+		ShaderParam* param = nullptr);
 
 private:
 	int m_ShaderId;

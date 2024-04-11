@@ -901,6 +901,11 @@ double XJson::StringToDouble()
 	return dval;
 }
 
+float XJson::StringToFloat()
+{
+	return (float)StringToDouble();
+}
+
 int XJson::StringToInt32()
 {
 	int ret = atoi(Data());

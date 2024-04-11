@@ -42,6 +42,7 @@ enum class RenderLayer
 };
 
 class StaticMesh;
+class SkeletalMesh;
 class Texture;
 class Material;
 class FontAtlas;
@@ -73,6 +74,8 @@ public:
 
 	virtual void SetUpStaticMesh(StaticMesh* mesh) = 0;
 
+	virtual void SetUpSkeletalMesh(SkeletalMesh* skeletalMesh) = 0;
+
 	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) = 0;
 
 	//virtual Unique<VertexBuffer> CreateVertexBuffer(float* vertices, uint32_t size, uint32_t elementSize, const VertexBufferLayout& layout) = 0;
@@ -89,7 +92,8 @@ public:
 
 	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) = 0;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path, ShaderParam* param = nullptr) = 0;
+	virtual Unique<Shader> CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+		ShaderParam* param = nullptr) = 0;
 
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) = 0;
 

@@ -117,6 +117,8 @@ public:
 
 	const V_Array<uint32>& GetSkeletalIndices() const { return m_SkeletalMeshData->Indices; }
 
+	const Unique<SkeletalMeshData>& GetSkeletalMeshData() const { return m_SkeletalMeshData; }
+
 protected:
 	String m_Name;
 	String m_Path;

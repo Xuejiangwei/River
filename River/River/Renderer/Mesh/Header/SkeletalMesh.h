@@ -8,7 +8,4 @@ public:
 	SkeletalMesh(String&& name, String&& path);
 
 	virtual ~SkeletalMesh() override;
-
-private:
-	String m_Path;
 };

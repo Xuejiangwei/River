@@ -4,6 +4,7 @@
 #include "Renderer/Header/Material.h"
 #include "Renderer/Header/Texture.h"
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
+#include "Renderer/Header/AssetManager.h"
 
 #include <fstream>
 
@@ -67,9 +68,13 @@ void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& 
 	std::string normalMapName;
 
 	fin >> ignore; // materials header text
+
+	auto shader = AssetManager::Get()->GetShader("skeletalOpaque");
 	for (uint32 i = 0; i < numMaterials; ++i)
 	{
-		fin >> ignore >> mats[i]->m_Name;
+		fin >> ignore >> ignore;
+		mats[i] = Material::CreateMaterial(ignore.c_str(), "");
+		mats[i]->m_Shader = shader;
 		fin >> ignore >> mats[i]->DiffuseAlbedo.x >> mats[i]->DiffuseAlbedo.y >> mats[i]->DiffuseAlbedo.z;
 		fin >> ignore >> mats[i]->FresnelR0.x >> mats[i]->FresnelR0.y >> mats[i]->FresnelR0.z;
 		fin >> ignore >> mats[i]->Roughness;

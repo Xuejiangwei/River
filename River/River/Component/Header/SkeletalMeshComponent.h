@@ -20,7 +20,7 @@ public:
 
 	void SetSkeletalMeshMaterials(V_Array<Material*> materials) { m_Materials = materials; }
 
-	const V_Array<class Material*>& GetSkeletalMeshMaterials() const { return m_Materials; }
+	const V_Array<class Material*>& GetSkeletalMeshMaterials() const;
 
 	MaterialBlendMode GetMaterialMode() const;
 

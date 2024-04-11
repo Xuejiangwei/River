@@ -6,6 +6,7 @@
 
 class Mesh;
 class StaticMesh;
+class SkeletalMesh;
 
 class AssetManager
 {
@@ -13,7 +14,7 @@ class AssetManager
 	friend Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool isImmediately);
 	friend Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data);
 	friend Texture* Texture::CreateTexture(const char* name, int width, int height);
-	friend Shader* Shader::CreateShader(const char* name, const char* path, ShaderParam* param);
+	friend Shader* Shader::CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam* param);
 	friend Material* Material::CreateMaterial(const char* name, const char* shaderName);
 public:
 	AssetManager();
@@ -27,6 +28,10 @@ public:
 	StaticMesh* AddStaticMesh(Unique<StaticMesh>& mesh);
 
 	StaticMesh* GetStaticMesh(const char* name);
+
+	SkeletalMesh* AddSkeletalMesh(Unique<SkeletalMesh>& mesh);
+
+	SkeletalMesh* GetSkeletalMesh(const char* name);
 
 	//Texture
 	Texture* GetTexture(const char* name);
@@ -54,6 +59,7 @@ private:
 
 	HashMap<String, Unique<Mesh>> m_CacheMeshes;
 	HashMap<String, Unique<StaticMesh>> m_CacheStaticMeshes;
+	HashMap<String, Unique<SkeletalMesh>> m_CacheSkeletalMeshes;
 	HashMap<String, Unique<Texture>> m_CacheTextures;
 	HashMap<String, Unique<Shader>> m_CacheShaders;
 };

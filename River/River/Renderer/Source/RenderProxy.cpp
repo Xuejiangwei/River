@@ -4,10 +4,12 @@
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Header/RenderItem.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Renderer/Mesh/Header/SkeletalMesh.h"
 #include "Renderer/Header/Material.h"
 #include "Object/Header/Object.h"
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/StaticMeshComponent.h"
+#include "Component/Header/SkeletalMeshComponent.h"
 #include "Application.h"
 #include "Math/Header/Geometric.h"
 
@@ -55,11 +57,32 @@ void RenderProxy::GetRenderData(RenderItem* renderItem)
 		renderItem->TexTransform = Matrix4x4_Scaling(8, 8, 1);
 		m_RenderItemId = renderItem->ObjCBIndex;
 	}
+	else
+	{
+		auto skmComp = m_RenderObject->GetComponent<SkeletalMeshComponent>();
+		if (skmComp)
+		{
+			renderItem->NumFramesDirty = RHI::GetFrameCount();
+			renderItem->World = m_RenderObject->GetTransform();
+			renderItem->BaseVertexLocation = 0;
+			renderItem->IndexCount = (int)skmComp->GetSkeletalMesh()->GetSkeletalIndices().size();
+			renderItem->StartIndexLocation = 0;
+			if (skmComp->GetSkeletalMeshMaterials().size() > 0)
+			{
+				renderItem->Material = skmComp->GetSkeletalMeshMaterials()[0];
+			}
+
+			auto buffer = RHI::Get()->GetStaticMeshBuffer(skmComp->GetSkeletalMesh()->GetName().c_str());
+			renderItem->VertexBuffer = buffer.first;
+			renderItem->IndexBuffer = buffer.second;
+			m_RenderItemId = renderItem->ObjCBIndex;
+		}
+	}
 }
 
 bool RenderProxy::HasRenderData() const
 {
-	return m_RenderObject->GetComponent<StaticMeshComponent>();
+	return m_RenderObject->GetComponent<StaticMeshComponent>() || m_RenderObject->GetComponent<SkeletalMeshComponent>();
 }
 
 MaterialBlendMode RenderProxy::GetRenderBlendMode() const
@@ -68,6 +91,14 @@ MaterialBlendMode RenderProxy::GetRenderBlendMode() const
 	if (meshComp)
 	{
 		return meshComp->GetMaterialMode();
+	}
+	else
+	{
+		auto skmComp = m_RenderObject->GetComponent<SkeletalMeshComponent>();
+		if (skmComp)
+		{
+			return skmComp->GetMaterialMode();
+		}
 	}
 
 	return MaterialBlendMode::Opaque;

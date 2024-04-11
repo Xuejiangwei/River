@@ -26,13 +26,11 @@
 
 #include "Renderer/Header/GeometryGenerator.h"
 #include "Renderer/Header/Material.h"
+#include "Renderer/Mesh/Header/SkeletalMesh.h"
 
 #include "DirectXMath.h"
 #include "DirectXCollision.h"
 #include <d3dcompiler.h>
-#include <iostream>
-#include <chrono>
-#include <fstream>
 
 #if defined(DEBUG) || defined(_DEBUG)
 	#define _CRTDBG_MAP_ALLOC
@@ -101,8 +99,9 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		m_Ssao = std::make_unique<Ssao>(m_Device.Get(), m_CommandList.Get(), param.WindowWidth, param.WindowHeight);
 		m_SrvDescriptorHeap = DX12DescriptorAllocator::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		InitBaseGeometry();
 		InitBaseTexture();
+		InitBaseShaders();
+		InitBaseGeometry();
 
 		/*m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 		CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
@@ -116,7 +115,7 @@ void DX12RHI::Initialize(const RHIInitializeParam& param)
 		//LoadSkinnedModel();
 		//LoadTextures();
 		//InitBaseRootSignatures();
-		InitBaseShaders();
+		
 
 		m_RawMeshVertexBuffer = CreateUploadVertexBuffer((float*)V_Array<RawVertex>(1000).data(), 1000 * sizeof(RawVertex), (uint32)sizeof(RawVertex), &m_InputLayers["defaultRaw"]);
 		m_RawMeshIndexBuffer = CreateUploadIndexBuffer(V_Array<uint16>(3000).data(), 3000, ShaderDataType::Short);
@@ -340,8 +339,22 @@ void DX12RHI::SetUpStaticMesh(StaticMesh* mesh)
 	if (m_MeshBuffer.find(mesh->GetName()) == m_MeshBuffer.end())
 	{
 		m_MeshBuffer[mesh->GetName()] = {
-			CreateVertexBuffer((float*)mesh->GetVertices().data(), (uint32)vbByteSize, (uint32)sizeof(DX12Vertex), &m_InputLayers["default"]),
+			CreateVertexBuffer((float*)mesh->GetVertices().data(), (uint32)vbByteSize, (uint32)sizeof(Vertex), &m_InputLayers["default"]),
 			CreateIndexBuffer((void*)mesh->GetIndices().data(), (uint32)mesh->GetIndices().size(), ShaderDataType::Int)
+		};
+	}
+}
+
+void DX12RHI::SetUpSkeletalMesh(SkeletalMesh* skeletalMesh)
+{
+	const uint64 vbByteSize = skeletalMesh->GetSkeletalVertices().size() * sizeof(SkeletalVertex);
+	const uint64 ibByteSize = skeletalMesh->GetSkeletalIndices().size() * sizeof(uint32);
+
+	if (m_MeshBuffer.find(skeletalMesh->GetName()) == m_MeshBuffer.end())
+	{
+		m_MeshBuffer[skeletalMesh->GetName()] = {
+			CreateVertexBuffer((float*)skeletalMesh->GetVertices().data(), (uint32)vbByteSize, (uint32)sizeof(SkeletalVertex), &m_InputLayers["skinnedDefault"]),
+			CreateIndexBuffer((void*)skeletalMesh->GetIndices().data(), (uint32)skeletalMesh->GetIndices().size(), ShaderDataType::Int)
 		};
 	}
 }
@@ -413,14 +426,19 @@ Unique<Texture> DX12RHI::CreateCubeTexture(const char* name, const char* path, b
 	return texture;
 }
 
-Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, ShaderParam* param)
+Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam * param)
 {
 	auto layout = &m_InputLayers["default"];
 	if (name == String("ui"))
 	{
 		layout = &m_InputLayers["ui"];
 	}
-	return MakeUnique<DX12Shader>(m_Device.Get(), path, Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>(nullptr, nullptr),
+	else if (name == String("skeletalOpaque"))
+	{
+		layout = &m_InputLayers["skinnedDefault"];
+	}
+	return MakeUnique<DX12Shader>(m_Device.Get(), path, 
+		Pair<const D3D_SHADER_MACRO*, const D3D_SHADER_MACRO*>((const D3D_SHADER_MACRO*)defines.first, (const D3D_SHADER_MACRO*)defines.second),
 		Pair<const char*, const char*>("VS", "PS"), Pair<const char*, const char*>{ "vs_5_1", "ps_5_1" }, layout, param);
 }
 
@@ -1213,6 +1231,8 @@ void DX12RHI::InitBaseGeometry()
 	GeometryGenerator::CreateBoxStaticMesh(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
 	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
+
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", "F:\\GitHub\\River\\River\\Models\\soldier.m3d"));
 }
 
 void DX12RHI::InitBaseTexture()
@@ -1236,7 +1256,7 @@ void DX12RHI::InitBaseShaders()
 		NULL, NULL
 	};
 
-	const D3D_SHADER_MACRO skinnedDefines[] =
+	const ShaderDefine skinnedDefines[] =
 	{
 		"SKINNED", "1",
 		NULL, NULL
@@ -1309,11 +1329,13 @@ void DX12RHI::InitBaseShaders()
 	Shader::CreateShader("ui", DEFAULT_SHADER_PATH_UI);
 
 	ShaderParam param = { CullMode::None, ComparisonFunc::LessEqual };
-	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2, &param);
+	Shader::CreateShader("sky", DEFAULT_SHADER_PATH_2, { nullptr, nullptr }, &param);
+
+	Shader::CreateShader("skeletalOpaque", DEFAULT_SHADER_PATH_DEFAULT, { skinnedDefines, nullptr });
 
 	//由自定义的Shader语言去做（D3D12_GRAPHICS_PIPELINE_STATE_DESC）相关参数配置，暂时先不做实现
 	ShaderParam shadowParam = { CullMode::Back, ComparisonFunc::Less, ShaderDefaultType::ShadowMap };
-	Shader::CreateShader("shadowMap", DEFAULT_SHADER_PATH_3, &shadowParam);
+	Shader::CreateShader("shadowMap", DEFAULT_SHADER_PATH_3, { nullptr, nullptr }, &shadowParam);
 }
 
 void DX12RHI::InitBaseRootSignatures()

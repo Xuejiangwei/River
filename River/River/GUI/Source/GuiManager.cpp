@@ -16,8 +16,8 @@
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json)
 {
 	widget->SetWidgetName(json["Name"].Data());
-	widget->SetSize(json["Size"][0].StringToInt32(), json["Size"][1].StringToInt32());
-	widget->SetPosition(json["Position"][0].StringToInt32(), json["Position"][1].StringToInt32());
+	widget->SetSize(json["Size"][0].StringToFloat(), json["Size"][1].StringToFloat());
+	widget->SetPosition(json["Position"][0].StringToFloat(), json["Position"][1].StringToFloat());
 }
 
 static Share<Widget> CreateWidgetByJson(XJson& json)
@@ -35,7 +35,7 @@ static Share<Widget> CreateWidgetByJson(XJson& json)
 		if (json["Text"].Data())
 		{
 			text->SetFont(AssetManager::Get()->GetTexture("font"));
-			text->SetFontSize(json["FontSize"].StringToInt32());
+			text->SetFontSize(json["FontSize"].StringToFloat());
 			text->SetText(json["Text"].Data());
 		}
 

@@ -11,7 +11,9 @@
 #include "Object/Header/CameraObject.h"
 #include "Component/Header/RenderMeshComponent.h"
 #include "Component/Header/StaticMeshComponent.h"
+#include "Component/Header/SkeletalMeshComponent.h"
 #include "Renderer/Mesh/Header/StaticMesh.h"
+#include "Renderer/Mesh/Header/SkeletalMesh.h"
 #include "Renderer/Header/Material.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/AssetManager.h"
@@ -99,6 +101,17 @@ void RiverEditorMainLayer::OnInitialize()
 		staticMeshComponent->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
 		auto mat = Material::GetMaterial("MyMat");
 		staticMeshComponent->SetStaticMeshMaterials({ mat });
+	}
+
+	{
+		auto obj = ProduceObject();
+		obj->SetPosition({ 0.f, -5.f, 0.f });
+		obj->SetScale({ 1.0f, 1.0f, 1.0f });
+		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
+		obj->AddComponent(skeletalMeshComponent);
+		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
+			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));
 	}
 
 	{

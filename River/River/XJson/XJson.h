@@ -190,6 +190,7 @@ public:
 	int StringToInt32();
 	long long StringToInt64();
 	double StringToDouble();
+	float StringToFloat();
 
 private:
 	void Read(std::shared_ptr<JsonBuffer> context, bool isRoot = false);

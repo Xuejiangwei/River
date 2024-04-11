@@ -58,6 +58,8 @@ public:
 
 	virtual void SetUpStaticMesh(StaticMesh* mesh) override;
 
+	virtual void SetUpSkeletalMesh(SkeletalMesh* skeletalMesh) override;
+
 	virtual Pair<void*, void*> GetStaticMeshBuffer(const char* name) override;
 
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) override;
@@ -74,7 +76,8 @@ public:
 
 	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) override;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path, ShaderParam* param = nullptr) override;
+	virtual Unique<Shader> CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+		ShaderParam * param = nullptr) override;
 
 	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
 

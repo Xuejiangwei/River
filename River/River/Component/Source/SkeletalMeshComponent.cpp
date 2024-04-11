@@ -20,6 +20,11 @@ void SkeletalMeshComponent::SetSkeletalMesh(SkeletalMesh* skeletalMesh)
 	m_SkeletalMesh = skeletalMesh;
 }
 
+const V_Array<class Material*>& SkeletalMeshComponent::GetSkeletalMeshMaterials() const
+{
+	return m_SkeletalMesh->GetSkeletalMeshData()->Materials;
+}
+
 MaterialBlendMode SkeletalMeshComponent::GetMaterialMode() const
 {
 	return m_Materials.size() > 0 ? m_Materials[0]->m_BlendMode : MaterialBlendMode::Opaque;

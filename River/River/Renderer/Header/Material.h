@@ -9,6 +9,7 @@ class Shader;
 enum class MaterialBlendMode
 {
 	Opaque,
+	SkeletalOpaque,
 	Translucent
 };
 
