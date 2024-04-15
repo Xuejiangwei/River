@@ -7,6 +7,8 @@
 
 enum class HazeValueType : uint32
 {
+	None,
+
 	Void,
 	Bool,
 
@@ -26,12 +28,13 @@ enum class HazeValueType : uint32
 	UnsignedInt,
 	UnsignedLong,
 
-	Array,
+	ArrayBase,
+	ArrayClass,
+	ArrayPointer, //普通类型的指针数组和指向指针的指针数组都用这个类型，若是指向指针的指针，则只需要在生成AST->CodeGen阶段判断是否是同一类型
 
 	PointerBase,
 	PointerClass,
 	PointerFunction,
-	PointerArray,
 	PointerPointer,
 
 	ReferenceBase,
@@ -61,7 +64,7 @@ struct HazeValue
 
 		int Int;
 		float Float;
-		long long Long;
+		int64 Long;
 		double Double;
 
 		uint32 UnsignedInt;
@@ -96,9 +99,13 @@ enum class HazeToken : uint32;
 
 uint32 GetSizeByHazeType(HazeValueType type);
 
+HazeToken GetTokenByValueType(HazeValueType type);
+
 HazeValueType GetValueTypeByToken(HazeToken token);
 
 HazeValueType GetStrongerType(HazeValueType type1, HazeValueType type2);
+
+bool IsNoneType(HazeValueType type);
 
 bool IsVoidType(HazeValueType type);
 
@@ -108,9 +115,17 @@ bool IsHazeDefaultType(HazeValueType type);
 
 bool IsIntegerType(HazeValueType type);
 
+bool IsFloatingType(HazeValueType type);
+
+bool IsUnsignedLongType(HazeValueType type);
+
 bool IsPointerType(HazeValueType type);
 
+bool IsOneLevelPointerType(HazeValueType type);
+
 bool IsPointerFunction(HazeValueType type);
+
+bool IsPointerPointer(HazeValueType type);
 
 bool IsNumberType(HazeValueType type);
 
@@ -118,13 +133,15 @@ bool IsClassType(HazeValueType type);
 
 bool IsArrayType(HazeValueType type);
 
+bool IsArrayPointerType(HazeValueType type);
+
 bool IsReferenceType(HazeValueType type);
 
 void StringToHazeValueNumber(const HAZE_STRING& str, HazeValueType type, HazeValue& value);
 
 void OperatorValueByType(HazeValueType type, InstructionOpCode typeCode, const void* target);
 
-void CalculateValueByType(HazeValueType type1, HazeValueType type2, InstructionOpCode typeCode, const void* source, const void* target);
+void CalculateValueByType(HazeValueType type, InstructionOpCode typeCode, const void* source, const void* target);
 
 void CompareValueByType(HazeValueType type, struct HazeRegister* hazeRegister, const void* source, const void* target);
 
@@ -135,3 +152,5 @@ const HAZE_CHAR* GetHazeValueTypeString(HazeValueType type);
 HAZE_BINARY_CHAR* GetBinaryPointer(HazeValueType type, const HazeValue& value);
 
 HazeValue GetNegValue(HazeValueType type, const HazeValue& value);
+
+bool CanCVT(HazeValueType type1, HazeValueType type2);

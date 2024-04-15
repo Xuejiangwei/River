@@ -138,6 +138,9 @@ enum class InstructionOpCode : uint32
 	SHL_ASSIGN,
 	SHR_ASSIGN,
 
+	CVT,			//基本类型转换
+	ARRAY_LENGTH,	//数组长度
+
 	LINE,			//调试用
 };
 
@@ -272,7 +275,7 @@ struct ClassData
 
 struct FunctionData
 {
-	HazeValueType Type;
+	HazeDefineType Type;
 	std::vector<HazeDefineVariable> Params;
 	std::vector<HazeVariableData> Variables;
 	uint32 InstructionNum;

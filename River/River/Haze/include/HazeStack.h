@@ -43,7 +43,7 @@ public:
 		uint32 ESP;
 		RegisterData Register;
 
-		HazeStackFrame(const FunctionData* Info, uint32 ParamSize, uint32 EBP, uint32 ESP, RegisterData& Register) 
+		HazeStackFrame(const FunctionData* Info, uint32 ParamSize, uint32 EBP, uint32 ESP, RegisterData& Register)
 			: FunctionParamSize(ParamSize), EBP(EBP), ESP(ESP), Register(Register)
 		{
 			FunctionInfo = Info;
@@ -63,10 +63,6 @@ private:
 
 	void PCStepInc();
 
-	void PreMainFunction();
-
-	void PushMainFuntion();
-
 	void InitStackRegister();
 
 	void OnCall(const FunctionData* info, int paramSize);
@@ -80,7 +76,11 @@ private:
 	void SubCallHazeTimes();
 
 private:
-	void* Alloca(uint32 size);
+	void* Alloca(uint64 size);
+
+	void RegisterArray(uint64 address, uint64 length);
+
+	uint64 GetRegisterArrayLength(uint64 address);
 
 	void GarbageCollection(bool force = false, bool collectionAll = false);
 

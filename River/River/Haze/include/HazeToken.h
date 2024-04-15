@@ -23,15 +23,16 @@ enum class HazeToken : unsigned int
 	UnsignedLong,
 
 	Array,
+	ArrayDefineEnd,
+	ArrayLength,
 
 	StringMatch,
 
 	Function,
 
-	MainFunction,
-
 	Enum,
 
+	TypeName,
 	Template,
 
 	Class,
@@ -144,4 +145,6 @@ enum class HazeToken : unsigned int
 	Colon,
 
 	NullPtr,
+
+	SizeOf,
 };

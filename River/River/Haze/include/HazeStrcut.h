@@ -2,6 +2,7 @@
 
 #include "HazeToken.h"
 #include "HazeValue.h"
+#include "HazeLog.h"
 
 enum class HazeSectionSignal : uint8
 {
@@ -19,21 +20,36 @@ struct HazeDefineType
 
 	HAZE_STRING CustomName;				//自定义类型名
 
-	HazeDefineType() : PrimaryType(HazeValueType::Void)
+	HazeDefineType() : PrimaryType(HazeValueType::None), SecondaryType(HazeValueType::None)
 	{
-		SecondaryType = HazeValueType::Void;
+		CustomName.clear();
 	}
 
 	~HazeDefineType()
 	{
 	}
 
-	HazeDefineType(HazeValueType type, const HAZE_STRING& customName) : PrimaryType(type), SecondaryType(HazeValueType::Void)
+	HazeDefineType(HazeValueType type) : PrimaryType(type), SecondaryType(HazeValueType::None)
+	{
+		this->CustomName.clear();
+	}
+
+	HazeDefineType(HazeValueType type, const HAZE_STRING& customName) : PrimaryType(type), SecondaryType(HazeValueType::None)
 	{
 		this->CustomName = customName;
 	}
 
-	HazeDefineType(HazeValueType type, const HAZE_CHAR* customName) : PrimaryType(type), SecondaryType(HazeValueType::Void)
+	HazeDefineType(HazeValueType type, const HAZE_CHAR* customName) : PrimaryType(type), SecondaryType(HazeValueType::None)
+	{
+		this->CustomName = customName;
+	}
+
+	HazeDefineType(HazeValueType type, HazeValueType type2, const HAZE_STRING& customName) : PrimaryType(type), SecondaryType(type2)
+	{
+		this->CustomName = customName;
+	}
+
+	HazeDefineType(HazeValueType type, HazeValueType type2, const HAZE_CHAR* customName) : PrimaryType(type), SecondaryType(type2)
 	{
 		this->CustomName = customName;
 	}
@@ -44,7 +60,7 @@ struct HazeDefineType
 			&& CustomName == type.CustomName;
 	}
 
-	bool operator!=(const HazeDefineType& type)
+	bool operator!=(const HazeDefineType& type) const
 	{
 		return PrimaryType != type.PrimaryType || SecondaryType != type.SecondaryType
 			|| CustomName != type.CustomName;
@@ -52,8 +68,8 @@ struct HazeDefineType
 
 	void Reset()
 	{
-		PrimaryType = HazeValueType::Void;
-		SecondaryType = HazeValueType::Void;
+		PrimaryType = HazeValueType::None;
+		SecondaryType = HazeValueType::None;
 		CustomName.clear();
 	}
 
@@ -65,13 +81,78 @@ struct HazeDefineType
 
 	bool StringStreamTo(HAZE_STRING_STREAM& hss) const { return StringStreamTo(hss, *this); }
 
+	void PointerTo(const HazeDefineType& type)
+	{
+		if (IsPointerPointer(type.PrimaryType))
+		{
+			HAZE_LOG_ERR_W("类型指向错误，指向指向指针的指针!\n");
+		}
+		else if (IsPointerType(type.PrimaryType))
+		{
+			PrimaryType = HazeValueType::PointerPointer;
+			SecondaryType = type.SecondaryType;
+			CustomName = type.CustomName;
+		}
+		else if (IsArrayType(type.PrimaryType))
+		{
+			switch (type.PrimaryType)
+			{
+			case HazeValueType::ArrayBase:
+				PrimaryType = HazeValueType::PointerBase;
+				break;
+			case HazeValueType::ArrayClass:
+				PrimaryType = HazeValueType::PointerClass;
+				break;
+			case HazeValueType::ArrayPointer:
+				PrimaryType = HazeValueType::PointerPointer;
+				break;
+			default:
+				break;
+			}
+
+			if (IsHazeDefaultTypeAndVoid(type.SecondaryType))
+			{
+				SecondaryType = type.SecondaryType;
+				CustomName.clear();
+			}
+			else if (IsClassType(type.SecondaryType))
+			{
+				SecondaryType = HazeValueType::Class;
+				CustomName = type.CustomName;
+			}
+			else
+			{
+				HAZE_LOG_ERR_W("类型指向数组类型错误!\n");
+			}
+		}
+		else
+		{
+			if (IsHazeDefaultTypeAndVoid(type.PrimaryType))
+			{
+				PrimaryType = HazeValueType::PointerBase;
+				SecondaryType = type.PrimaryType;
+				CustomName.clear();
+			}
+			else if (IsClassType(type.PrimaryType))
+			{
+				PrimaryType = HazeValueType::PointerClass;
+				SecondaryType = HazeValueType::None;
+				CustomName = type.CustomName;
+			}
+			else
+			{
+				HAZE_LOG_ERR_W("类型指向错误!\n");
+			}
+		}
+	}
+
 	template<typename Class>
 	void StringStream(Class* pThis, void(Class::* stringCall)(HAZE_STRING&), void(Class::* typeCall)(uint32&)) { StringStream(pThis, stringCall, typeCall, *this); }
 
 	static bool NeedSecondaryType(const HazeDefineType& type)
 	{
-		return type.PrimaryType == HazeValueType::Array || type.PrimaryType == HazeValueType::PointerBase ||
-			type.PrimaryType == HazeValueType::PointerFunction || type.PrimaryType == HazeValueType::PointerArray ||
+		return IsArrayType(type.PrimaryType) || type.PrimaryType == HazeValueType::PointerBase ||
+			type.PrimaryType == HazeValueType::PointerFunction ||
 			type.PrimaryType == HazeValueType::PointerPointer || type.PrimaryType == HazeValueType::ReferenceBase;
 	}
 

@@ -104,14 +104,14 @@ void RiverEditorMainLayer::OnInitialize()
 	}
 
 	{
-		auto obj = ProduceObject();
+		/*auto obj = ProduceObject();
 		obj->SetPosition({ 0.f, -5.f, 0.f });
 		obj->SetScale({ 1.0f, 1.0f, 1.0f });
 		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
 		obj->AddComponent(skeletalMeshComponent);
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
 			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
-		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));*/
 	}
 
 	{

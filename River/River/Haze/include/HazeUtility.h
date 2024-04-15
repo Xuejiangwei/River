@@ -16,6 +16,10 @@ bool IsAndToken(HazeToken token);
 
 bool IsOrToken(HazeToken token);
 
+bool IsCanCastToken(HazeToken token);
+
+int Log2(int n);
+
 const HAZE_CHAR* GetGlobalDataHeaderString();
 
 const HAZE_CHAR* GetStringTableHeaderString();
@@ -64,6 +68,9 @@ template <typename T>
 unsigned int GetSizeByType(HazeDefineType type, T* This);
 
 template <typename T>
+unsigned int GetNewAllocSizeByType(HazeDefineType type, T* This);
+
+template <typename T>
 T StringToStandardType(const HAZE_STRING& str);
 
 template <typename T>
@@ -76,5 +83,7 @@ HAZE_BINARY_STRING ToString(void* value);
 
 template <typename T>
 HAZE_STRING ToHazeString(T value);
+
+void ConvertBaseTypeValue(HazeValueType type1, HazeValue& v1, HazeValueType type2, const HazeValue& v2);
 
 #include "HazeTemplate.inl"

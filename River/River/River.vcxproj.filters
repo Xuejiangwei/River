@@ -665,6 +665,9 @@
     <ClInclude Include="Header\RiverMainUiLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Haze\include\HazeLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

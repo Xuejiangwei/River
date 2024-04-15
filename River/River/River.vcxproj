@@ -251,6 +251,7 @@
     <ClInclude Include="Haze\include\HazeInstruction.h" />
     <ClInclude Include="Haze\include\HazeLibraryDefine.h" />
     <ClInclude Include="Haze\include\HazeLibraryType.h" />
+    <ClInclude Include="Haze\include\HazeLog.h" />
     <ClInclude Include="Haze\include\HazeStack.h" />
     <ClInclude Include="Haze\include\HazeStandardLibraryBase.h" />
     <ClInclude Include="Haze\include\HazeStrcut.h" />
