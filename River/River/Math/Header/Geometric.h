@@ -89,6 +89,38 @@ inline Float4 VectorMergeZW(const Float4& v1, const Float4& v2)
     return { v1[2], v2[2], v1[3], v2[3] };
 }
 
+inline Float4 VectorLess(Float4 v1,Float4 v2) noexcept
+{
+    return Float4(
+        (v1[0] < v2[0]) ? 0xFFFFFFFF : 0,
+        (v1[1] < v2[1]) ? 0xFFFFFFFF : 0,
+        (v1[2] < v2[2]) ? 0xFFFFFFFF : 0,
+        (v1[3] < v2[3]) ? 0xFFFFFFFF : 0);
+}
+
+inline Float4 VectorATan2(Float4 y, Float4 x) noexcept
+{
+    return Float4(
+        atan2f(y[0], x[0]),
+        atan2f(y[1], x[1]),
+        atan2f(y[2], x[2]),
+        atan2f(y[3], x[3]));
+}
+
+inline Float4 VectorXorInt(Float4 v1, Float4 v2) noexcept
+{
+    return Float4(v1.ux ^ v2.ux, v1.uy ^ v2.uy, v1.uz ^ v2.uz, v1.uw ^ v2.uw);
+}
+inline Float4 VectorReciprocal(Float4 v) noexcept
+{
+    return Float4(1.f / v[0], 1.f / v[1], 1.f / v[2], 1.f / v[3]);
+}
+
+inline Float4 VectorSin(Float4 v) noexcept
+{
+    return Float4(sinf(v[0]), sinf(v[1]), sinf(v[2]), sinf(v[3]));
+}
+
 inline Matrix4x4 Matrix4x4_Transpose(const Matrix4x4& mat)
 {
     Matrix4x4 P;
@@ -204,6 +236,11 @@ inline Float4 VectorSplatW(const Float4& v) noexcept
     return vResult;
 }
 
+inline Float4  VectorSplatSignMask() noexcept
+{
+    return Float4(0x80000000U, 0x80000000U, 0x80000000U, 0x80000000U);
+}
+
 inline Float4 Vector3TransformNormal(const Float4& vector, const Matrix4x4& mat)
 {
     Float4 Z = VectorSplatZ(vector);
@@ -217,40 +254,30 @@ inline Float4 Vector3TransformNormal(const Float4& vector, const Matrix4x4& mat)
     return Result;
 }
 
-inline Float4 Vector3TransformCoord(const Float4& V, const Matrix4x4& M)
+inline Float4 Vector3TransformCoord(const Float4& v, const Matrix4x4& m)
 {
-    Float4 Z = VectorSplatZ(V);
-    Float4 Y = VectorSplatY(V);
-    Float4 X = VectorSplatX(V);
+    Float4 Z = VectorSplatZ(v);
+    Float4 Y = VectorSplatY(v);
+    Float4 X = VectorSplatX(v);
 
-    Float4 Result = Float4_Multiply(Z, M.GetFloat4(2)) + M.GetFloat4(3);
-    Result = Float4_Multiply(Y, M.GetFloat4(1)) + Result;
-    Result = Float4_Multiply(X, M.GetFloat4(0)) + Result;
+    Float4 Result = Float4_Multiply(Z, m.GetFloat4(2)) + m.GetFloat4(3);
+    Result = Float4_Multiply(Y, m.GetFloat4(1)) + Result;
+    Result = Float4_Multiply(X, m.GetFloat4(0)) + Result;
 
     Float4 W = VectorSplatW(Result);
     return Float4_Divide(Result, W);
 }
 
-inline Matrix4x4 Matrix4x4_LookToLH
-(
-    const Float3& EyePosition,
-    const Float3& EyeDirection,
-    const Float3& upDirection
-) noexcept
+inline Matrix4x4 Matrix4x4_LookToLH(const Float3& eyePosition, const Float3& eyeDirection, const Float3& upDirection) noexcept
 {
-  /*  assert(!XMVector3Equal(EyeDirection, XMVectorZero()));
-    assert(!XMVector3IsInfinite(EyeDirection));
-    assert(!XMVector3Equal(UpDirection, XMVectorZero()));
-    assert(!XMVector3IsInfinite(UpDirection));*/
-
-    auto R2 = VectorNormalize(GetFloat3(EyeDirection));
+    auto R2 = VectorNormalize(GetFloat3(eyeDirection));
 
     auto R0 = VectorCross(GetFloat3(upDirection), R2);
     R0 = VectorNormalize(R0);
 
     auto R1 = VectorCross(R2, R0);
 
-    auto NegEyePosition = VectorNegate(GetFloat3(EyePosition));
+    auto NegEyePosition = VectorNegate(GetFloat3(eyePosition));
 
     auto D0 = VectorDot(R0, NegEyePosition);
     auto D1 = VectorDot(R1, NegEyePosition);
@@ -273,24 +300,12 @@ inline Matrix4x4 Matrix4x4_LookAtLH(Float3 eyePos, Float3 focusPos, Float3 upDir
     return Matrix4x4_LookToLH(eyePos, negEyeDir, upDir);
 }
 
-inline Matrix4x4 Matrix4x4_OrthographicOffCenterLH
-(
-    float ViewLeft,
-    float ViewRight,
-    float ViewBottom,
-    float ViewTop,
-    float NearZ,
-    float FarZ
-) noexcept
+inline Matrix4x4 Matrix4x4_OrthographicOffCenterLH(float viewLeft, float viewRight, float viewBottom, float viewTop,
+    float nearZ, float farZ) noexcept
 {
-    /* assert(!XMScalarNearEqual(ViewRight, ViewLeft, 0.00001f));
-     assert(!XMScalarNearEqual(ViewTop, ViewBottom, 0.00001f));
-     assert(!XMScalarNearEqual(FarZ, NearZ, 0.00001f));*/
-
-
-    float ReciprocalWidth = 1.0f / (ViewRight - ViewLeft);
-    float ReciprocalHeight = 1.0f / (ViewTop - ViewBottom);
-    float fRange = 1.0f / (FarZ - NearZ);
+    float ReciprocalWidth = 1.0f / (viewRight - viewLeft);
+    float ReciprocalHeight = 1.0f / (viewTop - viewBottom);
+    float fRange = 1.0f / (farZ - nearZ);
 
     Matrix4x4 M;
     M.m[0][0] = ReciprocalWidth + ReciprocalWidth;
@@ -308,111 +323,115 @@ inline Matrix4x4 Matrix4x4_OrthographicOffCenterLH
     M.m[2][2] = fRange;
     M.m[2][3] = 0.0f;
 
-    M.m[3][0] = -(ViewLeft + ViewRight) * ReciprocalWidth;
-    M.m[3][1] = -(ViewTop + ViewBottom) * ReciprocalHeight;
-    M.m[3][2] = -fRange * NearZ;
+    M.m[3][0] = -(viewLeft + viewRight) * ReciprocalWidth;
+    M.m[3][1] = -(viewTop + viewBottom) * ReciprocalHeight;
+    M.m[3][2] = -fRange * nearZ;
     M.m[3][3] = 1.0f;
     return M;
 }
 
-inline Float4 VectorSwizzle
-(
-    Float4 V,
-    uint32_t E0,
-    uint32_t E1,
-    uint32_t E2,
-    uint32_t E3
-) noexcept
+inline Float4 VectorSwizzle(Float4 v, uint32 e0, uint32 e1, uint32 e2, uint32 e3) noexcept
 {
-    assert((E0 < 4) && (E1 < 4) && (E2 < 4) && (E3 < 4));
-    _Analysis_assume_((E0 < 4) && (E1 < 4) && (E2 < 4) && (E3 < 4));
-
-    Float4 Result = {
-            V[E0],
-            V[E1],
-            V[E2],
-            V[E3]
-    };
-    return Result;
+    return Float4(v[e0], v[e1], v[e2], v[e3]);
 }
 
-inline Float4 VectorNegativeMultiplySubtract
-(
-    Float4 V1,
-    Float4 V2,
-    Float4 V3
-) noexcept
+inline Float4 VectorNegativeMultiplySubtract(Float4 v1, Float4 v2, Float4 v3) noexcept
 {
-    Float4 Result = {
-            V3[0] - (V1[0] * V2[0]),
-            V3[1] - (V1[1] * V2[1]),
-            V3[2] - (V1[2] * V2[2]),
-            V3[3] - (V1[3] * V2[3])
-    };
-    return Result;
+    return Float4(v3[0] - (v1[0] * v2[0]), v3[1] - (v1[1] * v2[1]), v3[2] - (v1[2] * v2[2]), v3[3] - (v1[3] * v2[3]));
 }
 
-inline Float4 VectorMultiplyAdd
-(
-    Float4 V1,
-    Float4 V2,
-    Float4 V3
-) noexcept
+inline Float4 VectorMultiplyAdd(const Float4& v1, const Float4& v2, const Float4& v3) noexcept
 {
-    Float4 Result =  {
-            V1[0] * V2[0] + V3[0],
-            V1[1] * V2[1] + V3[1],
-            V1[2] * V2[2] + V3[2],
-            V1[3] * V2[3] + V3[3]
-        };
-    return Result;
+    return Float4(v1[0] * v2[0] + v3[0], v1[1] * v2[1] + v3[1], v1[2] * v2[2] + v3[2], v1[3] * v2[3] + v3[3]);
 }
 
-inline Float4 VectorPermute
-(
-    Float4 V1,
-    Float4 V2,
-    uint32_t PermuteX,
-    uint32_t PermuteY,
-    uint32_t PermuteZ,
-    uint32_t PermuteW
-) noexcept
+inline Float4 VectorLerp(Float4 v0, Float4 v1, float t)
+{
+    auto scale = Float4(t, t, t, t);
+    auto length = Float4_Sub(v1, v0);
+    return VectorMultiplyAdd(length, scale, v0);
+}
+
+inline Float4 VectorPermute(Float4 v1, Float4 v2, uint32 permuteX, uint32 permuteY, uint32 permuteZ, uint32_t permuteW) noexcept
 {
     const uint32_t* aPtr[2];
-    aPtr[0] = reinterpret_cast<const uint32_t*>(&V1);
-    aPtr[1] = reinterpret_cast<const uint32_t*>(&V2);
+    aPtr[0] = reinterpret_cast<const uint32_t*>(&v1);
+    aPtr[1] = reinterpret_cast<const uint32_t*>(&v2);
 
     Float4 Result;
     auto pWork = reinterpret_cast<uint32_t*>(&Result);
 
-    const uint32_t i0 = PermuteX & 3;
-    const uint32_t vi0 = PermuteX >> 2;
+    const uint32_t i0 = permuteX & 3;
+    const uint32_t vi0 = permuteX >> 2;
     pWork[0] = aPtr[vi0][i0];
 
-    const uint32_t i1 = PermuteY & 3;
-    const uint32_t vi1 = PermuteY >> 2;
+    const uint32_t i1 = permuteY & 3;
+    const uint32_t vi1 = permuteY >> 2;
     pWork[1] = aPtr[vi1][i1];
 
-    const uint32_t i2 = PermuteZ & 3;
-    const uint32_t vi2 = PermuteZ >> 2;
+    const uint32_t i2 = permuteZ & 3;
+    const uint32_t vi2 = permuteZ >> 2;
     pWork[2] = aPtr[vi2][i2];
 
-    const uint32_t i3 = PermuteW & 3;
-    const uint32_t vi3 = PermuteW >> 2;
+    const uint32_t i3 = permuteW & 3;
+    const uint32_t vi3 = permuteW >> 2;
     pWork[3] = aPtr[vi3][i3];
 
     return Result;
 }
 
-inline Float4 VectorReciprocal(Float4 V) noexcept
+inline Float4 VectorShiftLeft(Float4 v1, Float4 v2, uint32 elements) noexcept
 {
-    Float4 Result = {
-            1.f / V[0],
-            1.f / V[1],
-            1.f / V[2],
-            1.f / V[3]
-    };
+    return VectorPermute(v1, v2, elements, ((elements)+1), ((elements)+2), ((elements)+3));
+}
+
+inline Float4  QuaternionSlerpV(Float4 q0, Float4 q1, Float4 t) noexcept
+{
+    const Float4 OneMinusEpsilon(1.0f - 0.00001f, 1.0f - 0.00001f, 1.0f - 0.00001f, 1.0f - 0.00001f);
+
+    Float4 CosOmega = VectorDot(q0, q1);
+
+    Float4 Zero;
+    Float4 Control = VectorLess(CosOmega, Zero);
+    Float4 Sign = VectorSelect(Float4(1.0f, 1.0f, 1.0f, 1.0f), Float4(-1.0f, -1.0f, -1.0f, -1.0f), Control);
+
+    CosOmega = Float4_Multiply(CosOmega, Sign);
+
+    Control = VectorLess(CosOmega, OneMinusEpsilon);
+
+    Float4 SinOmega = VectorNegativeMultiplySubtract(CosOmega, CosOmega, Float4(1.0f, 1.0f, 1.0f, 1.0f));
+    SinOmega = VectorSqrt(SinOmega);
+
+    Float4 Omega = VectorATan2(SinOmega, CosOmega);
+
+    Float4 SignMask = VectorSplatSignMask();
+    Float4 V01 = VectorShiftLeft(t, Zero, 2);
+    SignMask = VectorShiftLeft(SignMask, Zero, 3);
+    V01 = VectorXorInt(V01, SignMask);
+    V01 = Float4_Add(Float4(1.0f, 0.0f, 0.0f, 0.0f), V01);
+
+    Float4 InvSinOmega = VectorReciprocal(SinOmega);
+
+    Float4 S0 = Float4_Multiply(V01, Omega);
+    S0 = VectorSin(S0);
+    S0 = Float4_Multiply(S0, InvSinOmega);
+
+    S0 = VectorSelect(V01, S0, Control);
+
+    Float4 S1 = VectorSplatY(S0);
+    S0 = VectorSplatX(S0);
+
+    S1 = Float4_Multiply(S1, Sign);
+
+    Float4 Result = Float4_Multiply(q0, S0);
+    Result = VectorMultiplyAdd(q1, S1, Result);
+
     return Result;
+}
+
+inline Float4 QuaternionSlerp(Float4 q0, Float4 q1, float t) noexcept
+{
+    return QuaternionSlerpV(q0, q1, Float4(t, t, t, t));
 }
 
 inline Float4 Matrix4x4_Determinant(const Matrix4x4& M) noexcept
@@ -630,10 +649,43 @@ inline Matrix4x4 Matrix4x4_RotationAxis(const Float3& axis, float angle)
     return Matrix4x4_RotationNormal(axis.Normalize(), angle);
 }
 
-inline Matrix4x4 Matrix4x4_PerspectiveFovLH(float FovAngleY,
-    float AspectRatio,
-    float NearZ,
-    float FarZ)
+inline Matrix4x4 Matrix4x4_RotationQuaternion(Float4 Quaternion) noexcept
+{
+    float qx = Quaternion[0];
+    float qxx = qx * qx;
+
+    float qy = Quaternion[1];
+    float qyy = qy * qy;
+
+    float qz = Quaternion[2];
+    float qzz = qz * qz;
+
+    float qw = Quaternion[3];
+
+    Matrix4x4 M;
+    M.m[0][0] = 1.f - 2.f * qyy - 2.f * qzz;
+    M.m[0][1] = 2.f * qx * qy + 2.f * qz * qw;
+    M.m[0][2] = 2.f * qx * qz - 2.f * qy * qw;
+    M.m[0][3] = 0.f;
+
+    M.m[1][0] = 2.f * qx * qy - 2.f * qz * qw;
+    M.m[1][1] = 1.f - 2.f * qxx - 2.f * qzz;
+    M.m[1][2] = 2.f * qy * qz + 2.f * qx * qw;
+    M.m[1][3] = 0.f;
+
+    M.m[2][0] = 2.f * qx * qz + 2.f * qy * qw;
+    M.m[2][1] = 2.f * qy * qz - 2.f * qx * qw;
+    M.m[2][2] = 1.f - 2.f * qxx - 2.f * qyy;
+    M.m[2][3] = 0.f;
+
+    M.m[3][0] = 0.f;
+    M.m[3][1] = 0.f;
+    M.m[3][2] = 0.f;
+    M.m[3][3] = 1.0f;
+    return M;
+}
+
+inline Matrix4x4 Matrix4x4_PerspectiveFovLH(float FovAngleY, float AspectRatio, float NearZ, float FarZ)
 {
     float    SinFov;
     float    CosFov;
@@ -726,5 +778,34 @@ inline Matrix4x4 Matrix4x4_Scaling
     M.m[3][1] = 0.0f;
     M.m[3][2] = 0.0f;
     M.m[3][3] = 1.0f;
+    return M;
+}
+
+inline Matrix4x4 Matrix4x4_ScalingFromVector(const Float3& Scale) noexcept
+{
+    return Matrix4x4_Scaling(Scale.x, Scale.y, Scale.z);
+}
+
+inline Matrix4x4 Matrix4x4_AffineTransformation
+(
+    Float4 Scaling,
+    Float4 RotationOrigin,
+    Float4 RotationQuaternion,
+    Float4 Translation
+    ) noexcept
+{
+    // M = MScaling * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
+
+    auto MScaling = Matrix4x4_ScalingFromVector(Scaling);
+    auto VRotationOrigin = VectorSelect(g_Select1110, RotationOrigin, g_Select1110);
+    auto MRotation = Matrix4x4_RotationQuaternion(RotationQuaternion);
+    auto VTranslation = VectorSelect(g_Select1110, Translation, g_Select1110);
+
+    Matrix4x4 M;
+    M = MScaling;
+    M.GetFloat4(3) = Float4_Sub(M.GetFloat4(3), VRotationOrigin);
+    M = Matrix4x4::Multiply(M, MRotation);
+    M.GetFloat4(3) = Float4_Add(M.GetFloat4(3), VRotationOrigin);
+    M.GetFloat4(3) = Float4_Add(M.GetFloat4(3), VTranslation);
     return M;
 }

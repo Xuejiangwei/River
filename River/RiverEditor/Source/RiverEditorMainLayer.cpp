@@ -56,7 +56,7 @@ void RiverEditorMainLayer::OnInitialize()
 		//Common shader中的gShadowMap可能没有shaderResourceView
 	}
 
-	auto shader = AssetManager::Get()->GetShader("opaque");
+	/*auto shader = AssetManager::Get()->GetShader("opaque");
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 2.0f, 1.0f, 0.0f });
@@ -101,17 +101,17 @@ void RiverEditorMainLayer::OnInitialize()
 		staticMeshComponent->SetStaticMesh(AssetManager::Get()->GetStaticMesh("DefaultGrid"));
 		auto mat = Material::GetMaterial("MyMat");
 		staticMeshComponent->SetStaticMeshMaterials({ mat });
-	}
+	}*/
 
 	{
-		/*auto obj = ProduceObject();
+		auto obj = ProduceObject();
 		obj->SetPosition({ 0.f, -5.f, 0.f });
 		obj->SetScale({ 1.0f, 1.0f, 1.0f });
 		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
 		obj->AddComponent(skeletalMeshComponent);
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
 			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
-		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));*/
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));
 	}
 
 	{

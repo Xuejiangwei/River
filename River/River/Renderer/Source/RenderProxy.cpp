@@ -65,8 +65,10 @@ void RenderProxy::GetRenderData(RenderItem* renderItem)
 			renderItem->NumFramesDirty = RHI::GetFrameCount();
 			renderItem->World = m_RenderObject->GetTransform();
 			renderItem->BaseVertexLocation = 0;
-			renderItem->IndexCount = (int)skmComp->GetSkeletalMesh()->GetSkeletalIndices().size();
+			renderItem->IndexCount = 21690;//(int)skmComp->GetSkeletalMesh()->GetSkeletalIndices().size();
 			renderItem->StartIndexLocation = 0;
+			
+			renderItem->AnimTransforms = skmComp->GetAnimFinalTransforms();
 			if (skmComp->GetSkeletalMeshMaterials().size() > 0)
 			{
 				renderItem->Material = skmComp->GetSkeletalMeshMaterials()[0];

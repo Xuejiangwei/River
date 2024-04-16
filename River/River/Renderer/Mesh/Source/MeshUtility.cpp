@@ -90,6 +90,8 @@ void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& 
 		fin >> ignore >> textureName;
 		texture = Texture::CreateTexture(textureName.c_str(), (DEFAULT_TEXTURE_PATH + textureName).c_str());
 		mats[i]->m_NormalTexture = texture;
+
+		mats[i]->MatCBIndex = 1;
 	}
 }
 

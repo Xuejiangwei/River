@@ -150,6 +150,7 @@ void DX12RHI::BeginFrame()
 
 	//添加与删除Uniform数据
 	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
+	auto& currSkinnedCB = m_CurrFrameResource->m_SkinnedUniform;
 	for (auto& renderItem : m_RenderItemAllocator.m_Containor)
 	{
 		if (renderItem.ObjCBIndex != (uint32)-1 && renderItem.NumFramesDirty > 0)
@@ -173,7 +174,13 @@ void DX12RHI::BeginFrame()
 			}
 
 			currObjectCB->CopyData(renderItem.ObjCBIndex, objConstants);
-
+		}
+		else if (renderItem.AnimTransforms)
+		{
+			//更新骨骼动画数据
+			SkinnedUniform skinned;
+			memcpy(&skinned.BoneTransforms[0], renderItem.AnimTransforms->begin()._Unwrapped(), renderItem.AnimTransforms->size() * sizeof(Matrix4x4));
+			currSkinnedCB->CopyData(0, skinned);
 		}
 	}
 
@@ -463,9 +470,12 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	auto& dynamicHeaps = m_DynamicDescriptorHeaps[m_CurrFrameResourceIndex];
 	UINT objCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(ObjectUniform));
 	UINT passCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(PassUniform));
+	UINT skinnedCBByteSize = RendererUtil::CalcMinimumGPUAllocSize(sizeof(SkinnedUniform));
+
 	auto objectCB = m_CurrFrameResource->m_ObjectUniform->Resource();
 	auto passCB = m_CurrFrameResource->m_PassUniform->Resource();
 	auto matCB = m_CurrFrameResource->m_MaterialUniform->Resource();
+	auto skinnedCB = m_CurrFrameResource->m_SkinnedUniform->Resource();
 
 	DrawRenderPassBegin(renderPass, frameBufferType);
 
@@ -568,6 +578,11 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
 
+			if (id == 3)
+			{
+				continue;
+			}
+
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
 
@@ -618,6 +633,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 		//Shadow map
 		int shadowMapOffset = 0;
 		bool hasSetShadowMap = false;
+		if (shadowPass)
 		{
 			auto shadowMapTexture = (DX12Texture*)((RenderPassShadow*)shadowPass)->GetShadowMapTexture();
 			m_Device->CopyDescriptorsSimple(1, dynamicHandle,
@@ -629,6 +645,11 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 		for (auto id : /*m_RenderItems*/m_DrawItems)
 		{
+			/*if (id == 3)
+			{
+				continue;
+			}*/
+
 			auto& it = m_RenderItemAllocator.m_Containor[id];
 
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
@@ -682,7 +703,7 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				commandList->SetPipelineState(shader->GetPipelineState());
 			}
 
-			if (!hasSetShadowMap)
+			if (!hasSetShadowMap && shadowPass)
 			{
 				hasSetShadowMap = true;
 
@@ -706,9 +727,16 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
 
 			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-			commandList->SetGraphicsRootConstantBufferView(1, 0);
-			commandList->DrawIndexedInstanced(it.IndexCount, 1,
-				it.StartIndexLocation, it.BaseVertexLocation, 0);
+			/*if (it.AnimTransforms)
+			{*/
+				D3D12_GPU_VIRTUAL_ADDRESS skinnedCBAddress = skinnedCB->GetGPUVirtualAddress() + 0 * skinnedCBByteSize;
+				commandList->SetGraphicsRootConstantBufferView(1, skinnedCBAddress);
+			/*}
+			else
+			{
+				commandList->SetGraphicsRootConstantBufferView(1, 0);
+			}*/
+			commandList->DrawIndexedInstanced(it.IndexCount, 1, it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
 	}
 

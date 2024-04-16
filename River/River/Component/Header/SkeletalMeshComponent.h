@@ -24,7 +24,12 @@ public:
 
 	MaterialBlendMode GetMaterialMode() const;
 
+	std::vector<Matrix4x4>* GetAnimFinalTransforms() { return &m_FinalTransforms; }
+
 private:
 	SkeletalMesh* m_SkeletalMesh;
 	V_Array<class Material*> m_Materials;
+
+	float m_AnimTimePos;
+	std::vector<Matrix4x4> m_FinalTransforms;
 };

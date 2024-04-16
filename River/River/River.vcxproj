@@ -185,6 +185,7 @@
     <ClCompile Include="Renderer\Font\Source\Font.cpp" />
     <ClCompile Include="Renderer\Font\Source\FontAtlas.cpp" />
     <ClCompile Include="Renderer\Font\Source\TTF_Info.cpp" />
+    <ClCompile Include="Renderer\MeshAnimation\Header\MeshAnimationData.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\MeshUtility.cpp" />
     <ClCompile Include="Renderer\Mesh\Source\SkeletalMesh.cpp" />
     <ClCompile Include="Renderer\Pass\Source\RenderPass.cpp" />

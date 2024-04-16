@@ -15,18 +15,20 @@ struct Keyframe
 
 struct BoneAnimation
 {
-	float GetStartTime()const;
-	float GetEndTime()const;
+	float GetStartTime() const;
 
-	void Interpolate(float t, Matrix4x4& M)const;
+	float GetEndTime() const;
+
+	void Interpolate(float t, Matrix4x4& M) const;
 
 	V_Array<Keyframe> Keyframes;
 };
 
 struct AnimationClip
 {
-	float GetClipStartTime()const;
-	float GetClipEndTime()const;
+	float GetClipStartTime() const;
+
+	float GetClipEndTime() const;
 
 	void Interpolate(float t, V_Array<Matrix4x4>& boneTransforms)const;
 

@@ -54,7 +54,7 @@ void Application::Run()
 {
 	m_Time.Reset();
 
-	m_HazeVM->CallFunction(HAZE_TEXT("添加Ui"));
+	//m_HazeVM->CallFunction(HAZE_TEXT("添加Ui"));
 
 	while (m_Running)
 	{
@@ -73,7 +73,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), m_Time.DeltaTime());
+		//m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), m_Time.DeltaTime());
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

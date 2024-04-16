@@ -17,7 +17,6 @@
 
 // Include common HLSL code.
 #include "Common.hlsl"
-
 struct VertexIn
 {
 	float3 PosL    : POSITION;

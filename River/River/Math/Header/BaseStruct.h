@@ -229,6 +229,15 @@ struct Float4
 		return *this;
 	}
 
+	Float4& operator-(const Float4& v) noexcept
+	{
+		this->x -= v.x;
+		this->y -= v.y;
+		this->z -= v.z;
+		this->w -= v.w;
+		return *this;
+	}
+
 	float& operator[](int i)
 	{
 		return *((float*)this + i);
@@ -248,6 +257,17 @@ struct Float4
 inline Float4 operator*(float other, Float4 v) noexcept
 {
 	return Float4(v.x * other, v.y * other, v.z * other, v.w * other);
+}
+
+
+inline Float4 Float4_Add(const Float4& v1, const Float4& v2) noexcept
+{
+	return Float4(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w);
+}
+
+inline Float4 Float4_Sub(const Float4& v1, const Float4& v2) noexcept
+{
+	return Float4(v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2], v1[3] - v2[3]);
 }
 
 inline Float4 Float4_Multiply(const Float4& v1, const Float4& v2) noexcept

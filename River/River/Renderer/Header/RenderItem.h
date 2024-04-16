@@ -26,7 +26,7 @@ struct RenderItem
 
 	uint32 ObjCBIndex = -1;
 	uint32 SkinnedCBIndex = -1;
-
+	std::vector<Matrix4x4>* AnimTransforms = nullptr;
 	RenderItem()
 		: NumFramesDirty(3), InstanceCount(1), IndexCount(0), StartIndexLocation(0), BaseVertexLocation(0), 
 		PriType(PrimitiveType::TriangleList), ObjCBIndex(-1), SkinnedCBIndex(-1),
