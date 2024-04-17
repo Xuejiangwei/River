@@ -137,7 +137,7 @@ void Application::OnEvent(Event& e)
 
 			if (ce.GetMouseButton() == MouseCode::ButtonRight)
 			{
-				RHI::Get()->Pick(ce.GetMouseX(), ce.GetMouseY());
+				//RHI::Get()->Pick(ce.GetMouseX(), ce.GetMouseY());
 			}
 		});
 }

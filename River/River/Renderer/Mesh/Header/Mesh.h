@@ -88,10 +88,20 @@ struct StaticMeshData
 	V_Array<class Material*> Materials;
 };
 
+struct SkeletalSubset
+{
+	uint32 Id = -1;
+	uint32 VertexStart = 0;
+	uint32 VertexCount = 0;
+	uint32 IndexStart = 0;
+	uint32 IndexCount = 0;
+};
+
 struct SkeletalMeshData
 {
 	V_Array<SkeletalVertex> Vertices;
 	V_Array<uint32> Indices;
+	V_Array<SkeletalSubset> Subsets;
 	V_Array<class Material*> Materials;
 
 	std::vector<int> BoneHierarchy;

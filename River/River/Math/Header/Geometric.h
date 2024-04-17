@@ -11,7 +11,7 @@ inline bool InRectangle(float pointX, float pointY, float posX, float posY, floa
 
 inline Float4 VectorDot(Float4 v1, Float4 v2)
 {
-    float fValue = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    float fValue = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w;
     return Float4(fValue, fValue, fValue, fValue);
 }
 

@@ -410,22 +410,42 @@ struct Matrix4x4
 			x, y, z, 1.0f,
 		};
 	}
+
+	static Matrix4x4 RotationMatrix(float pitch, float yaw, float roll)
+	{
+		float cp = cosf(pitch);
+		float sp = sinf(pitch);
+
+		float cy = cosf(yaw);
+		float sy = sinf(yaw);
+
+		float cr = cosf(roll);
+		float sr = sinf(roll);
+
+		return {
+			cr * cy + sr * sp * sy, sr * cp, sr * sp * cy - cr * sy, 0.0f,
+			cr * sp * sy - sr * cy, cr * cp, sr * sy + cr * sp * cy, 0.0f,
+			cp * sy, -sp, cp * cy, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f,
+		};
+	}
 };
 
 //Transform
 struct Transform
 {
 	Float3 Position;
-	Float4 Rotation;	//四元数
+	Float3 Rotation;	//四元数
 	Float3 Scale;
 
 	Transform()
-		: Position(0.f, 0.f, 0.f), Rotation(0.f, 0.f, 0.f, 0.f), Scale(1.f, 1.f, 1.f)
+		: Position(0.f, 0.f, 0.f), Rotation(0.f, 0.f, 0.f), Scale(1.f, 1.f, 1.f)
 	{}
 
 	operator Matrix4x4() const
 	{
-		return Matrix4x4::TranslationMatrix(Position.x, Position.y, Position.z) * Matrix4x4::ScaleMatrix(Scale.x, Scale.y, Scale.z);
+		return Matrix4x4::TranslationMatrix(Position.x, Position.y, Position.z) * Matrix4x4::ScaleMatrix(Scale.x, Scale.y, Scale.z)
+			* Matrix4x4::RotationMatrix(Rotation.x, Rotation.y, Rotation.z);
 	}
 };
 

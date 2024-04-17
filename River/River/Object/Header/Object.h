@@ -25,7 +25,7 @@ public:
 
 	void SetPosition(const Float3& position);
 
-	void SetRotation(const Float4& rotation);
+	void SetRotation(const Float3& rotation);
 
 	void SetScale(const Float3& scale);
 
@@ -34,9 +34,9 @@ public:
 	RenderProxy* GetRenderProxy();
 
 private:
-	void SetTransform(Float3* position, Float4* rotation, Float3* scale);
+	void SetTransform(Float3* position, Float3* rotation, Float3* scale);
 	
-	void SetTransform(const Float3* position, const Float4* rotation, const Float3* scale);
+	void SetTransform(const Float3* position, const Float3* rotation, const Float3* scale);
 
 public:
 	template<typename T>

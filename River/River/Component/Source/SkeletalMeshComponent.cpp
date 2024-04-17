@@ -3,6 +3,8 @@
 #include "Renderer/Mesh/Header/SkeletalMesh.h"
 #include "Math/Header/Geometric.h"
 
+#include "Haze/include/HazeLog.h"
+
 SkeletalMeshComponent::SkeletalMeshComponent()
 	: m_SkeletalMesh(nullptr), m_AnimTimePos(0.f)
 {
@@ -14,6 +16,7 @@ SkeletalMeshComponent::~SkeletalMeshComponent()
 
 void SkeletalMeshComponent::Tick(float deltaTime)
 {
+	//m_AnimTimePos = 0.837342f;//+= deltaTime;
 	m_AnimTimePos += deltaTime;
 
 	auto& skelatalData = m_SkeletalMesh->GetSkeletalMeshData();
@@ -53,6 +56,22 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 		auto finalTransform = Matrix4x4::Multiply(offset, toRoot);
 		m_FinalTransforms[i] = Matrix4x4_Transpose(finalTransform);
 	}
+
+	/*HAZE_LOG_ERR("%f\n", m_AnimTimePos);
+	for (size_t i = 0; i < numBones; i++)
+	{
+		for (size_t j = 0; j < 4; j++)
+		{
+			for (size_t k = 0; k < 4; k++)
+			{
+				HAZE_LOG_INFO("%f ", m_FinalTransforms[i].m[j][k]);
+			}
+			HAZE_LOG_INFO("\n");
+		}
+		HAZE_LOG_INFO("\n");
+	}
+
+	HAZE_LOG_ERR("%f-----------------------------------------\n", m_AnimTimePos);*/
 }
 
 void SkeletalMeshComponent::SetSkeletalMesh(SkeletalMesh* skeletalMesh)

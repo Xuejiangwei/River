@@ -14,23 +14,33 @@
 #include "Math/Header/Geometric.h"
 
 RenderProxy::RenderProxy(Object* object)
-	: m_RenderObject(object), m_IsDirty(true), m_RenderItemId(-1)
+	: m_RenderObject(object), m_IsDirty(true)
 {
+	m_RenderItemIds.clear();
 	m_ProxyId = Application::Get()->GetRenderScene()->AddObjectProxyToScene(this);
 }
 
 RenderProxy::~RenderProxy()
 {
 	Application::Get()->GetRenderScene()->RemoveObjectProxyFromScene(this);
-	RHI::Get()->RemoveRenderItem(m_RenderItemId);
+
+	for (auto& id : m_RenderItemIds)
+	{
+		RHI::Get()->RemoveRenderItem(id);
+	}
+
+	m_RenderItemIds.clear();
 }
 
-void RenderProxy::GetRenderData(RenderItem* renderItem)
+void RenderProxy::GetRenderData()
 {
 	m_IsDirty = false;
+	bool hasRenderItem = HasRenderItem();
 	auto staticMeshComp = m_RenderObject->GetComponent<StaticMeshComponent>();
 	if (staticMeshComp)
 	{
+		auto renderItem = hasRenderItem ? RHI::Get()->GetRenderItem(m_RenderItemIds[0]) : RHI::Get()->AddRenderItem();
+
 		renderItem->NumFramesDirty = RHI::GetFrameCount();
 		renderItem->World = m_RenderObject->GetTransform();
 		renderItem->BaseVertexLocation = 0;
@@ -55,29 +65,44 @@ void RenderProxy::GetRenderData(RenderItem* renderItem)
 		renderItem->VertexBuffer = buffer.first;
 		renderItem->IndexBuffer = buffer.second;
 		renderItem->TexTransform = Matrix4x4_Scaling(8, 8, 1);
-		m_RenderItemId = renderItem->ObjCBIndex;
+
+		if (!hasRenderItem)
+		{
+			m_RenderItemIds.push_back(renderItem->ObjCBIndex);
+		}
 	}
 	else
 	{
 		auto skmComp = m_RenderObject->GetComponent<SkeletalMeshComponent>();
 		if (skmComp)
 		{
-			renderItem->NumFramesDirty = RHI::GetFrameCount();
-			renderItem->World = m_RenderObject->GetTransform();
-			renderItem->BaseVertexLocation = 0;
-			renderItem->IndexCount = 21690;//(int)skmComp->GetSkeletalMesh()->GetSkeletalIndices().size();
-			renderItem->StartIndexLocation = 0;
-			
-			renderItem->AnimTransforms = skmComp->GetAnimFinalTransforms();
-			if (skmComp->GetSkeletalMeshMaterials().size() > 0)
+			auto skeletalMesh = skmComp->GetSkeletalMesh();
+			for (auto i = 0; i < skeletalMesh->GetSkeletalMeshData()->Subsets.size(); i++)
 			{
-				renderItem->Material = skmComp->GetSkeletalMeshMaterials()[0];
-			}
+				auto renderItem = hasRenderItem ? RHI::Get()->GetRenderItem(m_RenderItemIds[i]) : RHI::Get()->AddRenderItem();
+				auto subset = skeletalMesh->GetSkeletalMeshData()->Subsets[i];
 
-			auto buffer = RHI::Get()->GetStaticMeshBuffer(skmComp->GetSkeletalMesh()->GetName().c_str());
-			renderItem->VertexBuffer = buffer.first;
-			renderItem->IndexBuffer = buffer.second;
-			m_RenderItemId = renderItem->ObjCBIndex;
+				renderItem->NumFramesDirty = RHI::GetFrameCount();
+				renderItem->World = m_RenderObject->GetTransform();
+				renderItem->BaseVertexLocation = 0;
+				renderItem->IndexCount = subset.IndexCount;
+				renderItem->StartIndexLocation = subset.IndexStart;
+
+				renderItem->AnimTransforms = skmComp->GetAnimFinalTransforms();
+				if (skmComp->GetSkeletalMeshMaterials().size() > i)
+				{
+					renderItem->Material = skmComp->GetSkeletalMeshMaterials()[i];
+				}
+
+				auto buffer = RHI::Get()->GetStaticMeshBuffer(skmComp->GetSkeletalMesh()->GetName().c_str());
+				renderItem->VertexBuffer = buffer.first;
+				renderItem->IndexBuffer = buffer.second;
+
+				if (!hasRenderItem)
+				{
+					m_RenderItemIds.push_back(renderItem->ObjCBIndex);
+				}
+			}
 		}
 	}
 }

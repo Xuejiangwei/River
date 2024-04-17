@@ -27,7 +27,7 @@ void Object::SetPosition(const Float3& position)
 	SetTransform(&position, nullptr, nullptr);
 }
 
-void Object::SetRotation(const Float4& rotation)
+void Object::SetRotation(const Float3& rotation)
 {
 	SetTransform(nullptr, &rotation, nullptr);
 }
@@ -42,12 +42,12 @@ void Object::SetTransform(const Transform& transform)
 	SetTransform(&transform.Position, &transform.Rotation, &transform.Scale);
 }
 
-void Object::SetTransform(Float3* position, Float4* rotation, Float3* scale)
+void Object::SetTransform(Float3* position, Float3* rotation, Float3* scale)
 {
 	SetTransform(const_cast<const Float3*>(position), rotation, scale);
 }
 
-void Object::SetTransform(const Float3* position, const Float4* rotation, const Float3* scale)
+void Object::SetTransform(const Float3* position, const Float3* rotation, const Float3* scale)
 {
 	bool markDirty = false;
 	if (position)

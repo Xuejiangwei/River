@@ -101,8 +101,11 @@ void RenderPassShadow::Render()
 		auto renderProxy = static_cast<RenderProxy*>(proxy);
 		if (renderProxy)
 		{
-			auto renderItem = rhi->GetRenderItem(renderProxy->GetRenderItemId());
-			m_RenderBatch[renderItem->Material ? renderItem->Material->m_Shader->GetShaderId() : 0].push_back(renderProxy->GetRenderItemId());
+			for (auto& id : renderProxy->GetRenderItemIds())
+			{
+				auto renderItem = rhi->GetRenderItem(id);
+				m_RenderBatch[renderItem->Material ? renderItem->Material->m_Shader->GetShaderId() : 0].push_back(id);
+			}
 		}
 	}
 

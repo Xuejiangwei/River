@@ -3,6 +3,7 @@
 #include "BaseMeshComponent.h"
 #include "Renderer/Header/Material.h"
 
+class Material;
 class SkeletalMesh;
 
 class SkeletalMeshComponent : public BaseMeshComponent
@@ -20,7 +21,7 @@ public:
 
 	void SetSkeletalMeshMaterials(V_Array<Material*> materials) { m_Materials = materials; }
 
-	const V_Array<class Material*>& GetSkeletalMeshMaterials() const;
+	const V_Array<Material*>& GetSkeletalMeshMaterials() const;
 
 	MaterialBlendMode GetMaterialMode() const;
 

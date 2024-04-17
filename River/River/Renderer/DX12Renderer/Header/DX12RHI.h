@@ -100,8 +100,6 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) override;
 
-	virtual void Pick(int x, int y) override;
-
 	void WaitFence();
 
 	void ResetCmdListAlloc();

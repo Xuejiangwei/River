@@ -9,7 +9,7 @@
 #include <fstream>
 
 void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& mats);
-void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<Subset>& subsets);
+void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<SkeletalSubset>& subsets);
 void ReadVertices(std::ifstream& fin, uint32 numVertices, std::vector<Vertex>& vertices);
 void ReadSkinnedVertices(std::ifstream& fin, uint32 numVertices, std::vector<SkeletalVertex>& vertices);
 void ReadTriangles(std::ifstream& fin, uint32 numTriangles, std::vector<uint32>& indices);
@@ -45,9 +45,8 @@ bool LoadSkeletalMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 		fin >> ignore >> numBones;
 		fin >> ignore >> numAnimationClips;
 
-		std::vector<Subset> subsets;
 		ReadMaterials(fin, numMaterials, skeletalMeshData->Materials);
-		ReadSubsetTable(fin, numMaterials, subsets);
+		ReadSubsetTable(fin, numMaterials, skeletalMeshData->Subsets);
 		ReadSkinnedVertices(fin, numVertices, skeletalMeshData->Vertices);
 		ReadTriangles(fin, numTriangles, skeletalMeshData->Indices);
 		ReadBoneOffsets(fin, numBones, skeletalMeshData->BoneOffsets);
@@ -95,7 +94,7 @@ void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& 
 	}
 }
 
-void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<Subset>& subsets)
+void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<SkeletalSubset>& subsets)
 {
 	std::string ignore;
 	subsets.resize(numSubsets);
@@ -110,6 +109,7 @@ void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<Subset>&
 		fin >> ignore >> subsets[i].IndexCount;
 
 		subsets[i].IndexCount *= 3;
+		subsets[i].IndexStart *= 3;
 	}
 }
 

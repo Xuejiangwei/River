@@ -22,9 +22,9 @@ RenderScene::~RenderScene()
 
 void RenderScene::Initialize()
 {
-	//m_RenderPasses.push_back(MakeShare<RenderPassShadow>());
+	m_RenderPasses.push_back(MakeShare<RenderPassShadow>());
 	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
-	//m_RenderPasses.push_back(MakeShare<RenderPassUI>());
+	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
 }
 
 void RenderScene::Update(const RiverTime& time)
@@ -36,14 +36,7 @@ void RenderScene::Update(const RiverTime& time)
 			auto p = (RenderProxy*)proxy;
 			if (p->IsDirty())
 			{
-				if (p->HasRenderItem())
-				{
-					p->GetRenderData(RHI::Get()->GetRenderItem(p->GetRenderItemId()));
-				}
-				else
-				{
-					p->GetRenderData(RHI::Get()->AddRenderItem());
-				}
+				p->GetRenderData();
 			} 
 		}
 	}

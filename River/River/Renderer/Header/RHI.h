@@ -99,8 +99,6 @@ public:
 
 	virtual void UpdatePassUniform(int index, RenderPass::PassUniform* uniform) = 0;
 
-	virtual void Pick(int x, int y) = 0;
-
 	virtual void DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBufferType) = 0;
 
 	//virtual void OnSetRenderTargets(int commandId, FrameBufferType frameBufferType) = 0;

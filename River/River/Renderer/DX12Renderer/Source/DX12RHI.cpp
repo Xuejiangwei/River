@@ -248,39 +248,37 @@ void DX12RHI::OnUpdate(const RiverTime& time)
 
 void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices)
 {
+	if (!m_CurrFrameResource)
 	{
-		if (!m_CurrFrameResource)
+		return;
+	}
+
+	int index = 0;
+	auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
+	for (auto& it : m_RenderItemAllocator.m_Containor)
+	{
+
+		/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
+		m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
+		DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.World));
+		DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.TexTransform));
+
+		ObjectUniform objConstants;
+		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+		XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+		objConstants.MaterialIndex = 2;
+		it.ObjCBIndex = index++;
+
+		currObjectCB->CopyData(it.ObjCBIndex, objConstants);
+
+		if (!it.VertexBuffer)
 		{
-			return;
+			it.VertexBuffer = m_RawMeshVertexBuffer.get();
 		}
 
-		int index = 0;
-		auto& currObjectCB = m_CurrFrameResource->m_ObjectUniform;
-		for (auto& it : m_RenderItemAllocator.m_Containor)
+		if (!it.IndexBuffer)
 		{
-
-			/*m_RenderItems[i].VertexBufferView = TestVertexBuffer.get();
-			m_RenderItems[i].IndexBufferView = TestIndexBuffer.get();*/
-			DirectX::XMMATRIX world = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.World));
-			DirectX::XMMATRIX texTransform = XMLoadFloat4x4((const XMFLOAT4X4*)(&it.TexTransform));
-
-			ObjectUniform objConstants;
-			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-			XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-			objConstants.MaterialIndex = 2;
-			it.ObjCBIndex = index++;
-
-			currObjectCB->CopyData(it.ObjCBIndex, objConstants);
-
-			if (!it.VertexBuffer)
-			{
-				it.VertexBuffer = m_RawMeshVertexBuffer.get();
-			}
-
-			if (!it.IndexBuffer)
-			{
-				it.IndexBuffer = m_RawMeshIndexBuffer.get();
-			}
+			it.IndexBuffer = m_RawMeshIndexBuffer.get();
 		}
 	}
 
@@ -289,29 +287,6 @@ void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<
 		m_RawMeshVertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
 		m_RawMeshIndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
 	}
-
-	//auto& geo = m_Geometries["scene"];
-	//UINT verticesMore = (UINT)vertices.size() + 1000;
-	//UINT indicesMore = (UINT)indices.size() + 3000;
-	//if (geo == nullptr)
-	//{
-	//	const UINT vbByteSize = verticesMore * sizeof(RawVertex);
-	//	const UINT ibByteSize = indicesMore * sizeof(std::uint16_t);
-
-	//	auto geo = MakeUnique<MeshGeometry>();
-	//	geo->m_Name = "shapeGeo";
-	//	//geo->CopyCPUData(vertices, indices);
-	//	geo->SetVertexBufferAndIndexBuffer(CreateUploadVertexBuffer((float*)vertices.data(), vbByteSize, (UINT)sizeof(RawVertex), &m_InputLayers["defaultRaw"]),
-	//		CreateUploadIndexBuffer((void*)indices.data(), (UINT)indices.size(), ShaderDataType::Short));
-
-	//	m_Geometries["scene"] = std::move(geo);
-	//}
-	//else
-	//{
-	//	geo->m_VertexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)vertices.data(), (uint32)vertices.size(), 1000);
-	//	geo->m_IndexBuffer->UpdateData(m_Device.Get(), m_CommandList.Get(), (void*)indices.data(), (uint32)indices.size(), 3000);
-	//}
-
 }
 
 void DX12RHI::UpdateUIData(V_Array<UIVertex>& vertices, V_Array<uint16> indices)
@@ -440,7 +415,7 @@ Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, Pair<co
 	{
 		layout = &m_InputLayers["ui"];
 	}
-	else if (name == String("skeletalOpaque"))
+	else if (name == String("skeletalOpaque") || name == String("shadowSkeletalMap"))
 	{
 		layout = &m_InputLayers["skinnedDefault"];
 	}
@@ -571,17 +546,11 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 	{
 		shadowPass = renderPass;
 		auto shader = static_cast<DX12Shader*>(assetManager->GetShader("shadowMap"));
-		commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
-		commandList->SetPipelineState(shader->GetPipelineState());
-
-		for (auto id : /*m_RenderItems*/m_DrawItems)
+		auto skeletalShader = static_cast<DX12Shader*>(assetManager->GetShader("shadowSkeletalMap"));
+		
+		for (auto id : m_DrawItems)
 		{
 			auto& it = m_RenderItemAllocator.m_Containor[id];
-
-			if (id == 3)
-			{
-				continue;
-			}
 
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 			offset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex];
@@ -612,6 +581,17 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				}
 			}
 
+			if (it.AnimTransforms)
+			{
+				commandList->SetGraphicsRootSignature(skeletalShader->GetRootSignaure());
+				commandList->SetPipelineState(skeletalShader->GetPipelineState());
+			}
+			else
+			{
+				commandList->SetGraphicsRootSignature(shader->GetRootSignaure());
+				commandList->SetPipelineState(shader->GetPipelineState());
+			}
+
 			commandList->SetGraphicsRootShaderResourceView(3, matCB->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
 			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
@@ -624,6 +604,17 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 			commandList->SetGraphicsRootConstantBufferView(1, 0);
+
+			if (it.AnimTransforms)
+			{
+				D3D12_GPU_VIRTUAL_ADDRESS skinnedCBAddress = skinnedCB->GetGPUVirtualAddress() + 0 * skinnedCBByteSize;
+				commandList->SetGraphicsRootConstantBufferView(1, skinnedCBAddress);
+			}
+			else
+			{
+				commandList->SetGraphicsRootConstantBufferView(1, 0);
+			}
+
 			commandList->DrawIndexedInstanced(it.IndexCount, 1,
 				it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
@@ -643,13 +634,8 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			shadowMapOffset = m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;
 		}
 
-		for (auto id : /*m_RenderItems*/m_DrawItems)
+		for (auto id : m_DrawItems)
 		{
-			/*if (id == 3)
-			{
-				continue;
-			}*/
-
 			auto& it = m_RenderItemAllocator.m_Containor[id];
 
 			texDescriptor.Offset(m_DynamicDescriptorOffset[m_CurrFrameResourceIndex] - offset, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
@@ -727,15 +713,16 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + it.ObjCBIndex * objCBByteSize;
 
 			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-			/*if (it.AnimTransforms)
-			{*/
+			if (it.AnimTransforms)
+			{
 				D3D12_GPU_VIRTUAL_ADDRESS skinnedCBAddress = skinnedCB->GetGPUVirtualAddress() + 0 * skinnedCBByteSize;
 				commandList->SetGraphicsRootConstantBufferView(1, skinnedCBAddress);
-			/*}
+			}
 			else
 			{
 				commandList->SetGraphicsRootConstantBufferView(1, 0);
-			}*/
+			}
+
 			commandList->DrawIndexedInstanced(it.IndexCount, 1, it.StartIndexLocation, it.BaseVertexLocation, 0);
 		}
 	}
@@ -1364,6 +1351,7 @@ void DX12RHI::InitBaseShaders()
 	//由自定义的Shader语言去做（D3D12_GRAPHICS_PIPELINE_STATE_DESC）相关参数配置，暂时先不做实现
 	ShaderParam shadowParam = { CullMode::Back, ComparisonFunc::Less, ShaderDefaultType::ShadowMap };
 	Shader::CreateShader("shadowMap", DEFAULT_SHADER_PATH_3, { nullptr, nullptr }, &shadowParam);
+	Shader::CreateShader("shadowSkeletalMap", DEFAULT_SHADER_PATH_3, { skinnedDefines, nullptr }, &shadowParam);
 }
 
 void DX12RHI::InitBaseRootSignatures()
@@ -1665,108 +1653,6 @@ void DX12RHI::CreateSwapChain()
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	ThrowIfFailed(m_Factory->CreateSwapChain(m_CommandQueue.Get(), &sd, m_SwapChain.GetAddressOf()));
-}
-
-void DX12RHI::Pick(int x, int y)
-{
-	if (!mPickedRitem)
-	{
-		return;
-	}
-
-	DirectX::XMFLOAT4X4 P;// = m_PrespectiveCamera.m_Proj;
-
-	// Compute picking ray in view space.
-	float vx = (+2.0f * x / m_InitParam.WindowWidth - 1.0f) / P(0, 0);
-	float vy = (-2.0f * y / m_InitParam.WindowHeight + 1.0f) / P(1, 1);
-
-	// Ray definition in view space.
-	DirectX::XMVECTOR rayOrigin = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	DirectX::XMVECTOR rayDir = DirectX::XMVectorSet(vx, vy, 1.0f, 0.0f);
-
-	DirectX::XMMATRIX V = IdentityMatrix();// = m_PrespectiveCamera.GetView();
-	auto dv = XMMatrixDeterminant(V);
-	DirectX::XMMATRIX invView = XMMatrixInverse(&dv, V);
-
-	// Assume nothing is picked to start, so the picked render-item is invisible.
-	mPickedRitem->Visible = false;
-
-	// Check if we picked an opaque render item.  A real app might keep a separate "picking list"
-	// of objects that can be selected.   
-	for (auto ri : m_RitemLayer[(int)RenderLayer::Opaque])
-	{
-		auto geo = ri->Geo;
-
-		// Skip invisible render-items.
-		/*if (ri->Visible == false)
-			continue;*/
-
-		DirectX::XMMATRIX W = XMLoadFloat4x4((const XMFLOAT4X4*)(&ri->World));
-		auto dw = XMMatrixDeterminant(W);
-		DirectX::XMMATRIX invWorld = XMMatrixInverse(&dw, W);
-
-		// Tranform ray to vi space of Mesh.
-		DirectX::XMMATRIX toLocal = XMMatrixMultiply(invView, invWorld);
-
-		rayOrigin = XMVector3TransformCoord(rayOrigin, toLocal);
-		rayDir = XMVector3TransformNormal(rayDir, toLocal);
-
-		// Make the ray direction unit length for the intersection tests.
-		rayDir = DirectX::XMVector3Normalize(rayDir);
-
-		// If we hit the bounding box of the Mesh, then we might have picked a Mesh triangle,
-		// so do the ray/triangle tests.
-		//
-		// If we did not hit the bounding box, then it is impossible that we hit 
-		// the Mesh, so do not waste effort doing ray/triangle tests.
-		float tmin = 0.0f;
-		//if (ri->Bounds.Intersects(rayOrigin, rayDir, tmin))
-		{
-			// NOTE: For the demo, we know what to cast the vertex/index data to.  If we were mixing
-			// formats, some metadata would be needed to figure out what to cast it to.
-			auto vertices = (DX12Vertex*)geo->VertexBufferCPU->GetBufferPointer();
-			auto indices = (std::uint32_t*)geo->IndexBufferCPU->GetBufferPointer();
-			UINT triCount = ri->IndexCount / 3;
-
-			// Find the nearest ray/triangle intersection.
-			tmin = FLT_MAX;
-			for (UINT i = 0; i < triCount; ++i)
-			{
-				// Indices for this triangle.
-				UINT i0 = indices[i * 3 + 0];
-				UINT i1 = indices[i * 3 + 1];
-				UINT i2 = indices[i * 3 + 2];
-
-				// Vertices for this triangle.
-				DirectX::XMVECTOR v0 = XMLoadFloat3(&vertices[i0].Pos);
-				DirectX::XMVECTOR v1 = XMLoadFloat3(&vertices[i1].Pos);
-				DirectX::XMVECTOR v2 = XMLoadFloat3(&vertices[i2].Pos);
-
-				// We have to iterate over all the triangles in order to find the nearest intersection.
-				float t = 0.0f;
-				if (DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, t))
-				{
-					if (t < tmin)
-					{
-						// This is the new nearest picked triangle.
-						tmin = t;
-						UINT pickedTriangle = i;
-
-						mPickedRitem->Visible = true;
-						mPickedRitem->IndexCount = 3;
-						mPickedRitem->BaseVertexLocation = 0;
-
-						// Picked render item needs same world matrix as object picked.
-						mPickedRitem->World = ri->World;
-						mPickedRitem->NumFramesDirty = 3;
-
-						// Offset to the picked triangle in the mesh index buffer.
-						mPickedRitem->StartIndexLocation = 3 * pickedTriangle;
-					}
-				}
-			}
-		}
-	}
 }
 
 void DX12RHI::WaitFence()
