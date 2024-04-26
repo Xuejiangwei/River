@@ -74,7 +74,7 @@ void RiverEditorMainLayer::OnInitialize()
 	}
 
 	{
-		auto obj = ProduceObject();
+		/*auto obj = ProduceObject();
 		obj->SetPosition({ -2.0f, 1.0f, 0.0f });
 		obj->SetScale({ 2.f,2.f,2.f });
 		auto staticMeshComponent = MakeShare<StaticMeshComponent>();
@@ -86,7 +86,7 @@ void RiverEditorMainLayer::OnInitialize()
 		auto texture = AssetManager::Get()->GetTexture("bricksDiffuseMap");
 		auto normalTexture = AssetManager::Get()->GetTexture("bricksNormalMap");
 		mat->InitBaseParam(MaterialBlendMode::Opaque, shader, { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.01f,0.01f,0.01f }, 0.25f, 10, texture, normalTexture);
-		staticMeshComponent->SetStaticMeshMaterials({ mat });
+		staticMeshComponent->SetStaticMeshMaterials({ mat });*/
 	}
 
 	{
@@ -104,7 +104,7 @@ void RiverEditorMainLayer::OnInitialize()
 	}
 
 	{
-		auto obj = ProduceObject();
+		/*auto obj = ProduceObject();
 		obj->SetPosition({ 0.f, -5.f, 0.f });
 		obj->SetScale({ 0.05f, 0.05f, -0.05f });
 		obj->SetRotation({ 0.0f, 135.f, 0.0f });
@@ -112,7 +112,20 @@ void RiverEditorMainLayer::OnInitialize()
 		obj->AddComponent(skeletalMeshComponent);
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
 			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
-		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("human"));*/
+	}
+
+	{
+		auto obj = ProduceObject();
+		obj->SetPosition({ 0.f, 5.f, 0.f });
+		//obj->SetScale({ 0.05f, 0.05f, 0.05f });
+		obj->SetRotation({ -45.0f, 180.f, 0.0f });
+		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
+		obj->AddComponent(skeletalMeshComponent);
+		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
+			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
+
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("women"));
 	}
 
 	{

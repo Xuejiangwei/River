@@ -91,6 +91,11 @@ struct Float3
 		return Float3(x - other.x, y - other.y, z - other.z);
 	}
 
+	float& operator[](int i)
+	{
+		return *((float*)this + i);
+	}
+
 	bool IsZero() const
 	{
 		return x == 0.0f && y == 0.0f && z == 0.0f;

@@ -1,5 +1,5 @@
 #include "RiverPch.h"
-#include "MeshAnimationData.h"
+#include "Renderer/MeshAnimation/Header/MeshAnimationData.h"
 #include "Math/Header/BaseFunction.h"
 #include "Math/Header/Geometric.h"
 
@@ -86,6 +86,8 @@ void BoneAnimation::Interpolate(float t, Matrix4x4& M) const
 
 				auto zero = Float4(0.0f, 0.0f, 0.0f, 1.0f);
 				M = Matrix4x4_AffineTransformation(S, zero, Q, P);
+
+				//M = Keyframes[i].BoneMatrix;
 
 				break;
 			}

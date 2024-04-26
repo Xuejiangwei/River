@@ -20,8 +20,14 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	m_AnimTimePos += deltaTime;
 
 	auto& skelatalData = m_SkeletalMesh->GetSkeletalMeshData();
-	auto& currAnim = skelatalData->AnimClips["Take1"];
-	if (m_AnimTimePos > currAnim.GetClipEndTime())
+	auto& currAnim = skelatalData->AnimClips.find("Take1");
+	//auto& currAnim = skelatalData->AnimClips.find("Bip001|Bip001|Take 001|BaseLayer");
+	if (currAnim == skelatalData->AnimClips.end())
+	{
+		return;
+	}
+
+	if (m_AnimTimePos > currAnim->second.GetClipEndTime())
 	{
 		m_AnimTimePos = 0.f;
 	}
@@ -31,7 +37,8 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	m_FinalTransforms.resize(skelatalData->BoneHierarchy.size());
 	std::vector<Matrix4x4> toParentTransforms(numBones);
 
-	currAnim.Interpolate(m_AnimTimePos, toParentTransforms);
+	//currAnim->second.Interpolate(m_AnimTimePos, m_FinalTransforms);
+	currAnim->second.Interpolate(m_AnimTimePos, toParentTransforms);
 	std::vector<Matrix4x4> toRootTransforms(numBones);
 
 	toRootTransforms[0] = toParentTransforms[0];
@@ -56,22 +63,6 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 		auto finalTransform = Matrix4x4::Multiply(offset, toRoot);
 		m_FinalTransforms[i] = Matrix4x4_Transpose(finalTransform);
 	}
-
-	/*HAZE_LOG_ERR("%f\n", m_AnimTimePos);
-	for (size_t i = 0; i < numBones; i++)
-	{
-		for (size_t j = 0; j < 4; j++)
-		{
-			for (size_t k = 0; k < 4; k++)
-			{
-				HAZE_LOG_INFO("%f ", m_FinalTransforms[i].m[j][k]);
-			}
-			HAZE_LOG_INFO("\n");
-		}
-		HAZE_LOG_INFO("\n");
-	}
-
-	HAZE_LOG_ERR("%f-----------------------------------------\n", m_AnimTimePos);*/
 }
 
 void SkeletalMeshComponent::SetSkeletalMesh(SkeletalMesh* skeletalMesh)

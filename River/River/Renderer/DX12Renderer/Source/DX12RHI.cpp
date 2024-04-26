@@ -221,29 +221,7 @@ void DX12RHI::EndFrame()
 
 void DX12RHI::OnUpdate(const RiverTime& time)
 {
-	/*mLightRotationAngle += 0.1f * time.DeltaTime();
-
-	XMMATRIX R = XMMatrixRotationY(mLightRotationAngle);
-	for (int i = 0; i < 3; ++i)
-	{
-		XMVECTOR lightDir = XMLoadFloat3(&mBaseLightDirections[i]);
-		lightDir = XMVector3TransformNormal(lightDir, R);
-		XMStoreFloat3(&mRotatedLightDirections[i], lightDir);
-	}
-
-	UpdateShadowTransform(time);*/
-
-	/*m_CurrFrameResourceIndex = (m_CurrFrameResourceIndex + 1) % RHI::GetFrameCount();
-	m_CurrFrameResource = m_FrameBuffer[m_CurrFrameResourceIndex].get();
-	WaitFence();*/
-
-	//UpdateObjectCBs();
-	//UpdateSkinnedCBs(time);
-	//UpdateMaterialCBs();
-	//UpdateShadowTransform(time);
-	//UpdateMainPass();
-	//UpdateShadowPass(time);
-	//UpdateSsaoCBs(time);
+	
 }
 
 void DX12RHI::UpdateSceneData(const V_Array<RawVertex>& vertices, const V_Array<uint16_t> indices)
@@ -1247,8 +1225,10 @@ void DX12RHI::InitBaseGeometry()
 	GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
 	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
 
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", "F:\\GitHub\\River\\River\\Models\\fbx_extra.fbx"));
+
 	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", "F:\\GitHub\\River\\River\\Models\\soldier.m3d"));
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", "F:\\GitHub\\River\\River\\Models\\fbx_extra.fbx"));
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", "F:\\GitHub\\River\\River\\Models\\women.m3d"));
 }
 
 void DX12RHI::InitBaseTexture()

@@ -288,7 +288,10 @@
     <ClCompile Include="Source\RiverMainUiLayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\MeshAnimation\Header\MeshAnimationData.cpp">
+    <ClCompile Include="Renderer\MeshAnimation\Source\MeshAnimationData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Mesh\Source\FBXLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

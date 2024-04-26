@@ -6,10 +6,9 @@
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
 #include "Renderer/Header/AssetManager.h"
 
-#include "fbxsdk/core/fbxmanager.h"
-#include "fbxsdk.h"
-
 #include <fstream>
+
+extern bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData);
 
 void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& mats);
 void ReadSubsetTable(std::ifstream& fin, uint32 numSubsets, std::vector<SkeletalSubset>& subsets);
@@ -21,129 +20,6 @@ void ReadBoneHierarchy(std::ifstream& fin, uint32 numBones, std::vector<int>& bo
 void ReadAnimationClips(std::ifstream& fin, uint32 numBones, uint32 numAnimationClips, 
 	HashMap<String, AnimationClip>& animations);
 void ReadBoneKeyframes(std::ifstream& fin, uint32 numBones, BoneAnimation& boneAnimation);
-
-void ParseMesh(const FbxMesh* pMesh)
-{
-	FbxNode* lNode = pMesh->GetNode();
-	if (!lNode)
-	{
-		LOG("Mesh has no node.");
-		return;
-	}
-	//DEBUG_LOG_INFO("Mesh name: {}", lNode->GetName());
-	// 获取Mesh多边形个数，对游戏来说就是三角形面数。
-	const int lPolygonCount = pMesh->GetPolygonCount();
-	// 是否有UV数据？
-	bool mHasUV = pMesh->GetElementUVCount() > 0;
-	bool mAllByControlPoint = true;
-	FbxGeometryElement::EMappingMode lUVMappingMode = FbxGeometryElement::eNone;
-	if (mHasUV)
-	{
-		lUVMappingMode = pMesh->GetElementUV(0)->GetMappingMode();
-		if (lUVMappingMode == FbxGeometryElement::eNone) 
-		{
-			mHasUV = false;
-		}
-		if (mHasUV && lUVMappingMode != FbxGeometryElement::eByControlPoint)
-		{
-			mAllByControlPoint = false;
-		}
-	}
-	// 最终顶点个数到底是多少？
-	// 如果只有一套UV，即UV映射方式是按实际顶点个数(FbxGeometryElement::eByControlPoint)，那么就是实际顶点个数。
-	// 如果有多套UV，那么一个顶点在不同的多边形里，会对应不同的UV坐标，即UV映射方式是按多边形(eByPolygonVertex)，那么顶点个数是多边形数*3.
-	int lPolygonVertexCount = mAllByControlPoint ? pMesh->GetControlPointsCount() : lPolygonCount * 3;
-	// 创建数组存放所有顶点坐标。
-	float* lVertices = new float[lPolygonVertexCount * 3];
-	// 创建数组存放索引数据，数组长度=面数*3.
-	unsigned short* lIndices = new unsigned short[lPolygonCount * 3];
-	// 获取多套UV名字
-	float* lUVs = NULL;
-	FbxStringList lUVNames;
-	pMesh->GetUVSetNames(lUVNames);
-	const char* lUVName = NULL;
-	if (mHasUV && lUVNames.GetCount())
-	{
-		// 创建数组存放UV数据
-		lUVs = new float[lPolygonVertexCount * 2];
-		// 暂时只使用第一套UV。
-		lUVName = lUVNames[0];
-	}
-	// 实际顶点数据。
-	const FbxVector4* lControlPoints = pMesh->GetControlPoints();
-	// 遍历所有三角面，遍历每个面的三个顶点，解析顶点坐标、UV坐标数据。
-	int lVertexCount = 0;
-	for (int lPolygonIndex = 0; lPolygonIndex < lPolygonCount; ++lPolygonIndex)
-	{
-		// 三角面，3个顶点
-		for (int lVerticeIndex = 0; lVerticeIndex < 3; ++lVerticeIndex)
-		{
-			// 传入面索引，以及当前面的第几个顶点，获取顶点索引。
-			const int lControlPointIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
-			if (lControlPointIndex >= 0) {
-				// 因为设定一个顶点有多套UV，所以每个三角面与其他面相邻的共享的顶点，尽管实际上是同一个点(ControlPoint),因为有不同的UV，所以还是算不同的顶点。
-				lIndices[lVertexCount] = static_cast<unsigned short>(lVertexCount);
-				// 获取当前顶点索引对应的实际顶点。
-				FbxVector4 lCurrentVertex = lControlPoints[lControlPointIndex];
-				// 将顶点坐标从FbxVector4转为float数组
-				lVertices[lVertexCount * 3] = static_cast<float>(lCurrentVertex[0]);
-				lVertices[lVertexCount * 3 + 1] = static_cast<float>(lCurrentVertex[1]);
-				lVertices[lVertexCount * 3 + 2] = static_cast<float>(lCurrentVertex[2]);
-				if (mHasUV) {
-					// 获取当前顶点在指定UV层的UV坐标，前面说过，一个顶点可能有多套UV。
-					bool lUnmappedUV;
-					FbxVector2 lCurrentUV;
-					pMesh->GetPolygonVertexUV(lPolygonIndex, lVerticeIndex, lUVName, lCurrentUV, lUnmappedUV);
-					// 将UV坐标从FbxVector2转为float数组
-					lUVs[lVertexCount * 2] = static_cast<float>(lCurrentUV[0]);
-					lUVs[lVertexCount * 2 + 1] = static_cast<float>(lCurrentUV[1]);
-				}
-			}
-			++lVertexCount;
-		}
-	}
-	// 创建引擎Mesh文件，从FBX中解析数据填充到里面。
-	SkeletalMeshData data;
-	data.Vertices.resize(lVertexCount);
-	data.Indices.resize(lVertexCount);
-
-	for (size_t i = 0; i < lVertexCount; i++)
-	{
-		data.Vertices[i].Pos.x = lVertices[i * 3];
-		data.Vertices[i].Pos.y = lVertices[i * 3 + 1];
-		data.Vertices[i].Pos.z = lVertices[i * 3 + 2];
-		//data[i].color_ = glm::vec4(1.0f);
-		//data[i].uv_ = glm::vec2(lUVs[i * 2], lUVs[i * 2 + 1]);
-	}
-
-	for (size_t i = 0; i < lVertexCount; i++)
-	{
-		data.Indices[i] = *lIndices++;
-	}
-
-	// 写入文件
-	//mesh_file.Write(fmt::format("../data/model/fbx_extra_{}.mesh", mesh_file.head_.name_).c_str());
-}
-
-void ParseNode(FbxNode* pNode)
-{
-	// 获取节点属性
-	FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
-	if (lNodeAttribute) {
-		// 节点是Mesh
-		if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh) {
-			FbxMesh* lMesh = pNode->GetMesh();
-			if (lMesh && !lMesh->GetUserDataPtr()) {
-				ParseMesh(lMesh);
-			}
-		}
-	}
-	// 递归解析子节点
-	const int lChildCount = pNode->GetChildCount();
-	for (int lChildIndex = 0; lChildIndex < lChildCount; ++lChildIndex) {
-		ParseNode(pNode->GetChild(lChildIndex));
-	}
-}
 
 bool LoadStaticMesh(const String& path, StaticMeshData* meshData)
 {
@@ -187,81 +63,7 @@ bool LoadSkeletalMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	}
 	else
 	{
-		//fbx
-		static FbxManager* sdkManager = nullptr;
-		static FbxScene* fbxScene = nullptr;
-		static FbxImporter* fbxImporter = nullptr;
-
-		if (!sdkManager)
-		{
-			sdkManager = FbxManager::Create();
-
-			FbxIOSettings* ios = FbxIOSettings::Create(sdkManager, IOSROOT);
-			sdkManager->SetIOSettings(ios);
-
-			//Load plugins from the executable directory (optional)
-			FbxString lPath = FbxGetApplicationDirectory();
-			sdkManager->LoadPluginsDirectory(lPath.Buffer());
-
-			//Create an FBX scene. This object holds most objects imported/exported from/to files.
-			fbxScene = FbxScene::Create(sdkManager, "My Scene");
-
-			fbxImporter = FbxImporter::Create(sdkManager, "");
-		}
-
-		int lFileFormat = -1;
-		if (!sdkManager->GetIOPluginRegistry()->DetectReaderFileFormat(path.c_str(), lFileFormat)) {
-			// 未能识别文件格式
-			return false;
-		}
-
-		// 初始化Importer，设置文件路径
-		if (fbxImporter->Initialize(path.c_str(), lFileFormat) == false)
-		{
-			return false;
-		}
-
-		// 将FBX文件解析导入到Scene中
-		bool lResult = fbxImporter->Import(fbxScene);
-		if (!lResult)
-		{
-			LOG("Call to FbxImporter::Import() failed.Error reported: %s", fbxImporter->GetStatus().GetErrorString());
-		}
-
-		// 检查Scene完整性
-		FbxStatus status;
-		FbxArray<FbxString*> details;
-		FbxSceneCheckUtility sceneCheck(FbxCast<FbxScene>(fbxScene), &status, &details);
-		bool lNotify = (!sceneCheck.Validate(FbxSceneCheckUtility::eCkeckData) && details.GetCount() > 0) ||
-			(fbxImporter->GetStatus().GetCode() != FbxStatus::eSuccess);
-		//输出错误信息
-		if (lNotify) {
-			//return LogSceneCheckError(fbxImporter, details);
-		}
-		// 转换坐标系为右手坐标系。
-		FbxAxisSystem SceneAxisSystem = fbxScene->GetGlobalSettings().GetAxisSystem();
-		FbxAxisSystem OurAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
-		if (SceneAxisSystem != OurAxisSystem) {
-			OurAxisSystem.ConvertScene(fbxScene);
-		}
-		// 转换单元长度
-		FbxSystemUnit SceneSystemUnit = fbxScene->GetGlobalSettings().GetSystemUnit();
-		if (SceneSystemUnit.GetScaleFactor() != 1.0) {
-			// 例子中用的是厘米，所以这里也要转换
-			FbxSystemUnit::cm.ConvertScene(fbxScene);
-		}
-		// 转换曲面到三角形
-		FbxGeometryConverter lGeomConverter(sdkManager);
-		try {
-			lGeomConverter.Triangulate(fbxScene, /*replace*/true);
-		}
-		catch (std::runtime_error) {
-			LOG("Scene integrity verification failed.\n");
-			return false;
-		}
-		// 递归解析节点
-		ParseNode(fbxScene->GetRootNode());
-		LOG("extra mesh success");
+		return LoadFbxMesh(path, skeletalMeshData);
 	}
 
 	return false;
@@ -288,6 +90,11 @@ void ReadMaterials(std::ifstream& fin, uint32 numMaterials, V_Array<Material*>& 
 		fin >> ignore >> mats[i]->Roughness;
 		fin >> ignore >> ignore;//mats[i]->AlphaClip;
 		fin >> ignore >> ignore;//mats[i]->MaterialTypeName;
+
+		if (ignore != "Skinned")
+		{
+			mats[i]->m_Shader = AssetManager::Get()->GetShader("opaque");
+		}
 
 		String textureName;
 		fin >> ignore >> textureName;
