@@ -121,6 +121,19 @@ inline Float4 VectorSin(Float4 v) noexcept
     return Float4(sinf(v[0]), sinf(v[1]), sinf(v[2]), sinf(v[3]));
 }
 
+inline Float4 VectorToQuaternion(const Float4& rot) noexcept
+{
+    float cy = cos(rot.y * 0.5);
+    float sy = sin(rot.y * 0.5);
+    float cp = cos(rot.z * 0.5);
+    float sp = sin(rot.z * 0.5);
+    float cr = cos(rot.x * 0.5);
+    float sr = sin(rot.x * 0.5);
+
+    return { cy * cp * cr + sy * sp * sr, cy * cp * sr - sy * sp * cr,
+             sy * cp * sr + cy * sp * cr, sy * cp * cr - cy * sp * sr };
+}
+
 inline Matrix4x4 Matrix4x4_Transpose(const Matrix4x4& mat)
 {
     Matrix4x4 P;

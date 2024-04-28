@@ -8,15 +8,17 @@
 
 #include <fstream>
 
+#include "Math/Header/Geometric.h"
+
 bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData);
 void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData);
 void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSkeletalIndex = -1);
 void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData);
 
-static FbxManager* sdkManager = nullptr;
-static FbxScene* fbxScene = nullptr;
-static FbxImporter* fbxImporter = nullptr;
+static FbxManager* s_FbxSdkManager = nullptr;
+static FbxScene* s_FbxScene = nullptr;
 static int s_SkeletalIndex = -1;
+static V_Array<Pair<String, FbxNode*<< s_Bones;
 
 struct VertexRelateBoneInfo {
 	char bone_index_[4];//骨骼索引，一般骨骼少于128个，用char就行。
@@ -26,14 +28,14 @@ struct VertexRelateBoneInfo {
 			bone_index_[i] = -1;
 		}
 		for (int i = 0; i < sizeof(bone_weight_); ++i) {
-			bone_weight_[i] = -1;
+			bone_weight_[i] = 0;
 		}
 	}
 	void Push(char bone_index, char bone_weight) {
 		for (int i = 0; i < sizeof(bone_index_); ++i) {
 			if (bone_index_[i] == -1) {
 				bone_index_[i] = bone_index;
-				if (bone_weight_[i] == -1) {
+				if (bone_weight_[i] == 0) {
 					bone_weight_[i] = bone_weight;
 					return;
 				}
@@ -102,26 +104,28 @@ void ComputeClusterDeformation(FbxAMatrix& pGlobalPosition, FbxMesh* pMesh, FbxC
 
 bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 {
-	if (!sdkManager)
+	if (!s_FbxSdkManager)
 	{
-		sdkManager = FbxManager::Create();
+		s_FbxSdkManager = FbxManager::Create();
 
-		FbxIOSettings* ios = FbxIOSettings::Create(sdkManager, IOSROOT);
-		sdkManager->SetIOSettings(ios);
+		FbxIOSettings* ios = FbxIOSettings::Create(s_FbxSdkManager, IOSROOT);
+		s_FbxSdkManager->SetIOSettings(ios);
 
 		//Load plugins from the executable directory (optional)
 		FbxString lPath = FbxGetApplicationDirectory();
-		sdkManager->LoadPluginsDirectory(lPath.Buffer());
+		s_FbxSdkManager->LoadPluginsDirectory(lPath.Buffer());
 
 		//Create an FBX scene. This object holds most objects imported/exported from/to files.
-		fbxScene = FbxScene::Create(sdkManager, "My Scene");
+		s_FbxScene = FbxScene::Create(s_FbxSdkManager, "My Scene");
 
-		fbxImporter = FbxImporter::Create(sdkManager, "");
 	}
 
 	s_SkeletalIndex = -1;
+	s_Bones.clear();
+
 	int lFileFormat = -1;
-	if (!sdkManager->GetIOPluginRegistry()->DetectReaderFileFormat(path.c_str(), lFileFormat))
+	auto fbxImporter = FbxImporter::Create(s_FbxSdkManager, "");
+	if (!s_FbxSdkManager->GetIOPluginRegistry()->DetectReaderFileFormat(path.c_str(), lFileFormat))
 	{
 		// 未能识别文件格式
 		return false;
@@ -134,7 +138,7 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	}
 
 	// 将FBX文件解析导入到Scene中
-	if (!fbxImporter->Import(fbxScene))
+	if (!fbxImporter->Import(s_FbxScene))
 	{
 		LOG("Call to FbxImporter::Import() failed.Error reported: %s", fbxImporter->GetStatus().GetErrorString());
 		return false;
@@ -143,7 +147,7 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	// 检查Scene完整性
 	FbxStatus status;
 	FbxArray<FbxString*> details;
-	FbxSceneCheckUtility sceneCheck(FbxCast<FbxScene>(fbxScene), &status, &details);
+	FbxSceneCheckUtility sceneCheck(FbxCast<FbxScene>(s_FbxScene), &status, &details);
 	//输出错误信息
 	if ((!sceneCheck.Validate(FbxSceneCheckUtility::eCkeckData) && details.GetCount() > 0) ||
 		(fbxImporter->GetStatus().GetCode() != FbxStatus::eSuccess))
@@ -152,26 +156,26 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	}
 
 	// 转换坐标系为右手坐标系。
-	FbxAxisSystem SceneAxisSystem = fbxScene->GetGlobalSettings().GetAxisSystem();
+	FbxAxisSystem SceneAxisSystem = s_FbxScene->GetGlobalSettings().GetAxisSystem();
 	FbxAxisSystem OurAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
 	if (SceneAxisSystem != OurAxisSystem)
 	{
-		OurAxisSystem.ConvertScene(fbxScene);
+		OurAxisSystem.ConvertScene(s_FbxScene);
 	}
 
 	// 转换单元长度
-	FbxSystemUnit SceneSystemUnit = fbxScene->GetGlobalSettings().GetSystemUnit();
+	FbxSystemUnit SceneSystemUnit = s_FbxScene->GetGlobalSettings().GetSystemUnit();
 	if (SceneSystemUnit.GetScaleFactor() != 1.0)
 	{
 		// 例子中用的是厘米，所以这里也要转换
-		FbxSystemUnit::cm.ConvertScene(fbxScene);
+		FbxSystemUnit::cm.ConvertScene(s_FbxScene);
 	}
 
 	// 转换曲面到三角形
-	FbxGeometryConverter lGeomConverter(sdkManager);
+	FbxGeometryConverter lGeomConverter(s_FbxSdkManager);
 	try
 	{
-		lGeomConverter.Triangulate(fbxScene, /*replace*/true);
+		lGeomConverter.Triangulate(s_FbxScene, /*replace*/true);
 	}
 	catch (std::runtime_error)
 	{
@@ -180,116 +184,244 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	}
 
 	// 递归解析节点
-	ParseNode(fbxScene->GetRootNode(), skeletalMeshData);
+	ParseNode(s_FbxScene->GetRootNode(), skeletalMeshData);
 	LOG("extra mesh success");
+
+	fbxImporter->Destroy();
 }
 
 void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 {
-	FbxNode* lNode = pMesh->GetNode();
-	if (!lNode)
+	if (!pMesh->GetNode())
 	{
-		LOG("Mesh has no node.");
+		LOG("parse fbx mesh node is null!");
 		return;
 	}
-	//DEBUG_LOG_INFO("Mesh name: {}", lNode->GetName());
-	// 获取Mesh多边形个数，对游戏来说就是三角形面数。
-	const int lPolygonCount = pMesh->GetPolygonCount();
-	// 是否有UV数据？
-	bool mHasUV = pMesh->GetElementUVCount() > 0;
-	bool mAllByControlPoint = true;
+
+	const int polygonCount = pMesh->GetPolygonCount();
+
+	//解析材质
+	FbxLayerElementArrayTemplate<int>* materialIndice = NULL;
+	FbxGeometryElement::EMappingMode materialMappingMode = FbxGeometryElement::eNone;
+	if (pMesh->GetElementMaterial())
+	{
+		materialIndice = &pMesh->GetElementMaterial()->GetIndexArray();
+		materialMappingMode = pMesh->GetElementMaterial()->GetMappingMode();
+		if (materialIndice && materialMappingMode == FbxGeometryElement::eByPolygon)
+		{
+			FBX_ASSERT(materialIndice->GetCount() == polygonCount);
+			if (materialIndice->GetCount() == polygonCount)
+			{
+				// Count the faces of each material
+				for (int i = 0; i < polygonCount; i++)
+				{
+					const int materialIndex = materialIndice->GetAt(i);
+					if (skeletalMeshData->Subsets.size() < materialIndex + 1)
+					{
+						skeletalMeshData->Subsets.resize(materialIndex + 1);
+					}
+					/*if (skeletalMeshData->Subsets[materialIndex] == nullptr)
+					{
+						mSubMeshes[lMaterialIndex] = new SubMesh;
+					}
+					mSubMeshes[lMaterialIndex]->TriangleCount += 1;*/
+				}
+
+				// Make sure we have no "holes" (NULL) in the mSubMeshes table. This can happen
+				// if, in the loop above, we resized the mSubMeshes by more than one slot.
+				/*for (int i = 0; i < mSubMeshes.GetCount(); i++)
+				{
+					if (mSubMeshes[i] == NULL)
+						mSubMeshes[i] = new SubMesh;
+				}*/
+
+				// Record the offset (how many vertex)
+				//const int lMaterialCount = mSubMeshes.GetCount();
+				//int lOffset = 0;
+				//for (int lIndex = 0; lIndex < lMaterialCount; ++lIndex)
+				//{
+				//	mSubMeshes[lIndex]->IndexOffset = lOffset;
+				//	lOffset += mSubMeshes[lIndex]->TriangleCount * 3;
+				//	// This will be used as counter in the following procedures, reset to zero
+				//	mSubMeshes[lIndex]->TriangleCount = 0;
+				//}
+				//FBX_ASSERT(lOffset == lPolygonCount * 3);
+			}
+		}
+	}
+
+
+	// All faces will use the same material.
+	if (skeletalMeshData->Subsets.size() == 0)
+	{
+		skeletalMeshData->Subsets.resize(1);
+	}
+
+	// Congregate all the data of a mesh to be cached in VBOs.
+	// If normal or UV is by polygon vertex, record all vertex attributes by polygon vertex.
+	bool allByControlPoint = true;
+	bool hasNormal = pMesh->GetElementNormalCount() > 0;
+	bool hasUV = pMesh->GetElementUVCount() > 0;
+
+	FbxGeometryElement::EMappingMode lNormalMappingMode = FbxGeometryElement::eNone;
 	FbxGeometryElement::EMappingMode lUVMappingMode = FbxGeometryElement::eNone;
-	if (mHasUV)
+	if (hasNormal)
+	{
+		lNormalMappingMode = pMesh->GetElementNormal(0)->GetMappingMode();
+		if (lNormalMappingMode == FbxGeometryElement::eNone)
+		{
+			hasNormal = false;
+		}
+		if (hasNormal && lNormalMappingMode != FbxGeometryElement::eByControlPoint)
+		{
+			allByControlPoint = false;
+		}
+	}
+	if (hasUV)
 	{
 		lUVMappingMode = pMesh->GetElementUV(0)->GetMappingMode();
 		if (lUVMappingMode == FbxGeometryElement::eNone)
 		{
-			mHasUV = false;
+			hasUV = false;
 		}
-		if (mHasUV && lUVMappingMode != FbxGeometryElement::eByControlPoint)
+		if (hasUV && lUVMappingMode != FbxGeometryElement::eByControlPoint)
 		{
-			mAllByControlPoint = false;
+			allByControlPoint = false;
 		}
 	}
-	// 最终顶点个数到底是多少？
-	// 如果只有一套UV，即UV映射方式是按实际顶点个数(FbxGeometryElement::eByControlPoint)，那么就是实际顶点个数。
-	// 如果有多套UV，那么一个顶点在不同的多边形里，会对应不同的UV坐标，即UV映射方式是按多边形(eByPolygonVertex)，那么顶点个数是多边形数*3.
-	int lPolygonVertexCount = mAllByControlPoint ? pMesh->GetControlPointsCount() : lPolygonCount * 3;
-	// 创建数组存放所有顶点坐标。
-	float* lVertices = new float[lPolygonVertexCount * 3];
-	// 创建数组存放索引数据，数组长度=面数*3.
-	unsigned short* lIndices = new unsigned short[lPolygonCount * 3];
-	// 获取多套UV名字
-	float* lUVs = NULL;
+
+	// Allocate the array memory, by control point or by polygon vertex.
+	allByControlPoint = true;
+	int polygonVertexCount = pMesh->GetControlPointsCount();
+	if (!allByControlPoint)
+	{
+		polygonVertexCount = polygonCount * 3;
+	}
+
+	skeletalMeshData->Vertices.resize(polygonVertexCount);
+	skeletalMeshData->Indices.resize(polygonCount * 3);
+	
 	FbxStringList lUVNames;
 	pMesh->GetUVSetNames(lUVNames);
 	const char* lUVName = NULL;
-	if (mHasUV && lUVNames.GetCount())
+	if (hasUV && lUVNames.GetCount())
 	{
-		// 创建数组存放UV数据
-		lUVs = new float[lPolygonVertexCount * 2];
-		// 暂时只使用第一套UV。
 		lUVName = lUVNames[0];
 	}
-	// 实际顶点数据。
-	const FbxVector4* lControlPoints = pMesh->GetControlPoints();
-	// 遍历所有三角面，遍历每个面的三个顶点，解析顶点坐标、UV坐标数据。
-	int lVertexCount = 0;
-	for (int lPolygonIndex = 0; lPolygonIndex < lPolygonCount; ++lPolygonIndex)
+
+	// Populate the array with vertex attribute, if by control point.
+	const FbxVector4* controlPoints = pMesh->GetControlPoints();
+	FbxVector4 currentVertex;
+	FbxVector4 currentNormal;
+	FbxVector2 currentUV;
+	if (allByControlPoint)
 	{
-		// 三角面，3个顶点
-		for (int lVerticeIndex = 0; lVerticeIndex < 3; ++lVerticeIndex)
+		const FbxGeometryElementNormal* normalElement = NULL;
+		const FbxGeometryElementUV* lUVElement = NULL;
+		if (hasNormal)
 		{
-			// 传入面索引，以及当前面的第几个顶点，获取顶点索引。
-			const int lControlPointIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
-			if (lControlPointIndex >= 0) {
-				// 因为设定一个顶点有多套UV，所以每个三角面与其他面相邻的共享的顶点，尽管实际上是同一个点(ControlPoint),因为有不同的UV，所以还是算不同的顶点。
-				lIndices[lVertexCount] = static_cast<unsigned short>(lVertexCount);
-				// 获取当前顶点索引对应的实际顶点。
-				FbxVector4 lCurrentVertex = lControlPoints[lControlPointIndex];
-				// 将顶点坐标从FbxVector4转为float数组
-				lVertices[lVertexCount * 3] = static_cast<float>(lCurrentVertex[0]);
-				lVertices[lVertexCount * 3 + 1] = static_cast<float>(lCurrentVertex[1]);
-				lVertices[lVertexCount * 3 + 2] = static_cast<float>(lCurrentVertex[2]);
-				if (mHasUV) {
-					// 获取当前顶点在指定UV层的UV坐标，前面说过，一个顶点可能有多套UV。
-					bool lUnmappedUV;
-					FbxVector2 lCurrentUV;
-					pMesh->GetPolygonVertexUV(lPolygonIndex, lVerticeIndex, lUVName, lCurrentUV, lUnmappedUV);
-					// 将UV坐标从FbxVector2转为float数组
-					lUVs[lVertexCount * 2] = static_cast<float>(lCurrentUV[0]);
-					lUVs[lVertexCount * 2 + 1] = static_cast<float>(lCurrentUV[1]);
+			normalElement = pMesh->GetElementNormal(0);
+		}
+		if (hasUV)
+		{
+			lUVElement = pMesh->GetElementUV(0);
+		}
+		for (int index = 0; index < polygonVertexCount; ++index)
+		{
+			// Save the vertex position.
+			currentVertex = controlPoints[index];
+			skeletalMeshData->Vertices[index].Pos.x = static_cast<float>(currentVertex[0]);
+			skeletalMeshData->Vertices[index].Pos.y = static_cast<float>(currentVertex[1]);
+			skeletalMeshData->Vertices[index].Pos.z = static_cast<float>(currentVertex[2]);
+
+			// Save the normal.
+			if (hasNormal)
+			{
+				int lNormalIndex = index;
+				if (normalElement->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+				{
+					lNormalIndex = normalElement->GetIndexArray().GetAt(index);
+				}
+				currentNormal = normalElement->GetDirectArray().GetAt(lNormalIndex);
+				skeletalMeshData->Vertices[index].Normal.x = static_cast<float>(currentNormal[0]);
+				skeletalMeshData->Vertices[index].Normal.y = static_cast<float>(currentNormal[1]);
+				skeletalMeshData->Vertices[index].Normal.z = static_cast<float>(currentNormal[2]);
+			}
+
+			// Save the UV.
+			if (hasUV)
+			{
+				int lUVIndex = index;
+				if (lUVElement->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+				{
+					lUVIndex = lUVElement->GetIndexArray().GetAt(index);
+				}
+				currentUV = lUVElement->GetDirectArray().GetAt(lUVIndex);
+				skeletalMeshData->Vertices[index].TexC.x = static_cast<float>(currentUV[0]);
+				skeletalMeshData->Vertices[index].TexC.y = static_cast<float>(currentUV[1]);
+			}
+		}
+
+	}
+
+	int vertexCount = 0;
+	for (int i = 0; i < polygonCount; i++)
+	{
+		// The material for current face.
+		int materialIndex = 0;
+		if (materialIndice && materialMappingMode == FbxGeometryElement::eByPolygon)
+		{
+			materialIndex = materialIndice->GetAt(i);
+		}
+
+		// Where should I save the vertex attribute index, according to the material
+		const uint32 indexOffset = skeletalMeshData->Subsets[materialIndex].IndexStart + skeletalMeshData->Subsets[materialIndex].IndexCount;
+
+		for (int j = 0; j < 3; j++)
+		{
+			const int controlPointIndex = pMesh->GetPolygonVertex(i, j);
+			// If the lControlPointIndex is -1, we probably have a corrupted mesh data. At this point,
+			// it is not guaranteed that the cache will work as expected.
+
+			if (controlPointIndex >= 0)
+			{
+				if (allByControlPoint)
+				{
+					skeletalMeshData->Indices[indexOffset + j] = static_cast<unsigned int>(controlPointIndex);
+				}
+				// Populate the array with vertex attribute, if by polygon vertex.
+				else
+				{
+					skeletalMeshData->Indices[indexOffset + j] = controlPointIndex;//static_cast<unsigned int>(vertexCount);
+
+					currentVertex = controlPoints[controlPointIndex];
+					skeletalMeshData->Vertices[controlPointIndex].Pos.x = static_cast<float>(currentVertex[0]);
+					skeletalMeshData->Vertices[controlPointIndex].Pos.y = static_cast<float>(currentVertex[1]);
+					skeletalMeshData->Vertices[controlPointIndex].Pos.z = static_cast<float>(currentVertex[2]);
+
+					if (hasNormal)
+					{
+						pMesh->GetPolygonVertexNormal(i, j, currentNormal);
+						skeletalMeshData->Vertices[controlPointIndex].Normal.x = static_cast<float>(currentNormal[0]);
+						skeletalMeshData->Vertices[controlPointIndex].Normal.y = static_cast<float>(currentNormal[1]);
+						skeletalMeshData->Vertices[controlPointIndex].Normal.z = static_cast<float>(currentNormal[2]);
+					}
+
+					if (hasUV)
+					{
+						bool bUnmappedUV;
+						pMesh->GetPolygonVertexUV(i, j, lUVName, currentUV, bUnmappedUV);
+						skeletalMeshData->Vertices[controlPointIndex].TexC.x = static_cast<float>(currentUV[0]);
+						skeletalMeshData->Vertices[controlPointIndex].TexC.y = static_cast<float>(currentUV[1]);
+					}
 				}
 			}
-			++lVertexCount;
+			++vertexCount;
+			LOG("point %d %d", controlPointIndex, vertexCount);
 		}
-	}
-	// 创建引擎Mesh文件，从FBX中解析数据填充到里面。
-	skeletalMeshData->Vertices.resize(lVertexCount);
-	skeletalMeshData->Indices.resize(lVertexCount);
-	auto tc = pMesh->GetElementTangentCount();
-	for (size_t i = 0; i < lVertexCount; i++)
-	{
-		skeletalMeshData->Vertices[i].Pos.x = lVertices[i * 3];
-		skeletalMeshData->Vertices[i].Pos.y = lVertices[i * 3 + 1];
-		skeletalMeshData->Vertices[i].Pos.z = lVertices[i * 3 + 2];
-		skeletalMeshData->Vertices[i].TexC.x = lUVs[i * 2];
-		skeletalMeshData->Vertices[i].TexC.y = lUVs[i * 2 + 1];
-		//data[i].color_ = glm::vec4(1.0f);
-		//data[i].uv_ = glm::vec2(lUVs[i * 2], lUVs[i * 2 + 1]);
-	}
 
-	for (size_t i = 0; i < lVertexCount; i++)
-	{
-		skeletalMeshData->Indices[i] = *lIndices++;
+		skeletalMeshData->Subsets[materialIndex].IndexCount += 3;
 	}
-
-	SkeletalSubset subset;
-	subset.VertexStart = 0;
-	subset.VertexCount = lVertexCount;
-	subset.IndexStart = 0;
-	subset.IndexCount = lVertexCount * 3;
-	skeletalMeshData->Subsets.push_back(subset);
 
 	auto shader = AssetManager::Get()->GetShader("opaque");//skeletalO
 	auto mat = Material::CreateMaterial("womenMat");
@@ -304,7 +436,7 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 	int lClusterCount = lSkinDeformer->GetClusterCount();
 
 	// 遍历骨骼
-	VertexRelateBoneInfo* vertex_relate_bone_infos_ = new VertexRelateBoneInfo[lVertexCount];
+	V_Array<VertexRelateBoneInfo> vertex_relate_bone_infos_(vertexCount);
 
 	//skeletalMeshData->BoneHierarchy.resize(lClusterCount);
 	for (int lClusterIndex = 0; lClusterIndex < lClusterCount; ++lClusterIndex)
@@ -325,38 +457,29 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 			//拿到这个簇中对这个顶点的权重
 			auto lWeight = lCluster->GetControlPointWeights()[k];
 			vertex_relate_bone_infos_[lIndex].Push(lClusterIndex, (int)(lWeight * 100));
+			LOG("weight %d %d %f", lIndex, lClusterIndex, lWeight);
 		}
 	}
-
-	//上面记录了所有实际顶点的权重，下面要设置到逻辑顶点上。
-	// 是否有UV数据？
-	mAllByControlPoint = true;
-	lUVMappingMode = FbxGeometryElement::eNone;
-	if (mHasUV) {
-		lUVMappingMode = pMesh->GetElementUV(0)->GetMappingMode();
-		if (lUVMappingMode == FbxGeometryElement::eNone) {
-			mHasUV = false;
-		}
-		if (mHasUV && lUVMappingMode != FbxGeometryElement::eByControlPoint) {
-			mAllByControlPoint = false;
-		}
-	}
-
+	
 	// 遍历所有三角面，遍历每个面的三个顶点，解析顶点坐标、UV坐标数据。
-	for (int lPolygonIndex = 0; lPolygonIndex < lPolygonCount; ++lPolygonIndex) {
+	for (int lPolygonIndex = 0; lPolygonIndex < polygonCount; ++lPolygonIndex)
+	{
 		// 三角面，3个顶点
-		for (int lVerticeIndex = 0; lVerticeIndex < 3; ++lVerticeIndex) {
+		for (int lVerticeIndex = 0; lVerticeIndex < 3; ++lVerticeIndex)
+		{
 			// 传入面索引，以及当前面的第几个顶点，获取顶点索引。
 			const int lControlPointIndex = pMesh->GetPolygonVertex(lPolygonIndex, lVerticeIndex);
-			if (lControlPointIndex >= 0) {
+			if (lControlPointIndex >= 0)
+			{
 				VertexRelateBoneInfo vertex_relate_bone_info = vertex_relate_bone_infos_[lControlPointIndex];
-				for (int i = 0; i < 4; ++i) {
+				for (int i = 0; i < 4; ++i)
+				{
 					char bone_index = vertex_relate_bone_info.bone_index_[i];
 					char weight = vertex_relate_bone_info.bone_weight_[i];
-					skeletalMeshData->Vertices[lPolygonIndex * 3 + lVerticeIndex].BoneIndices[i] = bone_index < 0 ? 0 : bone_index;
+					skeletalMeshData->Vertices[lControlPointIndex].BoneIndices[i] = bone_index < 0 ? 0 : bone_index;
 					if (i < 3)
 					{
-						skeletalMeshData->Vertices[lPolygonIndex * 3 + lVerticeIndex].BoneWeights[i] = weight/100.f;
+						skeletalMeshData->Vertices[lControlPointIndex].BoneWeights[i] = weight/100.f;
 					}
 				}
 			}
@@ -385,7 +508,7 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 		meshFile << "Roughness: " << skeletalMeshData->Materials[i]->Roughness << std::endl;
 		meshFile << "AlphaClip: " << 0 << std::endl;
 		meshFile << "MaterialTypeName: " << "opaque" << std::endl;
-		meshFile << "DiffuseMap: " << "jacket_diff.dds" << std::endl;
+		meshFile << "DiffuseMap: " << "fbx_extra_jiulian.dds" << std::endl;
 		meshFile << "NormalMap: " << "jacket_norm.dds" << std::endl;
 	}
 	meshFile << std::endl;
@@ -420,7 +543,7 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 	meshFile << "***************Triangles*********************" << std::endl;
 	for (size_t i = 0; i < skeletalMeshData->Indices.size(); i++)
 	{
-		meshFile << i;
+		meshFile << skeletalMeshData->Indices[i];
 		if (i > 0 && (i + 1) % 3 == 0)
 		{
 			meshFile << std::endl;
@@ -429,6 +552,23 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 		{
 			meshFile << " ";
 		}
+	}
+
+	meshFile << "***************BoneOffsets*******************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneOffsets.size(); i++)
+	{
+		meshFile<<"BoneOffset"<<i << " "<<
+			skeletalMeshData->BoneOffsets[i](0, 0) << skeletalMeshData->BoneOffsets[i](0, 1) << skeletalMeshData->BoneOffsets[i](0, 2) << skeletalMeshData->BoneOffsets[i](0, 3) <<
+			skeletalMeshData->BoneOffsets[i](1, 0) << skeletalMeshData->BoneOffsets[i](1, 1) << skeletalMeshData->BoneOffsets[i](1, 2) << skeletalMeshData->BoneOffsets[i](1, 3) <<
+			skeletalMeshData->BoneOffsets[i](2, 0) << skeletalMeshData->BoneOffsets[i](2, 1) << skeletalMeshData->BoneOffsets[i](2, 2) << skeletalMeshData->BoneOffsets[i](2, 3) <<
+			skeletalMeshData->BoneOffsets[i](3, 0) << skeletalMeshData->BoneOffsets[i](3, 1) << skeletalMeshData->BoneOffsets[i](3, 2) << skeletalMeshData->BoneOffsets[i](3, 3) <<
+		std::endl;
+	}
+
+	meshFile << "***************BoneHierarchy*****************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneHierarchy.size(); i++)
+	{
+
 	}
 }
 
@@ -456,27 +596,36 @@ void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSke
 
 			Transform transform;
 			auto t = pNode->LclTranslation.Get();
-			transform.Position = { (float)t.mData[0], (float)t.mData[1], (float)t.mData[2] };
+			transform.Position = { (float)t.mData[0], (float)t.mData[2], (float)t.mData[1] };
 
 			auto r = pNode->LclRotation.Get();
-			transform.Rotation = { (float)r.mData[0], (float)r.mData[1], (float)r.mData[2] };
+			transform.Rotation = { (float)r.mData[0], (float)r.mData[2], (float)r.mData[1] };
 
 			auto s = pNode->LclScaling.Get();
-			transform.Scale = { (float)s.mData[0], (float)s.mData[1], (float)s.mData[2] };
+			transform.Scale = { (float)s.mData[0], (float)s.mData[2], (float)s.mData[1] };
 
 			skeletalMeshData->BoneOffsets.push_back(transform);
+			s_Bones.push_back({ pNode->GetName(), pNode });
 
 			s_SkeletalIndex++;
 		}
+		else if (type == FbxNodeAttribute::eNull)
+		{
+			s_Bones.push_back({ pNode->GetName(), pNode });
+		}
+
+		
 	}
 
 	// 递归解析子节点
 	const int lChildCount = pNode->GetChildCount();
 
 	auto parentIndex = s_SkeletalIndex;
+	LOG("%s count %d", pNode->GetName(), lChildCount);
 	for (int lChildIndex = 0; lChildIndex < lChildCount; ++lChildIndex)
 	{
 		ParseNode(pNode->GetChild(lChildIndex), skeletalMeshData, parentIndex);
+		LOG("%s     %s", pNode->GetName(), pNode->GetChild(lChildIndex)->GetName());
 	}
 }
 
@@ -503,14 +652,15 @@ void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 //            int lSkinCount = pMesh->GetDeformerCount(FbxDeformer::eSkin);
 			//Engine::Animation animation;
 		FbxArray<FbxString*>animStackNameArray;
-		fbxScene->FillAnimStackNameArray(animStackNameArray);
+		s_FbxScene->FillAnimStackNameArray(animStackNameArray);
 		for (size_t i = 0; i < animStackNameArray.Size(); i++)
 		{
-			auto animBuffer = fbxScene->FindMember<FbxAnimStack>(animStackNameArray[i]->Buffer());
+			auto animBuffer = s_FbxScene->FindMember<FbxAnimStack>(animStackNameArray[i]->Buffer());
+			s_FbxScene->SetCurrentAnimationStack(animBuffer);
 
 			// 获取动画片段的时间范围
 			FbxTime mStart, mStop;
-			FbxTakeInfo* lCurrentTakeInfo = fbxScene->GetTakeInfo(*(animStackNameArray[i]));
+			FbxTakeInfo* lCurrentTakeInfo = s_FbxScene->GetTakeInfo(*(animStackNameArray[i]));
 			if (lCurrentTakeInfo)
 			{
 				mStart = lCurrentTakeInfo->mLocalTimeSpan.GetStart();
@@ -518,39 +668,61 @@ void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 			}
 
 			AnimationClip animationClip;
-			FbxTime::EMode lTimeMode = fbxScene->GetGlobalSettings().GetTimeMode();
+			FbxTime::EMode lTimeMode = s_FbxScene->GetGlobalSettings().GetTimeMode();
 			//animation.frame_per_second_ = fbxsdk::FbxTime::GetFrameRate(lTimeMode);
 
 			// 每一帧的时间
 			FbxTime mFrameTime;
-			mFrameTime.SetTime(0, 0, 0, 1, 0, fbxScene->GetGlobalSettings().GetTimeMode());
+			mFrameTime.SetTime(0, 0, 0, 1, 0, s_FbxScene->GetGlobalSettings().GetTimeMode());
 			int lSkinIndex = 0;
 			FbxSkin* lSkinDeformer = (FbxSkin*)pMesh->GetDeformer(lSkinIndex, FbxDeformer::eSkin);
 
-			animationClip.BoneAnimations.resize(lSkinDeformer->GetClusterCount());
+			animationClip.BoneAnimations.resize(s_Bones.size() - 1);
 			for (FbxTime pTime = mStart; pTime < mStop; pTime += mFrameTime)
 			{
-				// 首先获取当前节点的全局坐标
-				FbxAMatrix lGlobalPosition = pNode->EvaluateGlobalTransform(pTime);
-				FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;//相乘获得pNode在当前时间相对原点的坐标。
-
-				//V_Array<Matrix4x4> one_frame_bone_matrix_vec;//一帧的所有骨骼变换矩阵
-				auto count = lSkinDeformer->GetClusterCount();
-				for (int lClusterIndex = 0; lClusterIndex < count; ++lClusterIndex)
+				for (size_t i = 0; i < s_Bones.size(); i++)
 				{
 					Keyframe frame;
+					auto t = s_Bones[i].second->EvaluateLocalTranslation(pTime);
+					auto r = s_Bones[i].second->EvaluateLocalRotation(pTime);
+					auto s = s_Bones[i].second->EvaluateLocalScaling(pTime);
+
+					frame.Translation.x = t.mData[0];
+					frame.Translation.y = t.mData[1];
+					frame.Translation.z = t.mData[2];
+
+					frame.RotationQuat = VectorToQuaternion({ (float)r.mData[0], (float)r.mData[1], (float)r.mData[2], (float)r.mData[3] });
+
+					frame.Scale.x = s.mData[0];
+					frame.Scale.y = s.mData[1];
+					frame.Scale.z = s.mData[2];
+
 					frame.TimePos = (float)pTime.GetSecondDouble();
-
-					// 获取骨骼的顶点组
-					FbxCluster* lCluster = lSkinDeformer->GetCluster(lClusterIndex);
-					// 计算这个骨骼的形变，前面pNode是指计算到Mesh节点的形变，而这是是计算骨骼节点，后面会作用到顶点。
-					FbxAMatrix lVertexTransformMatrix;
-					ComputeClusterDeformation(lGlobalOffPosition, pMesh, lCluster, lVertexTransformMatrix, pTime);
-					frame.BoneMatrix = FbxMatrixToGlmMat4(lVertexTransformMatrix);
-
-
-					animationClip.BoneAnimations[lClusterIndex].Keyframes.push_back(frame);
+					animationClip.BoneAnimations[i].Keyframes.push_back(frame);
 				}
+				
+				//// 首先获取当前节点的全局坐标
+				//FbxAMatrix lGlobalPosition = pNode->EvaluateGlobalTransform(pTime);
+				//FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;//相乘获得pNode在当前时间相对原点的坐标。
+
+				////V_Array<Matrix4x4> one_frame_bone_matrix_vec;//一帧的所有骨骼变换矩阵
+				//auto count = lSkinDeformer->GetClusterCount();
+				//for (int lClusterIndex = 0; lClusterIndex < count; ++lClusterIndex)
+				//{
+				//	Keyframe frame;
+				//	frame.TimePos = (float)pTime.GetSecondDouble();
+
+				//	// 获取骨骼的顶点组
+				//	FbxCluster* lCluster = lSkinDeformer->GetCluster(lClusterIndex);
+				//	
+				//	// 计算这个骨骼的形变，前面pNode是指计算到Mesh节点的形变，而这是是计算骨骼节点，后面会作用到顶点。
+				//	FbxAMatrix lVertexTransformMatrix;
+				//	ComputeClusterDeformation(lGlobalOffPosition, pMesh, lCluster, lVertexTransformMatrix, pTime);
+				//	frame.BoneMatrix = FbxMatrixToGlmMat4(lVertexTransformMatrix);
+
+
+				//	animationClip.BoneAnimations[lClusterIndex].Keyframes.push_back(frame);
+				//}
 
 				//animation.frame_bones_matrix_vec_.push_back(one_frame_bone_matrix_vec);
 			}//lClusterCount

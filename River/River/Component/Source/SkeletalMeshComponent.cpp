@@ -20,8 +20,8 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	m_AnimTimePos += deltaTime;
 
 	auto& skelatalData = m_SkeletalMesh->GetSkeletalMeshData();
-	auto& currAnim = skelatalData->AnimClips.find("Take1");
-	//auto& currAnim = skelatalData->AnimClips.find("Bip001|Bip001|Take 001|BaseLayer");
+	//auto& currAnim = skelatalData->AnimClips.find("Take1");
+	auto& currAnim = skelatalData->AnimClips.find("Bip001|Bip001|Take 001|BaseLayer");
 	if (currAnim == skelatalData->AnimClips.end())
 	{
 		return;
@@ -37,7 +37,6 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	m_FinalTransforms.resize(skelatalData->BoneHierarchy.size());
 	std::vector<Matrix4x4> toParentTransforms(numBones);
 
-	//currAnim->second.Interpolate(m_AnimTimePos, m_FinalTransforms);
 	currAnim->second.Interpolate(m_AnimTimePos, toParentTransforms);
 	std::vector<Matrix4x4> toRootTransforms(numBones);
 
@@ -48,6 +47,10 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 		auto toParent = toParentTransforms[i];
 
 		int parentIndex = skelatalData->BoneHierarchy[i];
+		if (parentIndex < 0)
+		{
+			parentIndex = 0;
+		}
 		auto parentToRoot = toRootTransforms[parentIndex];
 
 		auto toRoot = Matrix4x4::Multiply(toParent, parentToRoot);
