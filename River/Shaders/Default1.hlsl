@@ -46,7 +46,8 @@ VertexOut VS(VertexIn vin)
 
 	// Fetch the material data.
 	MaterialData matData = gMaterialData[gMaterialIndex];
-	
+
+//#define SKINNED
 #ifdef SKINNED
     float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     weights[0] = vin.BoneWeights.x;
@@ -57,15 +58,29 @@ VertexOut VS(VertexIn vin)
     float3 posL = float3(0.0f, 0.0f, 0.0f);
     float3 normalL = float3(0.0f, 0.0f, 0.0f);
     float3 tangentL = float3(0.0f, 0.0f, 0.0f);
+    
+    float4x4 m4 = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
     for(int i = 0; i < 4; ++i)
     {
         // Assume no nonuniform scaling when transforming normals, so 
         // that we do not have to use the inverse-transpose.
 
-        posL += weights[i] * mul(float4(vin.PosL, 1.0f), gBoneTransforms[vin.BoneIndices[i]]).xyz;
+        float4x4 trans = gBoneTransforms[vin.BoneIndices[i]];
+        posL += weights[i] * mul(float4(vin.PosL, 1.0f), trans).xyz;
         normalL += weights[i] * mul(vin.NormalL, (float3x3)gBoneTransforms[vin.BoneIndices[i]]);
         tangentL += weights[i] * mul(vin.TangentL.xyz, (float3x3)gBoneTransforms[vin.BoneIndices[i]]);
+
+        m4._11_12_13_14 = trans._11_12_13_14 * weights[i] + m4._11_12_13_14;
+        m4._21_22_23_24 = trans._21_22_23_24 * weights[i] + m4._21_22_23_24;
+        m4._31_32_33_34 = trans._31_32_33_34 * weights[i] + m4._31_32_33_34;
+        m4._41_42_43_44 = trans._41_42_43_44 * weights[i] + m4._41_42_43_44;
     }
+
+    float4x4 am = { 1,0,0,0, 0,1,0,0, 0,0,1,0, vin.PosL, 1};
+    
+    float4x4 m5 = { m4._11_21_31_41, m4._12_22_32_42, m4._13_23_33_43, m4._14_24_34_44 };
+    float4x4 ppos = mul(am, m5);
+    posL = (ppos._41_42_43_44).xyz;
 
     vin.PosL = posL;
     vin.NormalL = normalL;

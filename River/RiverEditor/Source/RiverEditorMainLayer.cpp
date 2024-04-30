@@ -192,6 +192,8 @@ bool RiverEditorMainLayer::OnEvent(const Event& e)
 		return OnMouseRelease(e);
 	case EventType::MouseMoved:
 		return OnMouseMove(e);
+	case EventType::MouseLeave:
+		return OnMouseLeave();
 	default:
 		break;
 	}

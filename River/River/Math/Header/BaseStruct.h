@@ -253,6 +253,34 @@ struct Float4
 		return *((float*)this + i);
 	}
 
+	Float4 operator*(float v)
+	{
+		return { x * v, y * v, z * v, w * v };
+	}
+
+	Float4 operator/(float v)
+	{
+		return { x / v, y / v, z / v, w / v };
+	}
+
+	Float4 operator+=(const Float4& v)
+	{
+		x += v.x;
+		y += v.y;
+		z += v.z;
+		w += v.w;
+		return *this;
+	}
+
+	Float4 operator-=(const Float4& v)
+	{
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		w -= v.w;
+		return *this;
+	}
+
 	unsigned int& GetUintIndex(int i)
 	{
 		return *((unsigned int*)this + i);
@@ -316,7 +344,7 @@ struct Matrix4x4
 		float m[4][4];
 	};
 
-	Matrix4x4() = default;
+	Matrix4x4() { memset(this, 0, sizeof(Matrix4x4)); };
 
 	Matrix4x4(const Matrix4x4&) = default;
 	Matrix4x4& operator=(const Matrix4x4&) = default;
@@ -381,9 +409,53 @@ struct Matrix4x4
 		return mResult;
 	}
 
+	Matrix4x4 operator+(const Matrix4x4& other)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				m[i][j] += other.m[i][j];
+			}
+		}
+
+		return *this;
+	}
+
+	Matrix4x4 operator-(const Matrix4x4& other)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				m[i][j] -= other.m[i][j];
+			}
+		}
+
+		return *this;
+	}
+
 	Matrix4x4 operator*(const Matrix4x4& M) const noexcept
 	{
 		return Multiply(*this, M);
+	}
+
+	Matrix4x4 operator*(float v) const noexcept
+	{
+		return { m[0][0] * v, m[0][1] * v, m[0][2] * v, m[0][3] * v,
+				 m[1][0] * v, m[1][1] * v, m[1][2] * v, m[1][3] * v,
+				 m[2][0] * v, m[2][1] * v, m[2][2] * v, m[2][3] * v,
+				 m[3][0] * v, m[3][1] * v, m[3][2] * v, m[3][3] * v };
+	}
+
+	Matrix4x4& operator+=(const Matrix4x4& other) noexcept
+	{
+		m[0][0] += other.m[0][0]; m[0][1] += other.m[0][1]; m[0][2] += other.m[0][2]; m[0][3] += other.m[0][3];
+		m[1][0] += other.m[1][0]; m[1][1] += other.m[1][1]; m[1][2] += other.m[1][2]; m[1][3] += other.m[1][3];
+		m[2][0] += other.m[2][0]; m[2][1] += other.m[2][1]; m[2][2] += other.m[2][2]; m[2][3] += other.m[2][3];
+		m[3][0] += other.m[3][0]; m[3][1] += other.m[3][1]; m[3][2] += other.m[3][2]; m[3][3] += other.m[3][3];
+
+		return *this;
 	}
 
 	static Matrix4x4 UnitMatrix()

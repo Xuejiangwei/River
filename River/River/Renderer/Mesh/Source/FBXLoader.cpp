@@ -14,11 +14,12 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData);
 void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData);
 void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSkeletalIndex = -1);
 void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData);
+void WriteToFile(SkeletalMeshData* skeletalMeshData);
 
 static FbxManager* s_FbxSdkManager = nullptr;
 static FbxScene* s_FbxScene = nullptr;
 static int s_SkeletalIndex = -1;
-static V_Array<Pair<String, FbxNode*<< s_Bones;
+static V_Array<Pair<String, Pair<FbxNode*, FbxCluster*>>> s_Bones;
 
 struct VertexRelateBoneInfo {
 	char bone_index_[4];//骨骼索引，一般骨骼少于128个，用char就行。
@@ -67,35 +68,38 @@ void ComputeClusterDeformation(FbxAMatrix& pGlobalPosition, FbxMesh* pMesh, FbxC
 	if (lClusterMode == FbxCluster::eNormalize)
 	{
 		FbxAMatrix lReferenceGlobalInitPosition;
+		FbxAMatrix lReferenceGlobalCurrentPosition;
 		FbxAMatrix lAssociateGlobalInitPosition;
 		FbxAMatrix lAssociateGlobalCurrentPosition;
 		FbxAMatrix lClusterGlobalInitPosition;
 		FbxAMatrix lClusterGlobalCurrentPosition;
 
+		FbxAMatrix lReferenceGeometry;
 		FbxAMatrix lAssociateGeometry;
 		FbxAMatrix lClusterGeometry;
 
 		FbxAMatrix lClusterRelativeInitPosition;
 		FbxAMatrix lClusterRelativeCurrentPositionInverse;
 		pCluster->GetTransformMatrix(lReferenceGlobalInitPosition);
+		lReferenceGlobalCurrentPosition = pGlobalPosition;
 		// Multiply lReferenceGlobalInitPosition by Geometric Transformation
+
 		const FbxVector4 lT = pMesh->GetNode()->GetGeometricTranslation(FbxNode::eSourcePivot);
 		const FbxVector4 lR = pMesh->GetNode()->GetGeometricRotation(FbxNode::eSourcePivot);
 		const FbxVector4 lS = pMesh->GetNode()->GetGeometricScaling(FbxNode::eSourcePivot);
-		FbxAMatrix lReferenceGeometry = FbxAMatrix(lT, lR, lS);
 
+		lReferenceGeometry = FbxAMatrix(lT, lR, lS);
 		lReferenceGlobalInitPosition *= lReferenceGeometry;
 
 		// Get the link initial global position and the link current global position.
 		pCluster->GetTransformLinkMatrix(lClusterGlobalInitPosition);
-
 		lClusterGlobalCurrentPosition = pCluster->GetLink()->EvaluateGlobalTransform(pTime);
 
 		// Compute the initial position of the link relative to the reference.
 		lClusterRelativeInitPosition = lClusterGlobalInitPosition.Inverse() * lReferenceGlobalInitPosition;
 
 		// Compute the current position of the link relative to the reference.
-		lClusterRelativeCurrentPositionInverse = pGlobalPosition.Inverse() * lClusterGlobalCurrentPosition;
+		lClusterRelativeCurrentPositionInverse = lReferenceGlobalCurrentPosition.Inverse() * lClusterGlobalCurrentPosition;
 
 		// Compute the shift of the link relative to the reference.
 		pVertexTransformMatrix = lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
@@ -155,7 +159,7 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 		return false;
 	}
 
-	// 转换坐标系为右手坐标系。
+	// 转换坐标系。
 	FbxAxisSystem SceneAxisSystem = s_FbxScene->GetGlobalSettings().GetAxisSystem();
 	FbxAxisSystem OurAxisSystem(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eRightHanded);
 	if (SceneAxisSystem != OurAxisSystem)
@@ -255,6 +259,7 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 	if (skeletalMeshData->Subsets.size() == 0)
 	{
 		skeletalMeshData->Subsets.resize(1);
+		skeletalMeshData->Subsets[0].Id = 0;
 	}
 
 	// Congregate all the data of a mesh to be cached in VBOs.
@@ -423,10 +428,13 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 		skeletalMeshData->Subsets[materialIndex].IndexCount += 3;
 	}
 
-	auto shader = AssetManager::Get()->GetShader("opaque");//skeletalO
+	skeletalMeshData->Subsets[0].VertexCount = skeletalMeshData->Vertices.size();
+	auto shader = AssetManager::Get()->GetShader("skeletalOpaque");//skeletalO
 	auto mat = Material::CreateMaterial("womenMat");
 	mat->MatCBIndex = 1;
 	mat->m_Shader = shader;
+	mat->m_DiffuseTexture = AssetManager::Get()->GetTexture("jiulian");
+	mat->m_NormalTexture = AssetManager::Get()->GetTexture("bricksNormalMap");
 	skeletalMeshData->Materials.push_back(mat);
 
 	// 获取蒙皮修改器
@@ -448,6 +456,25 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 
 		// 获取骨骼的顶点组
 		FbxCluster* lCluster = lSkinDeformer->GetCluster(lClusterIndex);
+		auto linkBone = lCluster->GetLink();
+		auto name = linkBone->GetName();
+
+		int boneIndex = -1;
+		for (size_t i = 0; i < s_Bones.size(); i++)
+		{
+			if (s_Bones[i].first == name)
+			{
+				if (s_Bones[i].second.second)
+				{
+					LOG("has set %s", s_Bones[i].first.c_str());
+				}
+
+				boneIndex = i;
+				s_Bones[i].second.second = lCluster;
+				break;
+			}
+		}
+
 		// 获取这个顶点组影响的顶点索引数量
 		int lVertexIndexCount = lCluster->GetControlPointIndicesCount();
 		for (int k = 0; k < lVertexIndexCount; ++k)
@@ -456,7 +483,7 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 			int lIndex = lCluster->GetControlPointIndices()[k];
 			//拿到这个簇中对这个顶点的权重
 			auto lWeight = lCluster->GetControlPointWeights()[k];
-			vertex_relate_bone_infos_[lIndex].Push(lClusterIndex, (int)(lWeight * 100));
+			vertex_relate_bone_infos_[lIndex].Push(boneIndex, (int)(lWeight * 100));
 			LOG("weight %d %d %f", lIndex, lClusterIndex, lWeight);
 		}
 	}
@@ -485,91 +512,6 @@ void ParseMesh(const FbxMesh* pMesh, SkeletalMeshData* skeletalMeshData)
 			}
 		}
 	}
-
-	LOG("");
-	// 写入文件
-	std::ofstream meshFile("F:\\GitHub\\River\\River\\Models\\women.m3d");
-
-	meshFile << "***************m3d-File-Header*******************" << std::endl;
-	meshFile << "#Materials " << skeletalMeshData->Materials.size() << std::endl;
-	meshFile << "#Vertices " << skeletalMeshData->Vertices.size() << std::endl;
-	meshFile << "#Triangles " << skeletalMeshData->Indices.size() / 3 << std::endl;
-	meshFile << "#Bones " << skeletalMeshData->BoneHierarchy.size() << std::endl;
-	meshFile << "#AnimationClips " << 0 << std::endl << std::endl;
-
-	meshFile << "***************Materials*********************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->Materials.size(); i++)
-	{
-		meshFile << "Name: " << skeletalMeshData->Materials[i]->m_Name + "1" << std::endl;
-		meshFile << "Diffuse: " << skeletalMeshData->Materials[i]->DiffuseAlbedo.r << " " << skeletalMeshData->Materials[i]->DiffuseAlbedo.g << " "
-			<< skeletalMeshData->Materials[i]->DiffuseAlbedo.b << std::endl;
-		meshFile << "Fresnel0: " << skeletalMeshData->Materials[i]->FresnelR0.x << " " << skeletalMeshData->Materials[i]->FresnelR0.y << " "
-			<< skeletalMeshData->Materials[i]->FresnelR0.z << std::endl;
-		meshFile << "Roughness: " << skeletalMeshData->Materials[i]->Roughness << std::endl;
-		meshFile << "AlphaClip: " << 0 << std::endl;
-		meshFile << "MaterialTypeName: " << "opaque" << std::endl;
-		meshFile << "DiffuseMap: " << "fbx_extra_jiulian.dds" << std::endl;
-		meshFile << "NormalMap: " << "jacket_norm.dds" << std::endl;
-	}
-	meshFile << std::endl;
-
-	meshFile << "***************SubsetTable*******************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->Subsets.size(); i++)
-	{
-		meshFile << "SubsetID: " << skeletalMeshData->Subsets[i].Id << " VertexStart: " << skeletalMeshData->Subsets[i].VertexStart << " VertexCount: " << skeletalMeshData->Subsets[i].VertexCount
-			<< " FaceStart: " << skeletalMeshData->Subsets[i].IndexStart / 3 << " FaceCount: " << skeletalMeshData->Subsets[i].IndexCount / 3 << std::endl;
-	}
-	meshFile << std::endl;
-
-	meshFile << "***************Vertices**********************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->Vertices.size(); i++)
-	{
-		meshFile << "Position: " << skeletalMeshData->Vertices[i].Pos.x << " " << skeletalMeshData->Vertices[i].Pos.y << " " <<
-			skeletalMeshData->Vertices[i].Pos.z << std::endl;
-		meshFile << "Tangent: " << skeletalMeshData->Vertices[i].TangentU.x << " " << skeletalMeshData->Vertices[i].TangentU.y << " " <<
-			skeletalMeshData->Vertices[i].TangentU.z << " " << 1 << std::endl;
-		meshFile << "Normal: " << skeletalMeshData->Vertices[i].Normal.x << " " << skeletalMeshData->Vertices[i].Normal.y << " " <<
-			skeletalMeshData->Vertices[i].Normal.z << std::endl;
-		meshFile << "Tex-Coords: " << skeletalMeshData->Vertices[i].TexC.x << " " << skeletalMeshData->Vertices[i].TexC.y << std::endl;
-		meshFile << "BlendWeights: " << skeletalMeshData->Vertices[i].BoneWeights.x << " " << skeletalMeshData->Vertices[i].BoneWeights.y << " " <<
-			skeletalMeshData->Vertices[i].BoneWeights.z << " " << 
-			(1 - (skeletalMeshData->Vertices[i].BoneWeights.x + skeletalMeshData->Vertices[i].BoneWeights.y + skeletalMeshData->Vertices[i].BoneWeights.z)) << std::endl;
-		meshFile << "BlendIndices: " << (int)skeletalMeshData->Vertices[i].BoneIndices[0] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[1] << " " <<
-			(int)skeletalMeshData->Vertices[i].BoneIndices[2] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[3] << std::endl;
-
-		meshFile << std::endl;
-	}
-
-	meshFile << "***************Triangles*********************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->Indices.size(); i++)
-	{
-		meshFile << skeletalMeshData->Indices[i];
-		if (i > 0 && (i + 1) % 3 == 0)
-		{
-			meshFile << std::endl;
-		}
-		else
-		{
-			meshFile << " ";
-		}
-	}
-
-	meshFile << "***************BoneOffsets*******************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->BoneOffsets.size(); i++)
-	{
-		meshFile<<"BoneOffset"<<i << " "<<
-			skeletalMeshData->BoneOffsets[i](0, 0) << skeletalMeshData->BoneOffsets[i](0, 1) << skeletalMeshData->BoneOffsets[i](0, 2) << skeletalMeshData->BoneOffsets[i](0, 3) <<
-			skeletalMeshData->BoneOffsets[i](1, 0) << skeletalMeshData->BoneOffsets[i](1, 1) << skeletalMeshData->BoneOffsets[i](1, 2) << skeletalMeshData->BoneOffsets[i](1, 3) <<
-			skeletalMeshData->BoneOffsets[i](2, 0) << skeletalMeshData->BoneOffsets[i](2, 1) << skeletalMeshData->BoneOffsets[i](2, 2) << skeletalMeshData->BoneOffsets[i](2, 3) <<
-			skeletalMeshData->BoneOffsets[i](3, 0) << skeletalMeshData->BoneOffsets[i](3, 1) << skeletalMeshData->BoneOffsets[i](3, 2) << skeletalMeshData->BoneOffsets[i](3, 3) <<
-		std::endl;
-	}
-
-	meshFile << "***************BoneHierarchy*****************" << std::endl;
-	for (size_t i = 0; i < skeletalMeshData->BoneHierarchy.size(); i++)
-	{
-
-	}
 }
 
 void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSkeletalIndex)
@@ -589,6 +531,7 @@ void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSke
 			}
 
 			ParseAniamtion(pNode, skeletalMeshData);
+			WriteToFile(skeletalMeshData);
 		}
 		else if (type == FbxNodeAttribute::eSkeleton)
 		{
@@ -596,23 +539,23 @@ void ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int parentSke
 
 			Transform transform;
 			auto t = pNode->LclTranslation.Get();
-			transform.Position = { (float)t.mData[0], (float)t.mData[2], (float)t.mData[1] };
+			transform.Position = { (float)t.mData[0], (float)t.mData[1], (float)t.mData[2] };
 
 			auto r = pNode->LclRotation.Get();
-			transform.Rotation = { (float)r.mData[0], (float)r.mData[2], (float)r.mData[1] };
+			transform.Rotation = { (float)r.mData[0], (float)r.mData[1], (float)r.mData[2] };
 
 			auto s = pNode->LclScaling.Get();
-			transform.Scale = { (float)s.mData[0], (float)s.mData[2], (float)s.mData[1] };
+			transform.Scale = { (float)s.mData[0], (float)s.mData[1], (float)s.mData[2] };
 
 			skeletalMeshData->BoneOffsets.push_back(transform);
-			s_Bones.push_back({ pNode->GetName(), pNode });
+			s_Bones.push_back({ pNode->GetName(),  { pNode, nullptr } });
 
 			s_SkeletalIndex++;
 		}
-		else if (type == FbxNodeAttribute::eNull)
+		/*else if (type == FbxNodeAttribute::eNull)
 		{
 			s_Bones.push_back({ pNode->GetName(), pNode });
-		}
+		}*/
 
 		
 	}
@@ -677,13 +620,25 @@ void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 			int lSkinIndex = 0;
 			FbxSkin* lSkinDeformer = (FbxSkin*)pMesh->GetDeformer(lSkinIndex, FbxDeformer::eSkin);
 
-			animationClip.BoneAnimations.resize(s_Bones.size() - 1);
+			animationClip.BoneAnimations.resize(s_Bones.size());
+			
 			for (FbxTime pTime = mStart; pTime < mStop; pTime += mFrameTime)
 			{
+				FbxAMatrix globalPos;
+				globalPos = pNode->EvaluateLocalTransform(pTime);
 				for (size_t i = 0; i < s_Bones.size(); i++)
 				{
 					Keyframe frame;
-					auto t = s_Bones[i].second->EvaluateLocalTranslation(pTime);
+					frame.TimePos = (float)pTime.GetSecondDouble();
+
+					FbxAMatrix trans;
+					if (s_Bones[i].second.second)
+					{
+						ComputeClusterDeformation(globalPos, pMesh, s_Bones[i].second.second, trans, pTime);
+					}
+
+
+					/*auto t = s_Bones[i].second->EvaluateLocalTranslation(pTime);
 					auto r = s_Bones[i].second->EvaluateLocalRotation(pTime);
 					auto s = s_Bones[i].second->EvaluateLocalScaling(pTime);
 
@@ -695,9 +650,28 @@ void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 
 					frame.Scale.x = s.mData[0];
 					frame.Scale.y = s.mData[1];
-					frame.Scale.z = s.mData[2];
+					frame.Scale.z = s.mData[2];*/
 
-					frame.TimePos = (float)pTime.GetSecondDouble();
+					
+					//auto m = s_Bones[i].second->EvaluateLocalTransform(pTime);
+					/*LOG("1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
+						m.Get(0, 0), m.Get(0, 1), m.Get(0, 2), m.Get(0, 3),
+						m.Get(1, 0), m.Get(1, 2), m.Get(1, 3), m.Get(1, 0),
+						m.Get(2, 0), m.Get(2, 2), m.Get(2, 3), m.Get(2, 0),
+						m.Get(3, 0), m.Get(3, 2), m.Get(3, 3), m.Get(3, 0));
+
+					LOG("2 %f,%f,%f,  %f,%f,%f,  %f,%f,%f,%f",
+						frame.Translation.x, frame.Translation.y, frame.Translation.z, frame.Scale.x, frame.Scale.y, frame.Scale.z,
+						frame.RotationQuat.x, frame.RotationQuat.y, frame.RotationQuat.z, frame.RotationQuat.w);*/
+
+					for (size_t k = 0; k < 4; k++)
+					{
+						for (size_t j = 0; j < 4; j++)
+						{
+							frame.trans.m[k][j] = (float)trans.Get(k, j);
+						}
+					}
+					
 					animationClip.BoneAnimations[i].Keyframes.push_back(frame);
 				}
 				
@@ -729,7 +703,121 @@ void ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 			//animation.frame_count_ = animation.frame_bones_matrix_vec_.size();
 			//animation.Write(fmt::format("../data/animation/fbx_extra_{}.skeleton_anim", animation.name_).c_str());
 
-			skeletalMeshData->AnimClips[animBuffer->GetName()] = animationClip;
+			
+			skeletalMeshData->AnimClips["anim" + std::to_string(i)] = animationClip;
 		}
+	}
+}
+
+void WriteToFile(SkeletalMeshData* skeletalMeshData)
+{
+	// 写入文件
+	std::ofstream meshFile("F:\\GitHub\\River\\River\\Models\\women.m3d");
+
+	meshFile << "***************m3d-File-Header*******************" << std::endl;
+	meshFile << "#Materials " << skeletalMeshData->Materials.size() << std::endl;
+	meshFile << "#Vertices " << skeletalMeshData->Vertices.size() << std::endl;
+	meshFile << "#Triangles " << skeletalMeshData->Indices.size() / 3 << std::endl;
+	meshFile << "#Bones " << skeletalMeshData->BoneHierarchy.size() << std::endl;
+	meshFile << "#AnimationClips " << skeletalMeshData->AnimClips.size() << std::endl << std::endl;
+
+	meshFile << "***************Materials*********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Materials.size(); i++)
+	{
+		meshFile << "Name: " << skeletalMeshData->Materials[i]->m_Name + "1" << std::endl;
+		meshFile << "Diffuse: " << skeletalMeshData->Materials[i]->DiffuseAlbedo.r << " " << skeletalMeshData->Materials[i]->DiffuseAlbedo.g << " "
+			<< skeletalMeshData->Materials[i]->DiffuseAlbedo.b << std::endl;
+		meshFile << "Fresnel0: " << skeletalMeshData->Materials[i]->FresnelR0.x << " " << skeletalMeshData->Materials[i]->FresnelR0.y << " "
+			<< skeletalMeshData->Materials[i]->FresnelR0.z << std::endl;
+		meshFile << "Roughness: " << skeletalMeshData->Materials[i]->Roughness << std::endl;
+		meshFile << "AlphaClip: " << 0 << std::endl;
+		meshFile << "MaterialTypeName: " << "Skinned" << std::endl;
+		meshFile << "DiffuseMap: " << "fbx_extra_jiulian.dds" << std::endl;
+		meshFile << "NormalMap: " << "jacket_norm.dds" << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************SubsetTable*******************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Subsets.size(); i++)
+	{
+		meshFile << "SubsetID: " << skeletalMeshData->Subsets[i].Id << " VertexStart: " << skeletalMeshData->Subsets[i].VertexStart << " VertexCount: " << skeletalMeshData->Subsets[i].VertexCount
+			<< " FaceStart: " << skeletalMeshData->Subsets[i].IndexStart / 3 << " FaceCount: " << skeletalMeshData->Subsets[i].IndexCount / 3 << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************Vertices**********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Vertices.size(); i++)
+	{
+		meshFile << "Position: " << skeletalMeshData->Vertices[i].Pos.x << " " << skeletalMeshData->Vertices[i].Pos.y << " " <<
+			skeletalMeshData->Vertices[i].Pos.z << std::endl;
+		meshFile << "Tangent: " << skeletalMeshData->Vertices[i].TangentU.x << " " << skeletalMeshData->Vertices[i].TangentU.y << " " <<
+			skeletalMeshData->Vertices[i].TangentU.z << " " << 1 << std::endl;
+		meshFile << "Normal: " << skeletalMeshData->Vertices[i].Normal.x << " " << skeletalMeshData->Vertices[i].Normal.y << " " <<
+			skeletalMeshData->Vertices[i].Normal.z << std::endl;
+		meshFile << "Tex-Coords: " << skeletalMeshData->Vertices[i].TexC.x << " " << skeletalMeshData->Vertices[i].TexC.y << std::endl;
+		meshFile << "BlendWeights: " << skeletalMeshData->Vertices[i].BoneWeights.x << " " << skeletalMeshData->Vertices[i].BoneWeights.y << " " <<
+			skeletalMeshData->Vertices[i].BoneWeights.z << " " <<
+			(1 - (skeletalMeshData->Vertices[i].BoneWeights.x + skeletalMeshData->Vertices[i].BoneWeights.y + skeletalMeshData->Vertices[i].BoneWeights.z)) << std::endl;
+		meshFile << "BlendIndices: " << (int)skeletalMeshData->Vertices[i].BoneIndices[0] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[1] << " " <<
+			(int)skeletalMeshData->Vertices[i].BoneIndices[2] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[3] << std::endl;
+
+		meshFile << std::endl;
+	}
+
+	meshFile << "***************Triangles*********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Indices.size(); i++)
+	{
+		meshFile << skeletalMeshData->Indices[i];
+		if (i > 0 && (i + 1) % 3 == 0)
+		{
+			meshFile << std::endl;
+		}
+		else
+		{
+			meshFile << " ";
+		}
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************BoneOffsets*******************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneOffsets.size(); i++)
+	{
+		meshFile << "BoneOffset" << i << " " <<
+			skeletalMeshData->BoneOffsets[i](0, 0) << " " << skeletalMeshData->BoneOffsets[i](0, 1) << " " << skeletalMeshData->BoneOffsets[i](0, 2) << " " << skeletalMeshData->BoneOffsets[i](0, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](1, 0) << " " << skeletalMeshData->BoneOffsets[i](1, 1) << " " << skeletalMeshData->BoneOffsets[i](1, 2) << " " << skeletalMeshData->BoneOffsets[i](1, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](2, 0) << " " << skeletalMeshData->BoneOffsets[i](2, 1) << " " << skeletalMeshData->BoneOffsets[i](2, 2) << " " << skeletalMeshData->BoneOffsets[i](2, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](3, 0) << " " << skeletalMeshData->BoneOffsets[i](3, 1) << " " << skeletalMeshData->BoneOffsets[i](3, 2) << " " << skeletalMeshData->BoneOffsets[i](3, 3) <<
+			std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************BoneHierarchy*****************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneHierarchy.size(); i++)
+	{
+		meshFile << "ParentIndexOfBone" << i << ": " << skeletalMeshData->BoneHierarchy[i] << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************AnimationClips****************" << std::endl;
+	for (auto& clip : skeletalMeshData->AnimClips)
+	{
+		meshFile << "AnimationClip " << clip.first << std::endl;
+		meshFile << "{" << std::endl;
+		for (size_t i = 0; i < clip.second.BoneAnimations.size(); i++)
+		{
+			meshFile << "	Bone" << i << " #Keyframes: " << clip.second.BoneAnimations[i].Keyframes.size() << std::endl;
+			meshFile << "	{" << std::endl;
+
+			for (auto& frame : clip.second.BoneAnimations[i].Keyframes)
+			{
+				meshFile << "		Time: " << frame.TimePos << " Pos: " << frame.Translation.x << " " << frame.Translation.y << " " <<
+					frame.Translation.z << " Scale: " << frame.Scale.x << " " << frame.Scale.y << " " << frame.Scale.z <<
+					" Quat: " << frame.RotationQuat.x << " " << frame.RotationQuat.y << " " << frame.RotationQuat.z << " " <<
+					frame.RotationQuat.w << std::endl;
+			}
+
+			meshFile << "	}" << std::endl << std::endl;
+		}
+		meshFile << "}" << std::endl;
 	}
 }

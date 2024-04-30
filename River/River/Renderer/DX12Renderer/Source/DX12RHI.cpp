@@ -1240,6 +1240,7 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
 	Texture::CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
+	Texture::CreateTexture("jiulian", DEFAULT_TEXTURE_PATH "fbx_extra_jiulian.dds");
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 	Texture::CreateTexture("ShadowMap", 720, 720);
 }

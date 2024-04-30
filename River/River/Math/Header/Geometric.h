@@ -121,17 +121,40 @@ inline Float4 VectorSin(Float4 v) noexcept
     return Float4(sinf(v[0]), sinf(v[1]), sinf(v[2]), sinf(v[3]));
 }
 
-inline Float4 VectorToQuaternion(const Float4& rot) noexcept
+inline Float4 VectorToQuaternion(const Float4& rot) noexcept // <Pitch, Yaw, Roll, 0>
 {
-    float cy = cos(rot.y * 0.5);
-    float sy = sin(rot.y * 0.5);
-    float cp = cos(rot.z * 0.5);
-    float sp = sin(rot.z * 0.5);
-    float cr = cos(rot.x * 0.5);
-    float sr = sin(rot.x * 0.5);
+    const float halfpitch = rot.x * 0.5f;
+    float cp = cosf(halfpitch);
+    float sp = sinf(halfpitch);
 
-    return { cy * cp * cr + sy * sp * sr, cy * cp * sr - sy * sp * cr,
-             sy * cp * sr + cy * sp * cr, sy * cp * cr - cy * sp * sr };
+    const float halfyaw = rot.y * 0.5f;
+    float cy = cosf(halfyaw);
+    float sy = sinf(halfyaw);
+
+    const float halfroll = rot.z * 0.5f;
+    float cr = cosf(halfroll);
+    float sr = sinf(halfroll);
+
+   return { cr * sp * cy + sr * cp * sy,
+            cr * cp * sy - sr * sp * cy,
+            sr * cp * cy - cr * sp * sy,
+            cr * cp * cy + sr * sp * sy };
+}
+
+inline Float4 Vector_Matrix4x4_Multiply(const Float4& v, const Matrix4x4& m)
+{
+    return { v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + v.w * m.m[3][0],
+             v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1] + v.w * m.m[3][1],
+             v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2] + v.w * m.m[3][2],
+             v.x * m.m[0][3] + v.y * m.m[1][3] + v.z * m.m[2][3] + v.w * m.m[3][3] };
+}
+
+inline Float4 Matrix4x4_Multiply_Vector(const Matrix4x4& m, const Float4& v)
+{
+    return { v.x * m.m[0][0] + v.y * m.m[0][1] + v.z * m.m[0][2] + v.w * m.m[0][3],
+             v.x * m.m[1][0] + v.y * m.m[1][1] + v.z * m.m[1][2] + v.w * m.m[1][3],
+             v.x * m.m[2][0] + v.y * m.m[2][1] + v.z * m.m[2][2] + v.w * m.m[2][3],
+             v.x * m.m[3][0] + v.y * m.m[3][1] + v.z * m.m[3][2] + v.w * m.m[3][3] };
 }
 
 inline Matrix4x4 Matrix4x4_Transpose(const Matrix4x4& mat)

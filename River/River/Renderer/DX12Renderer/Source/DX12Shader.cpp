@@ -11,7 +11,7 @@ DX12Shader::DX12Shader(ID3D12Device* device, const String& filePath, Pair<const 
 {
 #if defined(_DEBUG)
 	//调试状态下，打开Shader编译的调试标志，不优化
-	UINT nCompileFlags = D3DCOMPILE_ENABLE_STRICTNESS |
+	UINT nCompileFlags = /*D3DCOMPILE_ENABLE_STRICTNESS |*/
 		D3DCOMPILE_DEBUG
 		| D3DCOMPILE_SKIP_OPTIMIZATION;
 #else
