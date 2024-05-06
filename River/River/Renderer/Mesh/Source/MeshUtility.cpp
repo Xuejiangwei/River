@@ -21,6 +21,8 @@ void ReadAnimationClips(std::ifstream& fin, uint32 numBones, uint32 numAnimation
 	HashMap<String, AnimationClip>& animations);
 void ReadBoneKeyframes(std::ifstream& fin, uint32 numBones, BoneAnimation& boneAnimation);
 
+void WriteToFile(SkeletalMeshData* skeletalMeshData);
+
 bool LoadStaticMesh(const String& path, StaticMeshData* meshData)
 {
 	return false;
@@ -265,4 +267,117 @@ void ReadBoneKeyframes(std::ifstream& fin, uint32 numBones, BoneAnimation& boneA
 	}
 
 	fin >> ignore; // }
+}
+
+void WriteToFile(SkeletalMeshData* skeletalMeshData)
+{
+	// Ð´ÈëÎÄ¼þ
+	std::ofstream meshFile("F:\\GitHub\\River\\River\\Models\\women.m3d");
+
+	meshFile << "***************m3d-File-Header*******************" << std::endl;
+	meshFile << "#Materials " << skeletalMeshData->Materials.size() << std::endl;
+	meshFile << "#Vertices " << skeletalMeshData->Vertices.size() << std::endl;
+	meshFile << "#Triangles " << skeletalMeshData->Indices.size() / 3 << std::endl;
+	meshFile << "#Bones " << skeletalMeshData->BoneHierarchy.size() << std::endl;
+	meshFile << "#AnimationClips " << skeletalMeshData->AnimClips.size() << std::endl << std::endl;
+
+	meshFile << "***************Materials*********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Materials.size(); i++)
+	{
+		meshFile << "Name: " << skeletalMeshData->Materials[i]->m_Name + "1" << std::endl;
+		meshFile << "Diffuse: " << skeletalMeshData->Materials[i]->DiffuseAlbedo.r << " " << skeletalMeshData->Materials[i]->DiffuseAlbedo.g << " "
+			<< skeletalMeshData->Materials[i]->DiffuseAlbedo.b << std::endl;
+		meshFile << "Fresnel0: " << skeletalMeshData->Materials[i]->FresnelR0.x << " " << skeletalMeshData->Materials[i]->FresnelR0.y << " "
+			<< skeletalMeshData->Materials[i]->FresnelR0.z << std::endl;
+		meshFile << "Roughness: " << skeletalMeshData->Materials[i]->Roughness << std::endl;
+		meshFile << "AlphaClip: " << 0 << std::endl;
+		meshFile << "MaterialTypeName: " << "Skinned" << std::endl;
+		meshFile << "DiffuseMap: " << "fbx_extra_jiulian.dds" << std::endl;
+		meshFile << "NormalMap: " << "jacket_norm.dds" << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************SubsetTable*******************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Subsets.size(); i++)
+	{
+		meshFile << "SubsetID: " << skeletalMeshData->Subsets[i].Id << " VertexStart: " << skeletalMeshData->Subsets[i].VertexStart << " VertexCount: " << skeletalMeshData->Subsets[i].VertexCount
+			<< " FaceStart: " << skeletalMeshData->Subsets[i].IndexStart / 3 << " FaceCount: " << skeletalMeshData->Subsets[i].IndexCount / 3 << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************Vertices**********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Vertices.size(); i++)
+	{
+		meshFile << "Position: " << skeletalMeshData->Vertices[i].Pos.x << " " << skeletalMeshData->Vertices[i].Pos.y << " " <<
+			skeletalMeshData->Vertices[i].Pos.z << std::endl;
+		meshFile << "Tangent: " << skeletalMeshData->Vertices[i].TangentU.x << " " << skeletalMeshData->Vertices[i].TangentU.y << " " <<
+			skeletalMeshData->Vertices[i].TangentU.z << " " << 1 << std::endl;
+		meshFile << "Normal: " << skeletalMeshData->Vertices[i].Normal.x << " " << skeletalMeshData->Vertices[i].Normal.y << " " <<
+			skeletalMeshData->Vertices[i].Normal.z << std::endl;
+		meshFile << "Tex-Coords: " << skeletalMeshData->Vertices[i].TexC.x << " " << skeletalMeshData->Vertices[i].TexC.y << std::endl;
+		meshFile << "BlendWeights: " << skeletalMeshData->Vertices[i].BoneWeights.x << " " << skeletalMeshData->Vertices[i].BoneWeights.y << " " <<
+			skeletalMeshData->Vertices[i].BoneWeights.z << " " <<
+			(1 - (skeletalMeshData->Vertices[i].BoneWeights.x + skeletalMeshData->Vertices[i].BoneWeights.y + skeletalMeshData->Vertices[i].BoneWeights.z)) << std::endl;
+		meshFile << "BlendIndices: " << (int)skeletalMeshData->Vertices[i].BoneIndices[0] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[1] << " " <<
+			(int)skeletalMeshData->Vertices[i].BoneIndices[2] << " " << (int)skeletalMeshData->Vertices[i].BoneIndices[3] << std::endl;
+
+		meshFile << std::endl;
+	}
+
+	meshFile << "***************Triangles*********************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->Indices.size(); i++)
+	{
+		meshFile << skeletalMeshData->Indices[i];
+		if (i > 0 && (i + 1) % 3 == 0)
+		{
+			meshFile << std::endl;
+		}
+		else
+		{
+			meshFile << " ";
+		}
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************BoneOffsets*******************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneOffsets.size(); i++)
+	{
+		meshFile << "BoneOffset" << i << " " <<
+			skeletalMeshData->BoneOffsets[i](0, 0) << " " << skeletalMeshData->BoneOffsets[i](0, 1) << " " << skeletalMeshData->BoneOffsets[i](0, 2) << " " << skeletalMeshData->BoneOffsets[i](0, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](1, 0) << " " << skeletalMeshData->BoneOffsets[i](1, 1) << " " << skeletalMeshData->BoneOffsets[i](1, 2) << " " << skeletalMeshData->BoneOffsets[i](1, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](2, 0) << " " << skeletalMeshData->BoneOffsets[i](2, 1) << " " << skeletalMeshData->BoneOffsets[i](2, 2) << " " << skeletalMeshData->BoneOffsets[i](2, 3) << " " <<
+			skeletalMeshData->BoneOffsets[i](3, 0) << " " << skeletalMeshData->BoneOffsets[i](3, 1) << " " << skeletalMeshData->BoneOffsets[i](3, 2) << " " << skeletalMeshData->BoneOffsets[i](3, 3) <<
+			std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************BoneHierarchy*****************" << std::endl;
+	for (size_t i = 0; i < skeletalMeshData->BoneHierarchy.size(); i++)
+	{
+		meshFile << "ParentIndexOfBone" << i << ": " << skeletalMeshData->BoneHierarchy[i] << std::endl;
+	}
+	meshFile << std::endl;
+
+	meshFile << "***************AnimationClips****************" << std::endl;
+	for (auto& clip : skeletalMeshData->AnimClips)
+	{
+		meshFile << "AnimationClip " << clip.first << std::endl;
+		meshFile << "{" << std::endl;
+		for (size_t i = 0; i < clip.second.BoneAnimations.size(); i++)
+		{
+			meshFile << "	Bone" << i << " #Keyframes: " << clip.second.BoneAnimations[i].Keyframes.size() << std::endl;
+			meshFile << "	{" << std::endl;
+
+			for (auto& frame : clip.second.BoneAnimations[i].Keyframes)
+			{
+				meshFile << "		Time: " << frame.TimePos << " Pos: " << frame.Translation.x << " " << frame.Translation.y << " " <<
+					frame.Translation.z << " Scale: " << frame.Scale.x << " " << frame.Scale.y << " " << frame.Scale.z <<
+					" Quat: " << frame.RotationQuat.x << " " << frame.RotationQuat.y << " " << frame.RotationQuat.z << " " <<
+					frame.RotationQuat.w << std::endl;
+			}
+
+			meshFile << "	}" << std::endl << std::endl;
+		}
+		meshFile << "}" << std::endl;
+	}
 }

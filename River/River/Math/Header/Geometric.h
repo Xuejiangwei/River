@@ -121,25 +121,25 @@ inline Float4 VectorSin(Float4 v) noexcept
     return Float4(sinf(v[0]), sinf(v[1]), sinf(v[2]), sinf(v[3]));
 }
 
-inline Float4 VectorToQuaternion(const Float4& rot) noexcept // <Pitch, Yaw, Roll, 0>
-{
-    const float halfpitch = rot.x * 0.5f;
-    float cp = cosf(halfpitch);
-    float sp = sinf(halfpitch);
-
-    const float halfyaw = rot.y * 0.5f;
-    float cy = cosf(halfyaw);
-    float sy = sinf(halfyaw);
-
-    const float halfroll = rot.z * 0.5f;
-    float cr = cosf(halfroll);
-    float sr = sinf(halfroll);
-
-   return { cr * sp * cy + sr * cp * sy,
-            cr * cp * sy - sr * sp * cy,
-            sr * cp * cy - cr * sp * sy,
-            cr * cp * cy + sr * sp * sy };
-}
+//inline Float4 VectorToQuaternion(const Float4& rot) noexcept // <Pitch, Yaw, Roll, 0>
+//{
+//    const float halfpitch = rot.x * 0.5f;
+//    float cp = cosf(halfpitch);
+//    float sp = sinf(halfpitch);
+//
+//    const float halfyaw = rot.y * 0.5f;
+//    float cy = cosf(halfyaw);
+//    float sy = sinf(halfyaw);
+//
+//    const float halfroll = rot.z * 0.5f;
+//    float cr = cosf(halfroll);
+//    float sr = sinf(halfroll);
+//
+//   return { cr * sp * cy + sr * cp * sy,
+//            cr * cp * sy - sr * sp * cy,
+//            sr * cp * cy - cr * sp * sy,
+//            cr * cp * cy + sr * sp * sy };
+//}
 
 inline Float4 Vector_Matrix4x4_Multiply(const Float4& v, const Matrix4x4& m)
 {

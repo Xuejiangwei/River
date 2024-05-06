@@ -69,37 +69,37 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	//	m_FinalTransforms[i] = Matrix4x4_Transpose(finalTransform);
 	//}
 
-	float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	weights[0] = 0.5;
-	weights[1] = 0.5;
-	weights[2] = 0;
-	weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
+	//float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	//weights[0] = 0.5;
+	//weights[1] = 0.5;
+	//weights[2] = 0;
+	//weights[3] = 1.0f - weights[0] - weights[1] - weights[2];
 
-	Float3 posL = Float3(0.0f, 0.0f, 0.0f);
-	Float3 normalL = Float3(0.0f, 0.0f, 0.0f);
-	Float3 tangentL = Float3(0.0f, 0.0f, 0.0f);
-	float bi[4] = { 1,2,0,0 };
+	//Float3 posL = Float3(0.0f, 0.0f, 0.0f);
+	//Float3 normalL = Float3(0.0f, 0.0f, 0.0f);
+	//Float3 tangentL = Float3(0.0f, 0.0f, 0.0f);
+	//float bi[4] = { 1,2,0,0 };
 
-	Float4 t;
-	Matrix4x4 m4;
-	memset(&t, 0, sizeof(t));
-	for (int i = 0; i < 4; ++i)
-	{
-		// Assume no nonuniform scaling when transforming normals, so 
-		// that we do not have to use the inverse-transpose.
+	//Float4 t;
+	//Matrix4x4 m4;
+	//memset(&t, 0, sizeof(t));
+	//for (int i = 0; i < 4; ++i)
+	//{
+	//	// Assume no nonuniform scaling when transforming normals, so 
+	//	// that we do not have to use the inverse-transpose.
 
-		m4 = m_FinalTransforms[bi[i]] * weights[i] + m4;
-		//t +=  Vector_Matrix4x4_Multiply(Float4(0.0f, -0.0581496917, 1.60415041, 0.0f), m_FinalTransforms[bi[i]]) * weights[i];
-	}
+	//	m4 = m_FinalTransforms[bi[i]] * weights[i] + m4;
+	//	//t +=  Vector_Matrix4x4_Multiply(Float4(0.0f, -0.0581496917, 1.60415041, 0.0f), m_FinalTransforms[bi[i]]) * weights[i];
+	//}
 
-	Float4 zero(0.0f, 0.0f, 0.0f, 1.0f);
-	
-	auto t1 = Matrix4x4::Multiply( Matrix4x4(
-	1,0,0,0,
-	0,1,0, 0,
-	0,0,1, 0,
-	0, -0.0581496917, 1.60415041,1
-	), m4);
+	//Float4 zero(0.0f, 0.0f, 0.0f, 1.0f);
+	//
+	//auto t1 = Matrix4x4::Multiply( Matrix4x4(
+	//1,0,0,0,
+	//0,1,0, 0,
+	//0,0,1, 0,
+	//0, -0.0581496917, 1.60415041,1
+	//), m4);
 
 	//t = Matrix4x4_Multiply_Vector(m4, Float4(0.0f, -0.0581496917, 1.60415041, 0.0f));
 	//shader -0.145677164  -0.00986723229  1.59383941
@@ -110,7 +110,6 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	//0.190817639  0.976473570  0.0292456374  0.00000000
 	//0.0866005570  -0.0427552797  0.992022395 0.00000000
 	//-0.0604153648  0.196252048  0.0320572853  1.00000000
-	LOG();
 }
 
 void SkeletalMeshComponent::SetSkeletalMesh(SkeletalMesh* skeletalMesh)
