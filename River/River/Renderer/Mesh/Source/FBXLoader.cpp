@@ -118,6 +118,7 @@ void ComputeClusterDeformation(FbxAMatrix& pGlobalPosition, FbxMesh* pMesh, FbxC
 
 		// Compute the shift of the link relative to the reference.
 		pBoneTransformMatrix = lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
+		pBoneTransformMatrix = pGlobalPosition.Inverse() * (clusterBoneGlobalCurrentPosition * clusterBoneGlobalInitPosition.Inverse() * clusterGlobalInitPosition);
 	}
 }
 
@@ -531,15 +532,29 @@ void Fbx_ParseNode(FbxNode* pNode, SkeletalMeshData* skeletalMeshData, int paren
 		{
 			skeletalMeshData->BoneHierarchy.push_back(parentSkeletalIndex);
 
-			Transform transform;
+			auto globelTrans = pNode->EvaluateGlobalTransform(0);
+			auto globelTrans1 = pNode->EvaluateGlobalTransform();
+			//Transform transform;
 			auto t = pNode->LclTranslation.Get();
-			transform.Position = { (float)t.mData[0], (float)t.mData[1], (float)t.mData[2] };
+			//transform.Position = { (float)t.mData[0], (float)t.mData[1], (float)t.mData[2] };
 
 			auto r = pNode->LclRotation.Get();
-			transform.Rotation = { (float)r.mData[0], (float)r.mData[1], (float)r.mData[2] };
+			//transform.Rotation = { (float)r.mData[0], (float)r.mData[1], (float)r.mData[2] };
 
 			auto s = pNode->LclScaling.Get();
-			transform.Scale = { (float)s.mData[0], (float)s.mData[1], (float)s.mData[2] };
+			//transform.Scale = { (float)s.mData[0], (float)s.mData[1], (float)s.mData[2] };
+
+			FbxAMatrix globelTrans2(t, r, s);
+			globelTrans = globelTrans.Inverse();
+
+			Matrix4x4 transform;
+			for (size_t k = 0; k < 4; k++)
+			{
+				for (size_t j = 0; j < 4; j++)
+				{
+					transform.m[k][j] = (float)globelTrans.Get(k, j);
+				}
+			}
 
 			skeletalMeshData->BoneOffsets.push_back(transform);
 			s_Bones.push_back({ pNode->GetName(),  { pNode, nullptr } });
@@ -607,7 +622,7 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 			for (FbxTime pTime = mStart; pTime < mStop; pTime += mFrameTime)
 			{
 				FbxAMatrix globalPos;
-				globalPos = pNode->EvaluateLocalTransform(pTime);
+				globalPos = pNode->EvaluateLocalTransform(pTime); //世界原点的Transform，单位厘米
 				for (size_t i = 0; i < s_Bones.size(); i++)
 				{
 					Keyframe frame;
@@ -617,78 +632,85 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 					if (s_Bones[i].second.second)
 					{
 						ComputeClusterDeformation(globalPos, pMesh, s_Bones[i].second.second, trans, pTime);
-					}
 
-					auto lt = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
-					FbxAMatrix ltp;
-				
-					for (size_t k = 0; k < 4; k++)
-					{
-						for (size_t j = 0; j < 4; j++)
+
+						const FbxVector4 lT = s_Bones[i].second.first->GetGeometricTranslation(FbxNode::eSourcePivot);
+						const FbxVector4 lR = s_Bones[i].second.first->GetGeometricRotation(FbxNode::eSourcePivot);
+						const FbxVector4 lS = s_Bones[i].second.first->GetGeometricScaling(FbxNode::eSourcePivot);
+
+						FbxAMatrix geometryTransform = FbxAMatrix(lT, lR, lS);
+
+						FbxAMatrix transformMatrix, transformLinkMatrix;
+						s_Bones[i].second.second->GetTransformMatrix(transformMatrix);
+						s_Bones[i].second.second->GetTransformLinkMatrix(transformLinkMatrix);
+						auto globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
+
+						//skeleton.mJoints[jointIndex].mGlobalBindposeInverse = globalBindposeInverseMatrix;
+
+						auto lt0 = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
+
+						decltype(lt0) llt = geometryTransform;
+						auto parent = s_Bones[i].second.first->GetParent();
+						while (parent)
 						{
-							ltp.mData[k][j] = skeletalMeshData->BoneOffsets[0].m[k][j];
+							auto tttt = parent->EvaluateLocalTransform(pTime);
+							llt = tttt * llt;
+
+							if (parent->GetNodeAttribute() && parent->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eNull)
+							{
+								auto ppt = parent->EvaluateLocalTransform(pTime);
+								auto name = parent->GetName();
+								break;
+							}
+
+							parent = parent->GetParent();
 						}
-					}
-					auto rtrans = ltp * lt;
 
-					auto t = rtrans.GetT();
-					auto rq = rtrans.GetQ();
-					auto s = rtrans.GetS();
+						//auto llt = ->EvaluateLocalTransform(pTime);
+						auto lltt = llt * lt0;
+						auto lt = s_Bones[i].second.first->EvaluateGlobalTransform(pTime);
+						auto rtrans = transformMatrix.Inverse() * lltt * globalBindposeInverseMatrix;
 
-					frame.Translation.x = t.mData[0];
-					frame.Translation.y = t.mData[1];
-					frame.Translation.z = t.mData[2];
+						auto t = lt.GetT();
+						auto rq = lt.GetQ();
+						auto s = lt.GetS();
 
-					frame.RotationQuat.x = rq.mData[0];
-					frame.RotationQuat.y = rq.mData[1];
-					frame.RotationQuat.z = rq.mData[2];
-					frame.RotationQuat.w = rq.mData[3];
+						frame.Translation.x = t.mData[0];
+						frame.Translation.y = t.mData[1];
+						frame.Translation.z = t.mData[2];
 
-					frame.Scale.x = s.mData[0];
-					frame.Scale.y = s.mData[1];
-					frame.Scale.z = s.mData[2];
-					auto zero = Float4(0.0f, 0.0f, 0.0f, 1.0f);
-					auto m = Matrix4x4_AffineTransformation(frame.Scale, zero, frame.RotationQuat, frame.Translation);
+						frame.RotationQuat.x = rq.mData[0];
+						frame.RotationQuat.y = rq.mData[1];
+						frame.RotationQuat.z = rq.mData[2];
+						frame.RotationQuat.w = rq.mData[3];
 
-					t = lt.GetT();
-					rq = lt.GetQ();
-					s = lt.GetS();
+						frame.Scale.x = s.mData[0];
+						frame.Scale.y = s.mData[1];
+						frame.Scale.z = s.mData[2];
 
-					frame.Translation.x = t.mData[0];
-					frame.Translation.y = t.mData[1];
-					frame.Translation.z = t.mData[2];
 
-					frame.RotationQuat.x = rq.mData[0];
-					frame.RotationQuat.y = rq.mData[1];
-					frame.RotationQuat.z = rq.mData[2];
-					frame.RotationQuat.w = rq.mData[3];
-
-					frame.Scale.x = s.mData[0];
-					frame.Scale.y = s.mData[1];
-					frame.Scale.z = s.mData[2];
-					
-					
-					if (frame.TimePos <= 0)
-					{
-						LOG(" %d 1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f", i,
-						trans.Get(0, 0), trans.Get(0, 1), trans.Get(0, 2), trans.Get(0, 3),
-						trans.Get(1, 0), trans.Get(1, 2), trans.Get(1, 3), trans.Get(1, 0),
-						trans.Get(2, 0), trans.Get(2, 2), trans.Get(2, 3), trans.Get(2, 0),
-						trans.Get(3, 0), trans.Get(3, 2), trans.Get(3, 3), trans.Get(3, 0));
-
-						LOG("  2 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-							m.m[0][0], m.m[0][1], m.m[0][2], m.m[0][3],
-							m.m[1][0], m.m[1][2], m.m[1][3], m.m[1][0],
-							m.m[2][0], m.m[2][2], m.m[2][3], m.m[2][0],
-							m.m[3][0], m.m[3][2], m.m[3][3], m.m[3][0]);
-					}
-					
-
-					for (size_t k = 0; k < 4; k++)
-					{
-						for (size_t j = 0; j < 4; j++)
+						/*if (frame.TimePos <= 0)
 						{
-							frame.trans.m[k][j] = (float)trans.Get(k, j);
+							LOG(" %d 1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f", i,
+							trans.Get(0, 0), trans.Get(0, 1), trans.Get(0, 2), trans.Get(0, 3),
+							trans.Get(1, 0), trans.Get(1, 2), trans.Get(1, 3), trans.Get(1, 0),
+							trans.Get(2, 0), trans.Get(2, 2), trans.Get(2, 3), trans.Get(2, 0),
+							trans.Get(3, 0), trans.Get(3, 2), trans.Get(3, 3), trans.Get(3, 0));
+
+							LOG("  2 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
+								m.m[0][0], m.m[0][1], m.m[0][2], m.m[0][3],
+								m.m[1][0], m.m[1][2], m.m[1][3], m.m[1][0],
+								m.m[2][0], m.m[2][2], m.m[2][3], m.m[2][0],
+								m.m[3][0], m.m[3][2], m.m[3][3], m.m[3][0]);
+						}*/
+
+
+						for (size_t k = 0; k < 4; k++)
+						{
+							for (size_t j = 0; j < 4; j++)
+							{
+								frame.trans.m[k][j] = (float)rtrans.Get(k, j);
+							}
 						}
 					}
 					
