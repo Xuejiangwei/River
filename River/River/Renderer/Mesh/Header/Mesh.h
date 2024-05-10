@@ -107,6 +107,11 @@ struct SkeletalMeshData
 	std::vector<int> BoneHierarchy;
 	std::vector<Matrix4x4> BoneOffsets;
 	HashMap<String, AnimationClip> AnimClips;
+
+	/* 暂时用作fbx格式的cluster的逆矩阵，绑定骨骼点时冻结时cluster的位置，
+	   而骨骼的位置是相对cluster空间的，所以offset矩阵是变换到cluster空间的骨骼空间，
+	   最后还需要从cluster逆矩阵转换到世界原点空间*/
+	std::vector<Matrix4x4> BoneOffsets1; 
 };
 
 

@@ -13,6 +13,8 @@ struct Keyframe
 	Float4 RotationQuat;
 
 	Matrix4x4 trans;
+
+	bool IsNone;
 };
 
 struct BoneAnimation

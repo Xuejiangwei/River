@@ -344,7 +344,7 @@ struct Matrix4x4
 		float m[4][4];
 	};
 
-	Matrix4x4() { memset(this, 0, sizeof(Matrix4x4)); };
+	Matrix4x4() { memset(this, 0, sizeof(Matrix4x4)); m[0][0] = m[1][1] = m[2][2] = m[3][3] = 1.f; };
 
 	Matrix4x4(const Matrix4x4&) = default;
 	Matrix4x4& operator=(const Matrix4x4&) = default;

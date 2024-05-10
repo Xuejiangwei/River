@@ -1225,8 +1225,8 @@ void DX12RHI::InitBaseGeometry()
 	GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
 	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
 
-	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", "F:\\GitHub\\River\\River\\Models\\fbx_extra.fbx"));
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", "F:\\GitHub\\River\\River\\Models\\humanoid.fbx"));
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", "F:\\GitHub\\River\\River\\Models\\fbx_extra.fbx"));
+	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", "F:\\GitHub\\River\\River\\Models\\humanoid.fbx"));
 
 	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", "F:\\GitHub\\River\\River\\Models\\soldier.m3d"));
 	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", "F:\\GitHub\\River\\River\\Models\\women.m3d"));

@@ -54,7 +54,7 @@ void BoneAnimation::Interpolate(float t, Matrix4x4& M) const
 		Float4 zero(0.0f, 0.0f, 0.0f, 1.0f);
 		M = Matrix4x4_AffineTransformation(S, zero, Q, P);
 
-		M = Matrix4x4_Transpose(Keyframes.front().trans);
+		//M = Matrix4x4_Transpose(Keyframes.front().trans);
 	}
 	else if (t >= Keyframes.back().TimePos)
 	{
@@ -65,7 +65,7 @@ void BoneAnimation::Interpolate(float t, Matrix4x4& M) const
 		Float4 zero(0.0f, 0.0f, 0.0f, 1.0f);
 		M = Matrix4x4_AffineTransformation(S, zero, Q, P);
 
-		M = Matrix4x4_Transpose(Keyframes.back().trans);
+		//M = Matrix4x4_Transpose(Keyframes.back().trans);
 	}
 	else
 	{
@@ -90,8 +90,7 @@ void BoneAnimation::Interpolate(float t, Matrix4x4& M) const
 
 				auto zero = Float4(0.0f, 0.0f, 0.0f, 1.0f);
 				M = Matrix4x4_AffineTransformation(S, zero, Q, P);
-
-				M = Matrix4x4_Transpose(Keyframes[i].trans);
+				//M = Matrix4x4_Transpose(Keyframes[i].trans);
 				break;
 			}
 		}
