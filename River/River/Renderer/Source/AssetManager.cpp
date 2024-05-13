@@ -31,7 +31,7 @@ StaticMesh* AssetManager::AddStaticMesh(Unique<StaticMesh>& mesh)
 	return meshPtr;
 }
 
-StaticMesh* AssetManager::GetStaticMesh(const char* name)
+StaticMesh* AssetManager::GetStaticMesh(const String& name)
 {
 	auto iter = m_CacheStaticMeshes.find(name);
 	if (iter != m_CacheStaticMeshes.end())
@@ -60,7 +60,7 @@ SkeletalMesh* AssetManager::GetSkeletalMesh(const char* name)
 	return nullptr;
 }
 
-Texture* AssetManager::GetTexture(const char* name)
+Texture* AssetManager::GetTexture(const String& name)
 {
 	auto iter = m_CacheTextures.find(name);
 	if (iter != m_CacheTextures.end())
@@ -82,7 +82,7 @@ Texture* AssetManager::GetOrCreateTexture(const char* name, const char* path)
 	return Texture::CreateTexture(name, path, true);
 }
 
-Shader* AssetManager::GetShader(const char* name)
+Shader* AssetManager::GetShader(const String& name)
 {
 	auto iter = m_CacheShaders.find(name);
 	if (iter != m_CacheShaders.end())
@@ -93,12 +93,12 @@ Shader* AssetManager::GetShader(const char* name)
 	return nullptr;
 }
 
-void AssetManager::AddCacheTexture(const char* name, Unique<Texture>& texture)
+void AssetManager::AddCacheTexture(const String& name, Unique<Texture>& texture)
 {
 	m_CacheTextures[name] = River::Move(texture);
 }
 
-void AssetManager::AddCacheShader(const char* name, Unique<Shader>& shader)
+void AssetManager::AddCacheShader(const String& name, Unique<Shader>& shader)
 {
 	m_CacheShaders[name] = River::Move(shader);
 }

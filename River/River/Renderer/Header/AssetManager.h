@@ -10,12 +10,12 @@ class SkeletalMesh;
 
 class AssetManager
 {
-	friend Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isImmediately);
-	friend Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool isImmediately);
-	friend Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data);
-	friend Texture* Texture::CreateTexture(const char* name, int width, int height);
-	friend Shader* Shader::CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam* param);
-	friend Material* Material::CreateMaterial(const char* name, const char* shaderName);
+	friend Texture* Texture::CreateTexture(const String& name, const String& filePath, bool isImmediately);
+	friend Texture* Texture::CreateCubeTexture(const String& name, const String& filePath, bool isImmediately);
+	friend Texture* Texture::CreateTexture(const String& name, int width, int height, const uint8* data);
+	friend Texture* Texture::CreateTexture(const String& name, int width, int height);
+	friend Shader* Shader::CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam* param);
+	friend Material* Material::CreateMaterial(const String& name, const String& shaderName);
 public:
 	AssetManager();
 	
@@ -27,27 +27,27 @@ public:
 
 	StaticMesh* AddStaticMesh(Unique<StaticMesh>& mesh);
 
-	StaticMesh* GetStaticMesh(const char* name);
+	StaticMesh* GetStaticMesh(const String& name);
 
 	SkeletalMesh* AddSkeletalMesh(Unique<SkeletalMesh>& mesh);
 
 	SkeletalMesh* GetSkeletalMesh(const char* name);
 
 	//Texture
-	Texture* GetTexture(const char* name);
+	Texture* GetTexture(const String& name);
 
 	Texture* GetOrCreateTexture(const char* name, const char* path);
 
 	//Shader
-	Shader* GetShader(const char* name);
+	Shader* GetShader(const String& name);
 
 	//Material
-	Material* GetMaterial(const char* name);
+	Material* GetMaterial(const String& name);
 
 private:
-	void AddCacheTexture(const char* name, Unique<Texture>& texture);
+	void AddCacheTexture(const String& name, Unique<Texture>& texture);
 
-	void AddCacheShader(const char* name, Unique<Shader>& shader);
+	void AddCacheShader(const String& name, Unique<Shader>& shader);
 
 	void AddCacheMaterial(const char* name, Unique<Material>& material);
 

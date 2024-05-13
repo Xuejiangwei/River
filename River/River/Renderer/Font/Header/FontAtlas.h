@@ -15,7 +15,7 @@ enum ImFontAtlasFlags_
 class FontAtlas
 {
 public:
-	FontAtlas(const char* path, float pixelSize);
+	FontAtlas(const String& path, float pixelSize);
 
 	~FontAtlas();
 

@@ -1,38 +1,41 @@
 #pragma once
+#include "RiverFile.h"
 
-#define DEFAULT_FONT_PATH_1 "F:\\GitHub\\River\\River\\Fonts\\LXGWWenKai-Bold.ttf"
+#define FILE_PATH_RELATIVE(PATH) RiverFile::GetPathAddRootPath(PATH)
 
-#define DEFAULT_SHADER_PATH_1 "F:\\GitHub\\River\\River\\Shaders\\Default.hlsl"
-#define DEFAULT_SHADER_PATH_2 "F:\\GitHub\\River\\River\\Shaders\\Sky.hlsl"
-#define DEFAULT_SHADER_PATH_3 "F:\\GitHub\\River\\River\\Shaders\\Shadows.hlsl"
-#define DEFAULT_SHADER_PATH_4 "F:\\GitHub\\River\\River\\Shaders\\ShadowDebug.hlsl"
-#define DEFAULT_SHADER_PATH_5 "F:\\GitHub\\River\\River\\Shaders\\Ssao.hlsl"
-#define DEFAULT_SHADER_PATH_6 "F:\\GitHub\\River\\River\\Shaders\\DrawNormals.hlsl"
-#define DEFAULT_SHADER_PATH_7 "F:\\GitHub\\River\\River\\Shaders\\SsaoBlur.hlsl"
-#define DEFAULT_SHADER_PATH_UI "F:\\GitHub\\River\\River\\Shaders\\UI.hlsl"
-#define DEFAULT_SHADER_PATH_DEFAULT "F:\\GitHub\\River\\River\\Shaders\\Default1.hlsl"
-#define DEFAULT_SHADER_PATH_DEFAULT_RAW "F:\\GitHub\\River\\River\\Shaders\\DefaultRaw.hlsl"
+#define DEFAULT_FONT_PATH_1					FILE_PATH_RELATIVE("Fonts\\LXGWWenKai-Bold.ttf")
 
-#define DEFAULT_TEXTURE_PATH   "F:\\GitHub\\River\\River\\Textures\\"
-#define DEFAULT_TEXTURE_PATH_1 "F:\\GitHub\\River\\River\\Textures\\bricks.dds"
-#define DEFAULT_TEXTURE_PATH_2 "F:\\GitHub\\River\\River\\Textures\\stone.dds"
-#define DEFAULT_TEXTURE_PATH_3 "F:\\GitHub\\River\\River\\Textures\\tile.dds"
-#define DEFAULT_TEXTURE_PATH_4 "F:\\GitHub\\River\\River\\Textures\\grass.dds"
-#define DEFAULT_TEXTURE_PATH_5 "F:\\GitHub\\River\\River\\Textures\\water1.dds"
-#define DEFAULT_TEXTURE_PATH_6 "F:\\GitHub\\River\\River\\Textures\\WireFence.dds"
-#define DEFAULT_TEXTURE_PATH_7 "F:\\GitHub\\River\\River\\Textures\\bricks3.dds"
-#define DEFAULT_TEXTURE_PATH_8 "F:\\GitHub\\River\\River\\Textures\\checkboard.dds"
-#define DEFAULT_TEXTURE_PATH_9 "F:\\GitHub\\River\\River\\Textures\\ice.dds"
-#define DEFAULT_TEXTURE_PATH_10 "F:\\GitHub\\River\\River\\Textures\\white1x1.dds"
-#define DEFAULT_TEXTURE_PATH_11 "F:\\GitHub\\River\\River\\Textures\\WoodCrate01.dds"
-#define DEFAULT_TEXTURE_PATH_12 "F:\\GitHub\\River\\River\\Textures\\grasscube1024.dds"
-#define DEFAULT_TEXTURE_PATH_13 "F:\\GitHub\\River\\River\\Textures\\bricks2.dds"
-#define DEFAULT_TEXTURE_PATH_14 "F:\\GitHub\\River\\River\\Textures\\bricks2_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_15 "F:\\GitHub\\River\\River\\Textures\\tile_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_16 "F:\\GitHub\\River\\River\\Textures\\default_nmap.dds"
-#define DEFAULT_TEXTURE_PATH_17 "F:\\GitHub\\River\\River\\Textures\\snowcube1024.dds"
-#define DEFAULT_TEXTURE_PATH_18 "F:\\GitHub\\River\\River\\Textures\\desertcube1024.dds"
+#define DEFAULT_SHADER_PATH_1				FILE_PATH_RELATIVE("Shaders\\Default.hlsl")
+#define DEFAULT_SHADER_PATH_2				FILE_PATH_RELATIVE("Shaders\\Sky.hlsl")
+#define DEFAULT_SHADER_PATH_3				FILE_PATH_RELATIVE("Shaders\\Shadows.hlsl")
+#define DEFAULT_SHADER_PATH_4				FILE_PATH_RELATIVE("Shaders\\ShadowDebug.hlsl")
+#define DEFAULT_SHADER_PATH_5				FILE_PATH_RELATIVE("Shaders\\Ssao.hlsl")
+#define DEFAULT_SHADER_PATH_6				FILE_PATH_RELATIVE("Shaders\\DrawNormals.hlsl")
+#define DEFAULT_SHADER_PATH_7				FILE_PATH_RELATIVE("Shaders\\SsaoBlur.hlsl")
+#define DEFAULT_SHADER_PATH_UI				FILE_PATH_RELATIVE("Shaders\\UI.hlsl")
+#define DEFAULT_SHADER_PATH_DEFAULT			FILE_PATH_RELATIVE("Shaders\\Default1.hlsl")
+#define DEFAULT_SHADER_PATH_DEFAULT_RAW		FILE_PATH_RELATIVE("Shaders\\DefaultRaw.hlsl")
 
-#define DEFAULT_MODEL_PATH_1 "F:\\GitHub\\River\\River\\Models\\skull.txt"
-#define DEFAULT_MODEL_PATH_2 "F:\\GitHub\\River\\River\\Models\\car.txt"
-#define DEFAULT_MODEL_PATH_3 "F:\\GitHub\\River\\River\\Models\\soldier.m3d"
+#define DEFAULT_TEXTURE_PATH				FILE_PATH_RELATIVE("Textures\\")
+#define DEFAULT_TEXTURE_PATH_1				FILE_PATH_RELATIVE("Textures\\bricks.dds")
+#define DEFAULT_TEXTURE_PATH_2				FILE_PATH_RELATIVE("Textures\\stone.dds")
+#define DEFAULT_TEXTURE_PATH_3				FILE_PATH_RELATIVE("Textures\\tile.dds")
+#define DEFAULT_TEXTURE_PATH_4				FILE_PATH_RELATIVE("Textures\\grass.dds")
+#define DEFAULT_TEXTURE_PATH_5				FILE_PATH_RELATIVE("Textures\\water1.dds")
+#define DEFAULT_TEXTURE_PATH_6				FILE_PATH_RELATIVE("Textures\\WireFence.dds")
+#define DEFAULT_TEXTURE_PATH_7				FILE_PATH_RELATIVE("Textures\\bricks3.dds")
+#define DEFAULT_TEXTURE_PATH_8				FILE_PATH_RELATIVE("Textures\\checkboard.dds")
+#define DEFAULT_TEXTURE_PATH_9				FILE_PATH_RELATIVE("Textures\\ice.dds")
+#define DEFAULT_TEXTURE_PATH_10				FILE_PATH_RELATIVE("Textures\\white1x1.dds")
+#define DEFAULT_TEXTURE_PATH_11				FILE_PATH_RELATIVE("Textures\\WoodCrate01.dds")
+#define DEFAULT_TEXTURE_PATH_12				FILE_PATH_RELATIVE("Textures\\grasscube1024.dds")
+#define DEFAULT_TEXTURE_PATH_13				FILE_PATH_RELATIVE("Textures\\bricks2.dds")
+#define DEFAULT_TEXTURE_PATH_14				FILE_PATH_RELATIVE("Textures\\bricks2_nmap.dds")
+#define DEFAULT_TEXTURE_PATH_15				FILE_PATH_RELATIVE("Textures\\tile_nmap.dds")
+#define DEFAULT_TEXTURE_PATH_16				FILE_PATH_RELATIVE("Textures\\default_nmap.dds")
+#define DEFAULT_TEXTURE_PATH_17				FILE_PATH_RELATIVE("Textures\\snowcube1024.dds")
+#define DEFAULT_TEXTURE_PATH_18				FILE_PATH_RELATIVE("Textures\\desertcube1024.dds")
+
+#define DEFAULT_MODEL_PATH_1				FILE_PATH_RELATIVE("Models\\skull.txt")
+#define DEFAULT_MODEL_PATH_2				FILE_PATH_RELATIVE("Models\\car.txt")
+#define DEFAULT_MODEL_PATH_3				FILE_PATH_RELATIVE("Models\\soldier.m3d")

@@ -72,16 +72,16 @@ public:
 
 	virtual void DrawRenderItem(int renderItemId) override;
 
-	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) override;
+	virtual Unique<Texture> CreateTexture(const String& name, const String& path, bool isImmediately = false) override;
 
-	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) override;
+	virtual Unique<Texture> CreateCubeTexture(const String& name, const String& path, bool isImmediately = false) override;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+	virtual Unique<Shader> CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
 		ShaderParam * param = nullptr) override;
 
-	Unique<Texture> CreateTexture(const char* name, int width, int height, const uint8* data);
+	Unique<Texture> CreateTexture(const String& name, int width, int height, const uint8* data);
 
-	Unique<Texture> CreateTexture(const char* name, int width, int height);
+	Unique<Texture> CreateTexture(const String& name, int width, int height);
 
 	ID3D12Device* GetDevice() { return m_Device.Get(); }
 

@@ -11,10 +11,6 @@ struct Keyframe
 	Float3 Translation;
 	Float3 Scale;
 	Float4 RotationQuat;
-
-	Matrix4x4 trans;
-
-	bool IsNone;
 };
 
 struct BoneAnimation

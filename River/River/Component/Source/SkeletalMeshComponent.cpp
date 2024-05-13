@@ -124,16 +124,8 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 				finalTransform.m[1][0], finalTransform.m[1][1], finalTransform.m[1][2], finalTransform.m[1][3],
 				finalTransform.m[2][0], finalTransform.m[2][1], finalTransform.m[2][2], finalTransform.m[2][3],
 				finalTransform.m[3][0], finalTransform.m[3][1], finalTransform.m[3][2], finalTransform.m[3][3]);
-
-			finalTransform = currAnim->second.BoneAnimations[i].Keyframes[0].trans;
-			LOG("real %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f\n",
-				finalTransform.m[0][0], finalTransform.m[0][1], finalTransform.m[0][2], finalTransform.m[0][3],
-				finalTransform.m[1][0], finalTransform.m[1][1], finalTransform.m[1][2], finalTransform.m[1][3],
-				finalTransform.m[2][0], finalTransform.m[2][1], finalTransform.m[2][2], finalTransform.m[2][3],
-				finalTransform.m[3][0], finalTransform.m[3][1], finalTransform.m[3][2], finalTransform.m[3][3]);
 		}
 
-		//finalTransform = currAnim->second.BoneAnimations[i].Keyframes[0].trans;
 		m_FinalTransforms[i] = Matrix4x4_Transpose(finalTransform);
 
 	}

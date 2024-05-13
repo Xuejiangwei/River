@@ -16,15 +16,13 @@ enum class MaterialBlendMode
 class Material
 {
 public:
-	Material(String& name);
-
-	Material(const char* name);
+	Material(const String& name);
 
 	~Material();
 
-	static Material* CreateMaterial(const char* name, const char* shaderName = nullptr);
+	static Material* CreateMaterial(const String& name, const String& shaderName = String());
 
-	static Material* GetMaterial(const char* name);
+	static Material* GetMaterial(const String& name);
 
 	void InitBaseParam(MaterialBlendMode blendMode, Shader* shader, const Float4& diffuseAlbedo, const Float3& fresnelR0, float roughness, int cbIndx,
 		Texture* diffuseSrvIndex, Texture* normalSrvIndex);

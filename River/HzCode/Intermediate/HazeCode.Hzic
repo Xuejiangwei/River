@@ -22,10 +22,10 @@ Variable 丁$3 17 8 8 8 18
 FunctionStart 16
 
 Block Entry
-MOV Temp_R7 1 7 9 时间$1 2 0 9
-MUL Temp_R7 1 7 9 1000 1 1 9
-CVT Temp_R6 1 7 10 Temp_R7 1 7 9
-MOV 丙$2 2 0 10 Temp_R6 1 7 10
+MOV Temp_R6 1 7 9 时间$1 2 0 9
+MUL Temp_R6 1 7 9 1000 1 1 9
+CVT Temp_R5 1 7 10 Temp_R6 1 7 9
+MOV 丙$2 2 0 10 Temp_R5 1 7 10
 PUSH 0 1 1 8
 PUSH ui列表 1 11 18 列表__整数*
 PUSH RetAddress 0 9 8

@@ -16,7 +16,7 @@ Shader::~Shader()
 {
 }
 
-Shader* Shader::CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam* param)
+Shader* Shader::CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam* param)
 {
 	auto assetManager = AssetManager::Get();
 	Shader* shader = assetManager->GetShader(name);
@@ -29,7 +29,7 @@ Shader* Shader::CreateShader(const char* name, const char* path, Pair<const Shad
 	{
 	case APIMode::DX12:
 	{
-		if (name && path)
+		if (!name.empty() && !path.empty())
 		{
 #ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());

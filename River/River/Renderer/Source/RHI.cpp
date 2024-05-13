@@ -94,12 +94,12 @@ void RHI::AddUIRenderItem(UIRenderItem& renderItem)
 	m_UIRenderItemAllocator.m_Containor.push_back(renderItem);
 }
 
-void RHI::AddMaterial(const char* name, Unique<Material>& material)
+void RHI::AddMaterial(const String& name, Unique<Material>& material)
 {
 	m_Materials[name] = River::Move(material);
 }
 
-Material* RHI::GetMaterial(const char* name)
+Material* RHI::GetMaterial(const String& name)
 {
 	auto iter = m_Materials.find(name);
 	if (iter != m_Materials.end())

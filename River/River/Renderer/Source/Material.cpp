@@ -2,14 +2,9 @@
 #include "Material.h"
 #include "Renderer/Header/RHI.h"
 
-Material::Material(String& name)
-	: m_Name(std::move(name)), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
+Material::Material(const String& name)
+	: m_Name(name), DiffuseAlbedo({ 1.0f, 1.0f, 1.0f, 1.0f }), FresnelR0({ 0.01f,0.01f,0.01f }), Roughness(0.25f)
 	, MatTransform(Matrix4x4::UnitMatrix()), m_DiffuseTexture(nullptr), m_NormalTexture(nullptr), m_Shader(nullptr)
-{
-}
-
-Material::Material(const char* name)
-	: Material(String(name))
 {
 }
 
@@ -17,7 +12,7 @@ Material::~Material()
 {
 }
 
-Material* Material::CreateMaterial(const char* name, const char* shaderName)
+Material* Material::CreateMaterial(const String& name, const String& shaderName)
 {
 	auto material = MakeUnique<Material>(name);
 	auto ret = material.get();
@@ -27,7 +22,7 @@ Material* Material::CreateMaterial(const char* name, const char* shaderName)
 	return ret;
 }
 
-Material* Material::GetMaterial(const char* name)
+Material* Material::GetMaterial(const String& name)
 {
 	return RHI::Get()->GetMaterial(name);
 }

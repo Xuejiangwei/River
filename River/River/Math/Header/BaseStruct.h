@@ -361,6 +361,17 @@ struct Matrix4x4
 		_31(m20), _32(m21), _33(m22), _34(m23),
 		_41(m30), _42(m31), _43(m32), _44(m33) {}
 
+	Matrix4x4(double(*v)[4])
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++) 
+			{
+				m[i][j] = (float)v[i][j];
+			}
+		}
+	}
+
 	float operator() (size_t Row, size_t Column) const noexcept { return m[Row][Column]; }
 	float& operator() (size_t Row, size_t Column) noexcept { return m[Row][Column]; }
 

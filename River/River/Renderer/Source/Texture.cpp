@@ -10,7 +10,7 @@
 
 
 Texture::Texture(const String& name, const String& path, Type type)
-	: m_Name(std::move(name)), m_Path(std::move(path)), m_Type(type)
+	: m_Name(name), m_Path(path), m_Type(type)
 {
 }
 
@@ -23,7 +23,7 @@ void Texture::SetTextureId(uint32 textureId)
 	m_RendererId = textureId;
 }
 
-Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isImmediately)
+Texture* Texture::CreateTexture(const String& name, const String& filePath, bool isImmediately)
 {
 	auto assetManager = AssetManager::Get();
 	Texture* texture = assetManager->GetTexture(name);
@@ -36,7 +36,7 @@ Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isI
 	{
 	case APIMode::DX12:
 	{
-		if (name && filePath)
+		if (!name.empty() && !filePath.empty())
 		{
 #ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
@@ -59,7 +59,7 @@ Texture* Texture::CreateTexture(const char* name, const char* filePath, bool isI
 	return texture;
 }
 
-Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool isImmediately)
+Texture* Texture::CreateCubeTexture(const String& name, const String& filePath, bool isImmediately)
 {
 	auto assetManager = AssetManager::Get();
 	Texture* texture = assetManager->GetTexture(name);
@@ -72,7 +72,7 @@ Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool
 	{
 	case APIMode::DX12:
 	{
-		if (name && filePath)
+		if (!name.empty() && !filePath.empty())
 		{
 #ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
@@ -95,7 +95,7 @@ Texture* Texture::CreateCubeTexture(const char* name, const char* filePath, bool
 	return texture;
 }
 
-Texture* Texture::CreateTexture(const char* name, int width, int height, const uint8* data)
+Texture* Texture::CreateTexture(const String& name, int width, int height, const uint8* data)
 {
 	auto assetManager = AssetManager::Get();
 	Texture* texture = assetManager->GetTexture(name);
@@ -108,7 +108,7 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 	{
 	case APIMode::DX12:
 	{
-		if (name)
+		if (!name.empty())
 		{
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
 			auto newTexture = dx12Rhi->CreateTexture(name, width, height, data);
@@ -129,7 +129,7 @@ Texture* Texture::CreateTexture(const char* name, int width, int height, const u
 	return texture;
 }
 
-Texture* Texture::CreateTexture(const char* name, int width, int height)
+Texture* Texture::CreateTexture(const String& name, int width, int height)
 {
 	auto assetManager = AssetManager::Get();
 	Texture* texture = assetManager->GetTexture(name);
@@ -142,7 +142,7 @@ Texture* Texture::CreateTexture(const char* name, int width, int height)
 	{
 	case APIMode::DX12:
 	{
-		if (name)
+		if (!name.empty())
 		{
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
 			auto newTexture = dx12Rhi->CreateTexture(name, width, height);

@@ -220,6 +220,7 @@
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\GameInstance.cpp" />
     <ClCompile Include="Source\Layer.cpp" />
+    <ClCompile Include="Source\RiverFile.cpp" />
     <ClCompile Include="Source\RiverMainUiLayer.cpp" />
     <ClCompile Include="Source\River.cpp" />
     <ClCompile Include="Source\RiverPch.cpp">
@@ -263,6 +264,7 @@
     <ClInclude Include="Haze\include\HazeVariable.h" />
     <ClInclude Include="Haze\include\HazeVM.h" />
     <ClInclude Include="Header\GameInstance.h" />
+    <ClInclude Include="Header\RiverFile.h" />
     <ClInclude Include="Header\RiverMainUiLayer.h" />
     <ClInclude Include="Input\Header\InputManager.h" />
     <ClInclude Include="Level\Header\Level.h" />

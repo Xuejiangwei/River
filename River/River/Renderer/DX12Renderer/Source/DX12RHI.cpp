@@ -344,7 +344,7 @@ void DX12RHI::UpdatePassUniform(int index, RenderPass::PassUniform* uniform)
 	currPassCB->CopyData(index, *uniform);
 }
 
-Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool isImmediately)
+Unique<Texture> DX12RHI::CreateTexture(const String& name, const String& path, bool isImmediately)
 {
 	if (isImmediately)
 	{
@@ -365,7 +365,7 @@ Unique<Texture> DX12RHI::CreateTexture(const char* name, const char* path, bool 
 	return texture;
 }
 
-Unique<Texture> DX12RHI::CreateCubeTexture(const char* name, const char* path, bool isImmediately)
+Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const String& path, bool isImmediately)
 {
 	if (isImmediately)
 	{
@@ -386,7 +386,7 @@ Unique<Texture> DX12RHI::CreateCubeTexture(const char* name, const char* path, b
 	return texture;
 }
 
-Unique<Shader> DX12RHI::CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam * param)
+Unique<Shader> DX12RHI::CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam * param)
 {
 	auto layout = &m_InputLayers["default"];
 	if (name == String("ui"))
@@ -809,12 +809,12 @@ void DX12RHI::AddDescriptor(DX12Texture* texture)
 	m_Device->CreateShaderResourceView(texture->GetResource().Get(), &srvDesc, srv);
 }
 
-Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height, const uint8* data)
+Unique<Texture> DX12RHI::CreateTexture(const String& name, int width, int height, const uint8* data)
 {
 	return MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, width, height);;
 }
 
-Unique<Texture> DX12RHI::CreateTexture(const char* name, int width, int height)
+Unique<Texture> DX12RHI::CreateTexture(const String& name, int width, int height)
 {
 	return MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, width, height);
 }
@@ -1225,11 +1225,11 @@ void DX12RHI::InitBaseGeometry()
 	GeometryGenerator::CreateSphereStaticMesh(0.5f, 20, 20);
 	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
 
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", "F:\\GitHub\\River\\River\\Models\\fbx_extra.fbx"));
-	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", "F:\\GitHub\\River\\River\\Models\\humanoid.fbx"));
+	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", FILE_PATH_RELATIVE("Models\\fbx_extra.fbx")));
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", FILE_PATH_RELATIVE("Models\\humanoid.fbx")));
 
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", "F:\\GitHub\\River\\River\\Models\\soldier.m3d"));
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", "F:\\GitHub\\River\\River\\Models\\women.m3d"));
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", FILE_PATH_RELATIVE("Models\\soldier.m3d")));
+	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", FILE_PATH_RELATIVE("Models\\women.m3d")));
 }
 
 void DX12RHI::InitBaseTexture()
@@ -1241,7 +1241,7 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
 	Texture::CreateTexture("tileDiffuseMap", DEFAULT_TEXTURE_PATH_3);
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
-	Texture::CreateTexture("jiulian", DEFAULT_TEXTURE_PATH "fbx_extra_jiulian.dds");
+	Texture::CreateTexture("jiulian", DEFAULT_TEXTURE_PATH + "fbx_extra_jiulian.dds");
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 	Texture::CreateTexture("ShadowMap", 720, 720);
 }

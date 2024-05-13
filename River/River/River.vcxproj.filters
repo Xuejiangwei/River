@@ -294,6 +294,9 @@
     <ClCompile Include="Renderer\Mesh\Source\FBXLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Source\RiverFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -672,6 +675,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Haze\include\HazeLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\RiverFile.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

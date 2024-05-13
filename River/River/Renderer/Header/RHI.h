@@ -84,15 +84,15 @@ public:
 
 	virtual void Resize(const RHIInitializeParam& param) = 0;
 
-	void AddMaterial(const char* name, Unique<Material>& material);
+	void AddMaterial(const String& name, Unique<Material>& material);
 	
-	Material* GetMaterial(const char* name);
+	Material* GetMaterial(const String& name);
 
-	virtual Unique<Texture> CreateTexture(const char* name, const char* path, bool isImmediately = false) = 0;
+	virtual Unique<Texture> CreateTexture(const String& name, const String& path, bool isImmediately = false) = 0;
 
-	virtual Unique<Texture> CreateCubeTexture(const char* name, const char* path, bool isImmediately = false) = 0;
+	virtual Unique<Texture> CreateCubeTexture(const String& name, const String& path, bool isImmediately = false) = 0;
 
-	virtual Unique<Shader> CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+	virtual Unique<Shader> CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
 		ShaderParam* param = nullptr) = 0;
 
 	virtual void SetViewPort(uint32 w, uint32 h, uint32 xOffset = 0, uint32 yOffset = 0) = 0;

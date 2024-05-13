@@ -4,6 +4,7 @@
 #include "Layer.h"
 #include "Window.h"
 #include "RiverMainUiLayer.h"
+#include "RiverFile.h"
 
 #include "RHI.h"
 #include "Camera.h"
@@ -41,7 +42,8 @@ Application::Application()
 	m_MainUiLayer = MakeShare<RiverMainUiLayer>();
 	AddLayer(m_MainUiLayer);
 	
-	const char* args[4] = { "-m", "F:\\GitHub\\River\\River\\HzCode\\HazeCode.hz", "-d", "debug1" };
+	String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
+	const char* args[4] = { "-m", hazeMainFile.c_str(), "-d", "debug1"};
 	m_HazeVM = HazeMain(4, const_cast<char**>(args));
 	RiverUiLibrary::InitializeLib();
 }

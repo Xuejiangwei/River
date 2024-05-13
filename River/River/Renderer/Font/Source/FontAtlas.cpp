@@ -1,5 +1,5 @@
 #include "RiverPch.h"
-#include "Utils/Header/FileUtils.h"
+#include "RiverFile.h"
 #include "Renderer/Font/Header/FontAtlas.h"
 #include "Renderer/Font/Header/Font.h"
 
@@ -10,17 +10,17 @@
 	#define IM_DRAWLIST_TEX_LINES_WIDTH_MAX     (63)
 #endif
 
-FontAtlas::FontAtlas(const char* path, float pixelSize)
+FontAtlas::FontAtlas(const String& path, float pixelSize)
 {
-	auto f = W_OpenFile(path, "rb");
-	uint64 file_size = FileGetSize(f);
+	auto f = RiverFile::W_OpenFile(path.c_str(), "rb");
+	uint64 file_size = RiverFile::FileGetSize(f);
 	if (file_size == (uint64)-1) fclose(f);
 
 	m_Data.resize(file_size);
 	if (fread(m_Data.data(), 1, file_size, f) != file_size) fclose(f);
 
 	fclose(f);
-	m_Font = MakeUnique<Font>(path, this, pixelSize);
+	m_Font = MakeUnique<Font>(path.c_str(), this, pixelSize);
 }
 
 FontAtlas::~FontAtlas()

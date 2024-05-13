@@ -123,8 +123,8 @@ void RiverEditorMainLayer::OnInitialize()
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
 			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
 
-		//skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("humanoid"));
-		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("women1"));
+		//skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("women1"));
+		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("humanoid"));
 	}
 
 	{

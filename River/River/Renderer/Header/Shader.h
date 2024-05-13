@@ -78,7 +78,7 @@ public:
 	int GetShaderId() const { return m_ShaderId; }
 
 public:
-	static Shader* CreateShader(const char* name, const char* path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
+	static Shader* CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines = { nullptr, nullptr },
 		ShaderParam* param = nullptr);
 
 private:

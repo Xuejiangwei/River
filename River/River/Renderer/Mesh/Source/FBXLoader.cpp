@@ -10,6 +10,12 @@
 
 #include "Math/Header/Geometric.h"
 
+#define LOG_FBX_MATRIX(T) LOG("Matrix name:" #T ": %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f", \
+							T.Get(0, 0), T.Get(0, 1), T.Get(0, 2), T.Get(0, 3), \
+							T.Get(1, 0), T.Get(1, 2), T.Get(1, 3), T.Get(1, 0), \
+							T.Get(2, 0), T.Get(2, 2), T.Get(2, 3), T.Get(2, 0), \
+							T.Get(3, 0), T.Get(3, 2), T.Get(3, 3), T.Get(3, 0))
+
 extern void WriteToFile(SkeletalMeshData* skeletalMeshData);
 
 bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData);
@@ -480,7 +486,7 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 				s_Bones[i].second.second->GetTransformLinkMatrix(transformLinkMatrix);
 				auto globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
 
-				Matrix4x4 transform;
+				Matrix4x4 transform((double(*)[4])(&globalBindposeInverseMatrix.mData));
 				for (size_t k = 0; k < 4; k++)
 				{
 					for (size_t j = 0; j < 4; j++)
@@ -500,6 +506,14 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 				}
 				skeletalMeshData->BoneOffsets1[i] = transform;
 				break;
+			}
+		}
+
+		for (size_t i = 0; i < s_Bones.size(); i++)
+		{
+			if (!s_Bones[i].second.second)
+			{
+				memset(&skeletalMeshData->BoneOffsets[i], 0, sizeof(skeletalMeshData->BoneOffsets[i]));
 			}
 		}
 
@@ -632,221 +646,39 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 				globalPos = pNode->EvaluateLocalTransform(pTime); //世界原点的Transform，单位厘米
 				for (size_t i = 0; i < s_Bones.size(); i++)
 				{
-					bool log = (i == 48 || i == 0) && pTime <= 0 && skeletalMeshData->AnimClips.size() == 0;
-
 					Keyframe frame;
 					frame.TimePos = (float)pTime.GetSecondDouble();
 
+					auto boneLocalTransform = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
 					if (s_Bones[i].second.second)
 					{
-						FbxAMatrix transformMatrix, transformLinkMatrix;
-						s_Bones[i].second.second->GetTransformMatrix(transformMatrix);
-
-						auto lt0 = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
-						FbxAMatrix ltr;
 						auto parent = s_Bones[i].second.first->GetParent();
 						if (parent->GetNodeAttribute() && parent->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eNull)
 						{
-							ltr = parent->EvaluateLocalTransform(pTime) * lt0;
+							boneLocalTransform = parent->EvaluateLocalTransform(pTime) * boneLocalTransform;
 						}
-
-						if (log)
-						{
-							LOG(" currlocal\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								lt0.Get(0, 0), lt0.Get(0, 1), lt0.Get(0, 2), lt0.Get(0, 3),
-								lt0.Get(1, 0), lt0.Get(1, 1), lt0.Get(1, 2), lt0.Get(1, 3),
-								lt0.Get(2, 0), lt0.Get(2, 1), lt0.Get(2, 2), lt0.Get(2, 3),
-								lt0.Get(3, 0), lt0.Get(3, 1), lt0.Get(3, 2), lt0.Get(3, 3));
-
-							LOG(" currlocal parent ltr\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								ltr.Get(0, 0), ltr.Get(0, 1), ltr.Get(0, 2), ltr.Get(0, 3),
-								ltr.Get(1, 0), ltr.Get(1, 1), ltr.Get(1, 2), ltr.Get(1, 3),
-								ltr.Get(2, 0), ltr.Get(2, 1), ltr.Get(2, 2), ltr.Get(2, 3),
-								ltr.Get(3, 0), ltr.Get(3, 1), ltr.Get(3, 2), ltr.Get(3, 3));
-						}
-
-						if (!(parent->GetNodeAttribute() && parent->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eNull))
-						{
-							ltr = lt0;
-						}
-
-						FbxAMatrix llt;// = geometryTransform;
-						while (parent)
-						{
-							auto tttt = parent->EvaluateLocalTransform(pTime);
-
-							if (log)
-							{
-								LOG(" parent\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-									tttt.Get(0, 0), tttt.Get(0, 1), tttt.Get(0, 2), tttt.Get(0, 3),
-									tttt.Get(1, 0), tttt.Get(1, 1), tttt.Get(1, 2), tttt.Get(1, 3),
-									tttt.Get(2, 0), tttt.Get(2, 1), tttt.Get(2, 2), tttt.Get(2, 3),
-									tttt.Get(3, 0), tttt.Get(3, 1), tttt.Get(3, 2), tttt.Get(3, 3));
-
-								LOG(" parent after\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-									llt.Get(0, 0), llt.Get(0, 1), llt.Get(0, 2), llt.Get(0, 3),
-									llt.Get(1, 0), llt.Get(1, 1), llt.Get(1, 2), llt.Get(1, 3),
-									llt.Get(2, 0), llt.Get(2, 1), llt.Get(2, 2), llt.Get(2, 3),
-									llt.Get(3, 0), llt.Get(3, 1), llt.Get(3, 2), llt.Get(3, 3));
-							}
-
-							llt = tttt * llt;
-
-							if (log)
-							{
-								LOG(" parent after\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-									llt.Get(0, 0), llt.Get(0, 1), llt.Get(0, 2), llt.Get(0, 3),
-									llt.Get(1, 0), llt.Get(1, 1), llt.Get(1, 2), llt.Get(1, 3),
-									llt.Get(2, 0), llt.Get(2, 1), llt.Get(2, 2), llt.Get(2, 3),
-									llt.Get(3, 0), llt.Get(3, 1), llt.Get(3, 2), llt.Get(3, 3));
-							}
-
-							if (parent->GetNodeAttribute() && parent->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eNull)
-							{
-								auto ppt = parent->EvaluateLocalTransform(pTime);
-								ppt = parent->EvaluateLocalTransform(0);
-								ppt = parent->EvaluateLocalTransform();
-								auto name = parent->GetName();
-								break;
-							}
-
-							parent = parent->GetParent();
-						}
-
-						//auto llt = ->EvaluateLocalTransform(pTime);
-						auto lltt = llt * lt0;
-
-						if (log)
-						{
-							LOG(" curr world\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								lltt.Get(0, 0), lltt.Get(0, 1), lltt.Get(0, 2), lltt.Get(0, 3),
-								lltt.Get(1, 0), lltt.Get(1, 1), lltt.Get(1, 2), lltt.Get(1, 3),
-								lltt.Get(2, 0), lltt.Get(2, 1), lltt.Get(2, 2), lltt.Get(2, 3),
-								lltt.Get(3, 0), lltt.Get(3, 1), lltt.Get(3, 2), lltt.Get(3, 3));
-						}
-
-						FbxAMatrix invers;
-						for (size_t k = 0; k < 4; k++)
-						{
-							for (size_t j = 0; j < 4; j++)
-							{
-								invers.mData[k][j] = skeletalMeshData->BoneOffsets[i].m[k][j];
-							}
-						}
-
-						auto tv = lltt * invers;
-
-						if (log)
-						{
-							LOG(" curr world muli offset\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								invers.Get(0, 0), invers.Get(0, 1), invers.Get(0, 2), invers.Get(0, 3),
-								invers.Get(1, 0), invers.Get(1, 1), invers.Get(1, 2), invers.Get(1, 3),
-								invers.Get(2, 0), invers.Get(2, 1), invers.Get(2, 2), invers.Get(2, 3),
-								invers.Get(3, 0), invers.Get(3, 1), invers.Get(3, 2), invers.Get(3, 3));
-
-							LOG(" curr world muli offset result \n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								tv.Get(0, 0), tv.Get(0, 1), tv.Get(0, 2), tv.Get(0, 3),
-								tv.Get(1, 0), tv.Get(1, 1), tv.Get(1, 2), tv.Get(1, 3),
-								tv.Get(2, 0), tv.Get(2, 1), tv.Get(2, 2), tv.Get(2, 3),
-								tv.Get(3, 0), tv.Get(3, 1), tv.Get(3, 2), tv.Get(3, 3));
-						}
-
-						auto inv = transformMatrix.Inverse();
-						for (size_t k = 0; k < 4; k++)
-						{
-							for (size_t j = 0; j < 4; j++)
-							{
-								inv.mData[k][j] = (float)inv.mData[k][j];
-							}
-						}
-
-						auto rtrans = inv * tv;
-
-						if (log)
-						{
-							LOG(" final inv\n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								inv.Get(0, 0), inv.Get(0, 1), inv.Get(0, 2), inv.Get(0, 3),
-								inv.Get(1, 0), inv.Get(1, 1), inv.Get(1, 2), inv.Get(1, 3),
-								inv.Get(2, 0), inv.Get(2, 1), inv.Get(2, 2), inv.Get(2, 3),
-								inv.Get(3, 0), inv.Get(3, 1), inv.Get(3, 2), inv.Get(3, 3));
-
-							LOG(" final \n %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								rtrans.Get(0, 0), rtrans.Get(0, 1), rtrans.Get(0, 2), rtrans.Get(0, 3),
-								rtrans.Get(1, 0), rtrans.Get(1, 1), rtrans.Get(1, 2), rtrans.Get(1, 3),
-								rtrans.Get(2, 0), rtrans.Get(2, 1), rtrans.Get(2, 2), rtrans.Get(2, 3),
-								rtrans.Get(3, 0), rtrans.Get(3, 1), rtrans.Get(3, 2), rtrans.Get(3, 3));
-						}
-
-						auto t = ltr.GetT();
-						auto rq = ltr.GetQ();
-						auto s = ltr.GetS();
-
-						frame.Translation.x = t.mData[0];
-						frame.Translation.y = t.mData[1];
-						frame.Translation.z = t.mData[2];
-
-						frame.RotationQuat.x = rq.mData[0];
-						frame.RotationQuat.y = rq.mData[1];
-						frame.RotationQuat.z = rq.mData[2];
-						frame.RotationQuat.w = rq.mData[3];
-
-						frame.Scale.x = s.mData[0];
-						frame.Scale.y = s.mData[1];
-						frame.Scale.z = s.mData[2];
-
-
-						/*if (frame.TimePos <= 0)
-						{
-							LOG(" %d 1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f", i,
-							trans.Get(0, 0), trans.Get(0, 1), trans.Get(0, 2), trans.Get(0, 3),
-							trans.Get(1, 0), trans.Get(1, 2), trans.Get(1, 3), trans.Get(1, 0),
-							trans.Get(2, 0), trans.Get(2, 2), trans.Get(2, 3), trans.Get(2, 0),
-							trans.Get(3, 0), trans.Get(3, 2), trans.Get(3, 3), trans.Get(3, 0));
-
-							LOG("  2 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
-								m.m[0][0], m.m[0][1], m.m[0][2], m.m[0][3],
-								m.m[1][0], m.m[1][2], m.m[1][3], m.m[1][0],
-								m.m[2][0], m.m[2][2], m.m[2][3], m.m[2][0],
-								m.m[3][0], m.m[3][2], m.m[3][3], m.m[3][0]);
-						}*/
-
-
-						for (size_t k = 0; k < 4; k++)
-						{
-							for (size_t j = 0; j < 4; j++)
-							{
-								frame.trans.m[k][j] = (float)rtrans.Get(k, j);
-							}
-						}
-
-						frame.IsNone = false;
 					}
 					else
 					{
-						memset(&frame, 0, sizeof(frame));
-						frame.IsNone = true;
-
-						auto ltr = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
-
-						auto t = ltr.GetT();
-						auto rq = ltr.GetQ();
-						auto s = ltr.GetS();
-
-						frame.Translation.x = t.mData[0];
-						frame.Translation.y = t.mData[1];
-						frame.Translation.z = t.mData[2];
-
-						frame.RotationQuat.x = rq.mData[0];
-						frame.RotationQuat.y = rq.mData[1];
-						frame.RotationQuat.z = rq.mData[2];
-						frame.RotationQuat.w = rq.mData[3];
-
-						frame.Scale.x = s.mData[0];
-						frame.Scale.y = s.mData[1];
-						frame.Scale.z = s.mData[2];
-
-						memset(&skeletalMeshData->BoneOffsets[i], 0, sizeof(skeletalMeshData->BoneOffsets[i]));
+						
 					}
+
+					auto t = boneLocalTransform.GetT();
+					auto rq = boneLocalTransform.GetQ();
+					auto s = boneLocalTransform.GetS();
+
+					frame.Translation.x = t.mData[0];
+					frame.Translation.y = t.mData[1];
+					frame.Translation.z = t.mData[2];
+
+					frame.RotationQuat.x = rq.mData[0];
+					frame.RotationQuat.y = rq.mData[1];
+					frame.RotationQuat.z = rq.mData[2];
+					frame.RotationQuat.w = rq.mData[3];
+
+					frame.Scale.x = s.mData[0];
+					frame.Scale.y = s.mData[1];
+					frame.Scale.z = s.mData[2];
 					
 					animationClip.BoneAnimations[i].Keyframes.push_back(frame);
 				}
