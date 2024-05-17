@@ -469,6 +469,59 @@ struct Matrix4x4
 		return *this;
 	}
 
+	/*Matrix4x4 Determinant() const 
+	{
+		return a1 * b2 * c3 * d4 - a1 * b2 * c4 * d3 + a1 * b3 * c4 * d2 - a1 * b3 * c2 * d4
+			+ a1 * b4 * c2 * d3 - a1 * b4 * c3 * d2 - a2 * b3 * c4 * d1 + a2 * b3 * c1 * d4
+			- a2 * b4 * c1 * d3 + a2 * b4 * c3 * d1 - a2 * b1 * c3 * d4 + a2 * b1 * c4 * d3
+			+ a3 * b4 * c1 * d2 - a3 * b4 * c2 * d1 + a3 * b1 * c2 * d4 - a3 * b1 * c4 * d2
+			+ a3 * b2 * c4 * d1 - a3 * b2 * c1 * d4 - a4 * b1 * c2 * d3 + a4 * b1 * c3 * d2
+			- a4 * b2 * c3 * d1 + a4 * b2 * c1 * d3 - a4 * b3 * c1 * d2 + a4 * b3 * c2 * d1;
+	}*/
+
+	//Matrix4x4& Inverse()
+	//{
+	//	// Compute the reciprocal determinant
+	//	const TReal det = Determinant();
+	//	if (det == static_cast<TReal>(0.0))
+	//	{
+	//		// Matrix is not invertible. Setting all elements to nan is not really
+	//		// correct in a mathematical sense but it is easy to debug for the
+	//		// programmer.
+	//		const TReal nan = std::numeric_limits<TReal>::quiet_NaN();
+	//		*this = aiMatrix4x4t<TReal>(
+	//			nan, nan, nan, nan,
+	//			nan, nan, nan, nan,
+	//			nan, nan, nan, nan,
+	//			nan, nan, nan, nan);
+
+	//		return *this;
+	//	}
+
+	//	const TReal invdet = static_cast<TReal>(1.0) / det;
+
+	//	aiMatrix4x4t<TReal> res;
+	//	res.a1 = invdet * (b2 * (c3 * d4 - c4 * d3) + b3 * (c4 * d2 - c2 * d4) + b4 * (c2 * d3 - c3 * d2));
+	//	res.a2 = -invdet * (a2 * (c3 * d4 - c4 * d3) + a3 * (c4 * d2 - c2 * d4) + a4 * (c2 * d3 - c3 * d2));
+	//	res.a3 = invdet * (a2 * (b3 * d4 - b4 * d3) + a3 * (b4 * d2 - b2 * d4) + a4 * (b2 * d3 - b3 * d2));
+	//	res.a4 = -invdet * (a2 * (b3 * c4 - b4 * c3) + a3 * (b4 * c2 - b2 * c4) + a4 * (b2 * c3 - b3 * c2));
+	//	res.b1 = -invdet * (b1 * (c3 * d4 - c4 * d3) + b3 * (c4 * d1 - c1 * d4) + b4 * (c1 * d3 - c3 * d1));
+	//	res.b2 = invdet * (a1 * (c3 * d4 - c4 * d3) + a3 * (c4 * d1 - c1 * d4) + a4 * (c1 * d3 - c3 * d1));
+	//	res.b3 = -invdet * (a1 * (b3 * d4 - b4 * d3) + a3 * (b4 * d1 - b1 * d4) + a4 * (b1 * d3 - b3 * d1));
+	//	res.b4 = invdet * (a1 * (b3 * c4 - b4 * c3) + a3 * (b4 * c1 - b1 * c4) + a4 * (b1 * c3 - b3 * c1));
+	//	res.c1 = invdet * (b1 * (c2 * d4 - c4 * d2) + b2 * (c4 * d1 - c1 * d4) + b4 * (c1 * d2 - c2 * d1));
+	//	res.c2 = -invdet * (a1 * (c2 * d4 - c4 * d2) + a2 * (c4 * d1 - c1 * d4) + a4 * (c1 * d2 - c2 * d1));
+	//	res.c3 = invdet * (a1 * (b2 * d4 - b4 * d2) + a2 * (b4 * d1 - b1 * d4) + a4 * (b1 * d2 - b2 * d1));
+	//	res.c4 = -invdet * (a1 * (b2 * c4 - b4 * c2) + a2 * (b4 * c1 - b1 * c4) + a4 * (b1 * c2 - b2 * c1));
+	//	res.d1 = -invdet * (b1 * (c2 * d3 - c3 * d2) + b2 * (c3 * d1 - c1 * d3) + b3 * (c1 * d2 - c2 * d1));
+	//	res.d2 = invdet * (a1 * (c2 * d3 - c3 * d2) + a2 * (c3 * d1 - c1 * d3) + a3 * (c1 * d2 - c2 * d1));
+	//	res.d3 = -invdet * (a1 * (b2 * d3 - b3 * d2) + a2 * (b3 * d1 - b1 * d3) + a3 * (b1 * d2 - b2 * d1));
+	//	res.d4 = invdet * (a1 * (b2 * c3 - b3 * c2) + a2 * (b3 * c1 - b1 * c3) + a3 * (b1 * c2 - b2 * c1));
+	//	*this = res;
+
+	//	return *this;
+	//}
+
 	static Matrix4x4 UnitMatrix()
 	{
 		return {

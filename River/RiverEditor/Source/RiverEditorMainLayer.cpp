@@ -40,7 +40,7 @@ void RiverEditorMainLayer::OnInitialize()
 	//Па»ъ
 	{
 		m_MainCamera = ProduceObject<CameraObject>();
-		m_MainCamera->SetPosition({ 0.0f, 2.0f, -15.0f });
+		m_MainCamera->SetPosition({ 0.0f, 20.0f, -150.0f });
 	}
 
 	{
@@ -118,6 +118,7 @@ void RiverEditorMainLayer::OnInitialize()
 	{
 		auto obj = ProduceObject();
 		obj->SetPosition({ 0.f, 5.f, 0.f });
+		//obj->SetScale({ 0.1f, 0.1f, 0.1f });
 		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
 		obj->AddComponent(skeletalMeshComponent);
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
@@ -154,7 +155,7 @@ void RiverEditorMainLayer::OnUpdate(float deltaTime)
 	auto application = Application::Get();
 	auto inputManager = application->GetInputManager();
 
-	float cameraSpeed = 10.0f * deltaTime;
+	float cameraSpeed = 100.0f * deltaTime;
 	if (inputManager->GetKeyState(KeyCode::W) == KeyState::Press)
 	{
 		m_MainCamera->MoveForward(cameraSpeed);

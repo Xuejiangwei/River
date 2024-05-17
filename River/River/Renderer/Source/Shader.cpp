@@ -9,6 +9,7 @@
 #endif // _WIN32
 
 Shader::Shader()
+	:m_ShaderId(-1)
 {
 }
 

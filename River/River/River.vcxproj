@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;RIVER_EXPORT;FBX_SHARED=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdLib\FBX SDK\2020.3.7\include;$(ProjectDir)Renderer\Header;$(ProjectDir)Window\Header;$(ProjectDir);$(ProjectDir)Haze\include;$(ProjectDir)Header;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdLib\Assimp\include;$(SolutionDir)ThirdLib\FBX SDK\2020.3.7\include;$(ProjectDir)Renderer\Header;$(ProjectDir)Window\Header;$(ProjectDir);$(ProjectDir)Haze\include;$(ProjectDir)Header;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>RiverPch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>

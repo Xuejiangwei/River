@@ -47,7 +47,7 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 
 	for (auto i = 0; i < numBones; ++i)
 	{
-		bool log = i == 48 || i == 0;
+		bool log = i == 0;
 		int parentIndex = skelatalData->BoneHierarchy[i];
 		if (parentIndex < 0)
 		{
@@ -98,11 +98,11 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 	
 	for (auto i = 0; i < numBones; ++i)
 	{
-		bool log = i == 48 || i == 0;
+		bool log = i == 0;
 		auto offset = skelatalData->BoneOffsets[i];
 		auto toRoot = toRootTransforms[i];
 		auto finalTransform = Matrix4x4::Multiply(offset, toRoot);
-		finalTransform = Matrix4x4::Multiply(finalTransform, skelatalData->BoneOffsets1[i]);
+		//finalTransform = Matrix4x4::Multiply(finalTransform, skelatalData->BoneOffsets1[i]);
 		
 
 		if (log && !bset)
@@ -113,11 +113,11 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 				offset.m[2][0], offset.m[2][1], offset.m[2][2], offset.m[2][3],
 				offset.m[3][0], offset.m[3][1], offset.m[3][2], offset.m[3][3]);
 
-			LOG("offset1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
+			/*LOG("offset1 %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f",
 				skelatalData->BoneOffsets1[i].m[0][0], skelatalData->BoneOffsets1[i].m[0][1], skelatalData->BoneOffsets1[i].m[0][2], skelatalData->BoneOffsets1[i].m[0][3],
 				skelatalData->BoneOffsets1[i].m[1][0], skelatalData->BoneOffsets1[i].m[1][1], skelatalData->BoneOffsets1[i].m[1][2], skelatalData->BoneOffsets1[i].m[1][3],
 				skelatalData->BoneOffsets1[i].m[2][0], skelatalData->BoneOffsets1[i].m[2][1], skelatalData->BoneOffsets1[i].m[2][2], skelatalData->BoneOffsets1[i].m[2][3],
-				skelatalData->BoneOffsets1[i].m[3][0], skelatalData->BoneOffsets1[i].m[3][1], skelatalData->BoneOffsets1[i].m[3][2], skelatalData->BoneOffsets1[i].m[3][3]);
+				skelatalData->BoneOffsets1[i].m[3][0], skelatalData->BoneOffsets1[i].m[3][1], skelatalData->BoneOffsets1[i].m[3][2], skelatalData->BoneOffsets1[i].m[3][3]);*/
 
 			LOG("curr %d %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f,  %f,%f,%f,%f\n", i,
 				finalTransform.m[0][0], finalTransform.m[0][1], finalTransform.m[0][2], finalTransform.m[0][3],

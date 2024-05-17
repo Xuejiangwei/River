@@ -1228,14 +1228,15 @@ void DX12RHI::InitBaseGeometry()
 	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", FILE_PATH_RELATIVE("Models\\fbx_extra.fbx")));
 	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", FILE_PATH_RELATIVE("Models\\humanoid.fbx")));
 
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", FILE_PATH_RELATIVE("Models\\soldier.m3d")));
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", FILE_PATH_RELATIVE("Models\\women.m3d")));
+	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", FILE_PATH_RELATIVE("Models\\soldier.m3d")));
+	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", FILE_PATH_RELATIVE("Models\\women.m3d")));
 }
 
 void DX12RHI::InitBaseTexture()
 {
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
-	Texture::CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), m_Fonts["default"]->GetTextureDataRGBA32());
+	Texture::CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), 
+		m_Fonts["default"]->GetTextureDataRGBA32());
 	
 	Texture::CreateTexture("bricksDiffuseMap", DEFAULT_TEXTURE_PATH_13);
 	Texture::CreateTexture("bricksNormalMap", DEFAULT_TEXTURE_PATH_14);
