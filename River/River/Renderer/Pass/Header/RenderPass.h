@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RiverHead.h"
+#include "Math/Header/BaseStruct.h"
+
 #define MaxLights 16
 
 class RenderPass

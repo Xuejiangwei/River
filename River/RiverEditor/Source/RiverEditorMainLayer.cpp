@@ -107,7 +107,7 @@ void RiverEditorMainLayer::OnInitialize()
 		/*auto obj = ProduceObject();
 		obj->SetPosition({ 0.f, -5.f, 0.f });
 		obj->SetScale({ 0.05f, 0.05f, -0.05f });
-		obj->SetRotation({ 0.0f, 135.f, 0.0f });
+		obj->SetRotation({ 0.0f, 180.f, 0.0f });
 		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
 		obj->AddComponent(skeletalMeshComponent);
 		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
@@ -116,16 +116,17 @@ void RiverEditorMainLayer::OnInitialize()
 	}
 
 	{
-		auto obj = ProduceObject();
-		obj->SetPosition({ 0.f, 5.f, 0.f });
-		//obj->SetScale({ 0.1f, 0.1f, 0.1f });
-		auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
-		obj->AddComponent(skeletalMeshComponent);
-		skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
-			new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
+		//auto obj = ProduceObject();
+		//obj->SetPosition({ 0.f, 5.f, 0.f });
+		//obj->SetRotation({ 0.f, 0.f, 0.f });
+		//obj->SetScale({ 1.f, 1.f, 1.f });
+		//auto skeletalMeshComponent = MakeShare<SkeletalMeshComponent>();
+		//obj->AddComponent(skeletalMeshComponent);
+		//skeletalMeshComponent->SetCollider(MakeShare<CollisionVolume>(ColliderType::Box,
+		//	new ColliderPlane({ 1.f, 1.f, 1.f }, 1)));
 
-		//skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("women1"));
-		skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("humanoid"));
+		////skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("women1"));
+		//skeletalMeshComponent->SetSkeletalMesh(AssetManager::Get()->GetSkeletalMesh("humanoid"));
 	}
 
 	{

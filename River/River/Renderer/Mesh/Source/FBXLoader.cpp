@@ -1,4 +1,5 @@
 #include "RiverPch.h"
+#include "Math/Header/BaseStruct.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 #include "Renderer/Header/AssetManager.h"
 
@@ -663,7 +664,6 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 	// 遍历骨骼
 	V_Array<VertexRelateBoneInfo> vertex_relate_bone_infos_(skeletalMeshData->Vertices.size());
 
-	//skeletalMeshData->BoneHierarchy.resize(lClusterCount);
 	for (int lClusterIndex = 0; lClusterIndex < clusterCount; ++lClusterIndex)
 	{
 		// 获取骨骼的顶点组
@@ -713,14 +713,6 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 			}
 		}
 
-		for (size_t i = 0; i < s_Bones.size(); i++)
-		{
-			if (!s_Bones[i].second.second)
-			{
-				memset(&skeletalMeshData->BoneOffsets[i], 0, sizeof(skeletalMeshData->BoneOffsets[i]));
-			}
-		}
-
 		// 获取这个顶点组影响的顶点索引数量
 		int lVertexIndexCount = cluster->GetControlPointIndicesCount();
 		for (int k = 0; k < lVertexIndexCount; ++k)
@@ -731,6 +723,14 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 			//拿到这个簇中对这个顶点的权重
 			auto weight = cluster->GetControlPointWeights()[k];
 			vertex_relate_bone_infos_[vertexIndex].Push(boneIndex, (int)(weight * 100));
+		}
+	}
+
+	for (size_t i = 0; i < s_Bones.size(); i++)
+	{
+		if (!s_Bones[i].second.second)
+		{
+			memset(&skeletalMeshData->BoneOffsets[i], 0, sizeof(skeletalMeshData->BoneOffsets[i]));
 		}
 	}
 	
@@ -864,7 +864,7 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 					frame.TimePos = (float)pTime.GetSecondDouble();
 
 					auto boneLocalTransform = s_Bones[i].second.first->EvaluateLocalTransform(pTime);
-					if (s_Bones[i].second.second)
+					if (s_Bones[i].second.second) 
 					{
 						auto parent = s_Bones[i].second.first->GetParent();
 						if (parent->GetNodeAttribute() && parent->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eNull)

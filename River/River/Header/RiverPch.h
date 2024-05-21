@@ -15,7 +15,6 @@
 
 #include "Event.h"
 #include "RiverHead.h"
-#include "Math/Header/BaseStruct.h"
 
 
 #if defined(DEBUG) || defined(_DEBUG)

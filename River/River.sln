@@ -10,6 +10,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RiverEditor", "RiverEditor\
 		{6B1A7947-13BA-4594-9428-88565D91FA4C} = {6B1A7947-13BA-4594-9428-88565D91FA4C}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KnowledgeNeuron", "KnowledgeNeuron\KnowledgeNeuron.vcxproj", "{4613AF8B-5907-4CE6-AF65-D3252C84B92F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6B1A7947-13BA-4594-9428-88565D91FA4C} = {6B1A7947-13BA-4594-9428-88565D91FA4C}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +39,14 @@ Global
 		{7C6F1FA4-F373-47D3-8AD7-FA419643C405}.Release|x64.Build.0 = Release|x64
 		{7C6F1FA4-F373-47D3-8AD7-FA419643C405}.Release|x86.ActiveCfg = Release|Win32
 		{7C6F1FA4-F373-47D3-8AD7-FA419643C405}.Release|x86.Build.0 = Release|Win32
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Debug|x64.ActiveCfg = Debug|x64
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Debug|x64.Build.0 = Debug|x64
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Debug|x86.ActiveCfg = Debug|Win32
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Debug|x86.Build.0 = Debug|Win32
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Release|x64.ActiveCfg = Release|x64
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Release|x64.Build.0 = Release|x64
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Release|x86.ActiveCfg = Release|Win32
+		{4613AF8B-5907-4CE6-AF65-D3252C84B92F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

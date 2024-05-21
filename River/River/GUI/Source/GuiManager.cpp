@@ -115,10 +115,10 @@ Widget* GuiManager::GetUiWidgetByName(const char* panelName, const char* widgetN
 	return Application::Get()->GetMainUiLayer()->GetUiByName(panelName, widgetName);
 }
 
-Share<Widget> GuiManager::DecodeGUI_File(const char* filePath)
+Share<Widget> GuiManager::DecodeGUI_File(const String& filePath)
 {
 	XJson json;
-	json.DecodeFromFile(filePath);
+	json.DecodeFromFile(filePath.c_str());
 
 	return CreateWidgetByJson(json["Root"]);
 }

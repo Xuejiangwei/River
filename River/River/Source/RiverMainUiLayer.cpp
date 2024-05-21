@@ -1,6 +1,7 @@
 #include "RiverPch.h"
 #include "RiverMainUiLayer.h"
 
+#include "RiverFile.h"
 #include "Application.h"
 #include "Renderer/Header/RHI.h"
 #include "Renderer/Header/AssetManager.h"
@@ -31,7 +32,9 @@ void RiverMainUiLayer::OnAttach()
 {
 	//initialize
 	//RHI::Get()->SetShowUIDebugOutline(true);
-	//auto panel = DynamicCast<Panel>(GuiManager::DecodeGUI_File("F:\\GitHub\\River\\River\\UI\\MainUI.json"));
+	
+	auto panel = DynamicCast<Panel>(
+		GuiManager::DecodeGUI_File(RiverFile::GetPathAddRootPath("UI\\MainUI.json")));
 	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
 	list->SetChildWidgetType("Text");
 	list->SetListData<String>({ String(u8"ÏÄ"), String(u8"ÉÌ"), String(u8"ÖÜ") });
@@ -40,7 +43,7 @@ void RiverMainUiLayer::OnAttach()
 	uint8 color[4] = { 0, 255, 255, 255 };
 	canvas->SetBackgroundColor(color);*/
 
-	//m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
+	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }
 
 void RiverMainUiLayer::OnDetach()

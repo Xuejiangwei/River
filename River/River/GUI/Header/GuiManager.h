@@ -13,7 +13,7 @@ public:
 	Widget* GetUiWidgetByName(const char* panelName, const char* widgetName);
 
 public:
-	static Share<Widget> DecodeGUI_File(const char* filePath);
+	static Share<Widget> DecodeGUI_File(const String& filePath);
 
 	static Share<Widget> CreateWidgetByTypeName(const char* typeName);
 	

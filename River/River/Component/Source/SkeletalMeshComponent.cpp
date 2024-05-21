@@ -23,7 +23,7 @@ void SkeletalMeshComponent::Tick(float deltaTime)
 
 	auto& skelatalData = m_SkeletalMesh->GetSkeletalMeshData();
 	//auto& currAnim = skelatalData->AnimClips.find("Take1");
-	auto& currAnim = skelatalData->AnimClips.find("anim0");
+	auto& currAnim = skelatalData->AnimClips.find("anim1");
 	if (currAnim == skelatalData->AnimClips.end())
 	{
 		return;

@@ -382,7 +382,6 @@ Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const String& pat
 		WaitFence();
 	}
 
-
 	return texture;
 }
 
@@ -1226,7 +1225,7 @@ void DX12RHI::InitBaseGeometry()
 	GeometryGenerator::CreateGridStaticMesh(20, 30, 60, 40);
 
 	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women1", FILE_PATH_RELATIVE("Models\\fbx_extra.fbx")));
-	AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", FILE_PATH_RELATIVE("Models\\humanoid.fbx")));
+	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("humanoid", FILE_PATH_RELATIVE("Models\\humanoid.fbx")));
 
 	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("human", FILE_PATH_RELATIVE("Models\\soldier.m3d")));
 	//AssetManager::Get()->AddSkeletalMesh(MakeUnique<SkeletalMesh>("women", FILE_PATH_RELATIVE("Models\\women.m3d")));

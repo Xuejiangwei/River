@@ -24,7 +24,7 @@ VertexOut VS(VertexIn vin)
 	
     vout.TexC = vin.TexC;
 	
-    vout.Color = float4(vin.Color.r / 255.f, vin.Color.g / 255.f, vin.Color.b / 255.f, vin.Color.a / 255.f); //vin.Color / 255;
+    vout.Color = float4(vin.Color.r / 255.f, vin.Color.g / 255.f, vin.Color.b / 255.f, 0.5f); //vin.Color / 255;
     
     return vout;
 }
@@ -37,11 +37,13 @@ float4 PS(VertexOut pin) : SV_Target
     
     if (gObjPad0 == 1 << 0)
     {
-        return pin.Color;
+       return pin.Color;
     }
     else
     {
-        return gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC); //float4(color, pin.Color.a);
+        float4 color = gTextureMaps[0].Sample(gsamLinearWrap, pin.TexC);
+        clip(color.a - 0.1f);
+        return color; //float4(color, pin.Color.a);
     }
     
     //return float4(gSsaoMap.Sample(gsamLinearWrap, pin.TexC).rrr, 1.0f);

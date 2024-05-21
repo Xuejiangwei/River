@@ -554,6 +554,10 @@ struct Matrix4x4
 
 	static Matrix4x4 RotationMatrix(float pitch, float yaw, float roll)
 	{
+		pitch = DegreeToRadians(pitch);
+		yaw = DegreeToRadians(yaw);
+		roll = DegreeToRadians(roll);
+
 		float cp = cosf(pitch);
 		float sp = sinf(pitch);
 

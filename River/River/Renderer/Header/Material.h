@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RiverHead.h"
-
+#include "Math/Header/BaseStruct.h"
 
 class Texture;
 class Shader;

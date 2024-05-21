@@ -1,6 +1,7 @@
 #pragma once
 #include "RiverHead.h"
 #include "Event.h"
+#include "Math/Header/BaseStruct.h"
 
 class Layer;
 
