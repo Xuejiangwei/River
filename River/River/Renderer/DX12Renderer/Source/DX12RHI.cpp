@@ -1244,6 +1244,10 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("jiulian", DEFAULT_TEXTURE_PATH + "fbx_extra_jiulian.dds");
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
 	Texture::CreateTexture("ShadowMap", 720, 720);
+
+	V_Array<uint8> data;
+	extern void LoadPNG(const char* path, uint8 * data);
+	LoadPNG((DEFAULT_TEXTURE_PATH + "GraphPanel_SolidBackground.PNG").c_str(), data.data());
 }
 
 void DX12RHI::InitBaseShaders()

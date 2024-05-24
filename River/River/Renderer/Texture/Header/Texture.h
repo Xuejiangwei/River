@@ -1,5 +1,4 @@
 #pragma once
-
 #include "RiverHead.h"
 
 class Texture

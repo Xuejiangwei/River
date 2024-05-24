@@ -6,8 +6,8 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "RenderItem.h"
-#include "Texture.h"
 #include "FrameBuffer.h"
+#include "Renderer/Texture/Header/Texture.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 #include "Renderer/Pass/Header/RenderPass.h"
 

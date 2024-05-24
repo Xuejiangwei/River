@@ -3,10 +3,10 @@
 #include "Application.h"
 #include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"
+#include "Renderer/Texture/Header/Texture.h"
 
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 
-#include "Renderer/Header/Texture.h"
 
 Image::Image()
     : m_Texture(nullptr)

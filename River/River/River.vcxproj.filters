@@ -87,7 +87,7 @@
     <ClCompile Include="Renderer\Source\Material.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\Source\Texture.cpp">
+    <ClCompile Include="Renderer\Texture\Source\Texture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\DX12Renderer\Source\DDSTextureLoader.cpp">
@@ -297,6 +297,9 @@
     <ClCompile Include="Source\RiverFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Texture\Source\PNGLoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -392,7 +395,7 @@
     <ClInclude Include="Renderer\Header\Material.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Header\Texture.h">
+    <ClInclude Include="Renderer\Texture\Header\Texture.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\DX12Renderer\Header\DDSTextureLoader.h">

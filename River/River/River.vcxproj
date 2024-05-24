@@ -208,7 +208,8 @@
     <ClCompile Include="Renderer\Source\RHI.cpp" />
     <ClCompile Include="Renderer\Source\RenderScene.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
-    <ClCompile Include="Renderer\Source\Texture.cpp" />
+    <ClCompile Include="Renderer\Texture\Source\PNGLoader.cpp" />
+    <ClCompile Include="Renderer\Texture\Source\Texture.cpp" />
     <ClCompile Include="Renderer\Source\UniformBuffer.cpp" />
     <ClCompile Include="Renderer\Source\VertexBuffer.cpp" />
     <ClCompile Include="GUI\Source\Button.cpp" />
@@ -338,7 +339,7 @@
     <ClInclude Include="Renderer\Header\RHI.h" />
     <ClInclude Include="Renderer\Header\Shader.h" />
     <ClInclude Include="Renderer\Header\ShaderDataType.h" />
-    <ClInclude Include="Renderer\Header\Texture.h" />
+    <ClInclude Include="Renderer\Texture\Header\Texture.h" />
     <ClInclude Include="Renderer\Header\UniformBuffer.h" />
     <ClInclude Include="Renderer\Header\VertexBuffer.h" />
     <ClInclude Include="Renderer\Header\AssetManager.h" />

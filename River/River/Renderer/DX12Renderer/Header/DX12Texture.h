@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Texture.h"
+#include "Renderer/Texture/Header/Texture.h"
 
 #include <wrl.h>
 #include <d3d12.h>

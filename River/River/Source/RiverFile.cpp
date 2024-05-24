@@ -11,12 +11,17 @@
 
 String RiverFile::s_RootFilePath = "";
 
-RiverFile::RiverFile()
+RiverFile::RiverFile(const char* path, int mode)
 {
+	m_FileStream.open(path, mode);
 }
 
 RiverFile::~RiverFile()
 {
+	if (m_FileStream.is_open())
+	{
+		m_FileStream.close();
+	}
 }
 
 void RiverFile::Initialize()
