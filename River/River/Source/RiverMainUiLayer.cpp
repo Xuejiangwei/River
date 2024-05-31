@@ -43,6 +43,8 @@ void RiverMainUiLayer::OnAttach()
 	uint8 color[4] = { 0, 255, 255, 255 };
 	canvas->SetBackgroundColor(color);*/
 
+	auto img = DynamicCast<Image>(panel->GetChildWidgetByName("TestImg"));
+	img->SetTexture(AssetManager::Get()->GetTexture("Block"));
 	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }
 

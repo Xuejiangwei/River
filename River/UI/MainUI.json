@@ -21,6 +21,12 @@
                 "Position" : [200, 200]
             },
             {
+                "Type" : "Image",
+                "Name" : "TestImg",
+                "Size" : [100, 100],
+                "Position" : [300, 300]
+            },
+            {
                 "Type" : "ListWidget",
                 "Name" : "MainList",
                 "Size" : [100, 300],

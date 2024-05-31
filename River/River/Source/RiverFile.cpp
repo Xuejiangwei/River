@@ -57,3 +57,17 @@ String RiverFile::GetPathAddRootPath(const char* relativePath)
 {
 	return RiverFile::GetRootPath() + "\\" + relativePath;
 }
+
+void RiverFile::ReadNumber(char* dst, uint64 size)
+{
+	m_FileStream.read(dst, size);
+
+	int end = size - 1;
+	uint8 tmp;
+	for (int i = 0; i < size / 2; i++)
+	{
+		tmp = dst[i];
+		dst[i] = dst[end - i];
+		dst[end - i] = tmp;
+	}
+}

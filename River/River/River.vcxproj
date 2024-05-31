@@ -208,6 +208,7 @@
     <ClCompile Include="Renderer\Source\RHI.cpp" />
     <ClCompile Include="Renderer\Source\RenderScene.cpp" />
     <ClCompile Include="Renderer\Source\Shader.cpp" />
+    <ClCompile Include="Renderer\Texture\Source\lodepng.cpp" />
     <ClCompile Include="Renderer\Texture\Source\PNGLoader.cpp" />
     <ClCompile Include="Renderer\Texture\Source\Texture.cpp" />
     <ClCompile Include="Renderer\Source\UniformBuffer.cpp" />
@@ -358,6 +359,7 @@
     <ClInclude Include="GUI\Header\Text.h" />
     <ClInclude Include="GUI\Header\UIWindow.h" />
     <ClInclude Include="GUI\Header\Widget.h" />
+    <ClInclude Include="Renderer\Texture\Source\lodepng.h" />
     <ClInclude Include="Utils\Header\FileUtils.h" />
     <ClInclude Include="Utils\Header\StringUtils.h" />
     <ClInclude Include="Window\Header\Window.h" />

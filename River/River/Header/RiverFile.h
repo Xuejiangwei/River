@@ -4,9 +4,8 @@
 
 class RiverFile
 {
-	using FileStream = std::ifstream;
-
 public:
+	using FileStream = std::ifstream;
 	enum IOStreamMode
 	{
 		In = std::ios_base::in,
@@ -30,6 +29,8 @@ public:
 	static String GetPathAddRootPath(const char* relativePath);
 
 	FileStream& GetStream() { return m_FileStream; }
+
+	void ReadNumber(char* dst, uint64 size);
 
 private:
 	static String s_RootFilePath;

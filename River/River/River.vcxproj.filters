@@ -300,6 +300,9 @@
     <ClCompile Include="Renderer\Texture\Source\PNGLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Texture\Source\lodepng.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -681,6 +684,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Header\RiverFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Texture\Source\lodepng.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

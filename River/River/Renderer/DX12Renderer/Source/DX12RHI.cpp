@@ -1246,8 +1246,10 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("ShadowMap", 720, 720);
 
 	V_Array<uint8> data;
-	extern void LoadPNG(const char* path, uint8 * data);
-	LoadPNG((DEFAULT_TEXTURE_PATH + "GraphPanel_SolidBackground.PNG").c_str(), data.data());
+	uint32 w, h;
+	extern void LoadPNG(const char* path, V_Array<uint8>& data, uint32& width, uint32& height);
+	LoadPNG((DEFAULT_TEXTURE_PATH + "GraphPanel_SolidBackground.PNG").c_str(), data, w, h);
+	Texture::CreateTexture("Block", w, h, data.data());
 }
 
 void DX12RHI::InitBaseShaders()
