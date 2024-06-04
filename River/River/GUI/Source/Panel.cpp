@@ -3,7 +3,7 @@
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Button.h"
 
-#include "Renderer/Header/Texture.h"
+#include "Renderer/Texture/Header/Texture.h"
 #include "Renderer/DX12Renderer/Header/DX12RHI.h"
 
 #include "Math/Header/Geometric.h"
@@ -18,7 +18,7 @@ Panel::~Panel()
 
 void Panel::OnUpdate(float deltaTime)
 {
-	Widget::OnUpdate(deltaTime);
+	//Widget::OnUpdate(deltaTime);
 
 	for (size_t i = 0; i < m_Children.size(); i++)
 	{

@@ -15,15 +15,16 @@
                 "Text" : "4562 科夫斯克"
             },
             {
-                "Type" : "Canvas",
+                "Type" : "InfiniteCanvas",
                 "Name" : "MainCanvas",
-                "Size" : [100, 100],
-                "Position" : [200, 200]
+                "Size" : [150, 150],
+                "Position" : [200, 200],
+                "ChildWidget" : "G:\\GitHub\\River\\River\\UI\\NeuronUI.json"
             },
             {
                 "Type" : "Image",
                 "Name" : "TestImg",
-                "Size" : [100, 100],
+                "Size" : [400, 400],
                 "Position" : [300, 300]
             },
             {

@@ -1,5 +1,4 @@
 #include "RiverPch.h"
-#include "GUI/Header/GuiManager.h"
 #include "Application.h"
 #include "UILayer.h"
 
@@ -9,6 +8,7 @@
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Canvas.h"
+#include "GUI/Header/InfiniteCanvas.h"
 #include "GUI/Header/ListWidget.h"
 #include "GUI/Header/TreeWidget.h"
 #include "Renderer/Header/AssetManager.h"
@@ -64,6 +64,16 @@ static Share<Widget> CreateWidgetByJson(XJson& json)
 	else if (typeName == Canvas::GetWidgetTypeName())
 	{
 		widget = MakeShare<Canvas>();
+	}
+	else if (typeName == InfiniteCanvas::GetWidgetTypeName())
+	{
+		auto infiniteCanvasWidget = MakeShare<InfiniteCanvas>();
+		if (json["ChildWidget"].Data())
+		{
+			infiniteCanvasWidget->SetChildWidgetType(json["ChildWidget"].Data());
+		}
+
+		widget = infiniteCanvasWidget;
 	}
 	else if (typeName == ListWidget::GetWidgetTypeName())
 	{
@@ -123,9 +133,10 @@ Share<Widget> GuiManager::DecodeGUI_File(const String& filePath)
 	return CreateWidgetByJson(json["Root"]);
 }
 
-Share<Widget> GuiManager::CreateWidgetByTypeName(const char* typeName)
+Share<Widget> GuiManager::CreateWidgetByTypeName(const String& typeName, Widget* parent)
 {
 	Share<Widget> widget = nullptr;
+
 	if (typeName == Panel::GetWidgetTypeName())
 	{
 		widget = MakeShare<Panel>();
@@ -146,6 +157,10 @@ Share<Widget> GuiManager::CreateWidgetByTypeName(const char* typeName)
 	{
 		widget = MakeShare<Canvas>();
 	}
+	else if (typeName == InfiniteCanvas::GetWidgetTypeName())
+	{
+		widget = MakeShare<InfiniteCanvas>();
+	}
 	else if (typeName == ListWidget::GetWidgetTypeName())
 	{
 		widget = MakeShare<ListWidget>();
@@ -154,6 +169,11 @@ Share<Widget> GuiManager::CreateWidgetByTypeName(const char* typeName)
 	{
 		widget = MakeShare<TreeWidget>();
 	}
+	else if (typeName.find(".json") != std::string::npos)
+	{
+		widget = DecodeGUI_File(typeName);
+	}
 
+	widget->m_Parent = parent;
 	return widget;
 }

@@ -88,7 +88,11 @@ public:
 	
 	Material* GetMaterial(const String& name);
 
+	virtual Unique<Texture> CreateTexture(const String& name, const uint8* data, int width, int height, bool isImmediately = false) = 0;
+	
 	virtual Unique<Texture> CreateTexture(const String& name, const String& path, bool isImmediately = false) = 0;
+
+	virtual Unique<Texture> CreateCubeTexture(const String& name, const uint8* data, int width, int height, bool isImmediately = false) = 0;
 
 	virtual Unique<Texture> CreateCubeTexture(const String& name, const String& path, bool isImmediately = false) = 0;
 

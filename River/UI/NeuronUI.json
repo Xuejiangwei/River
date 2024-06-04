@@ -1,0 +1,26 @@
+{
+    "Root" :
+    {
+        "Type" : "Panel",
+        "Name" : "Root",
+        "Size" : [100, 100],
+        "Position" : [0, 0],
+        "ChildWidgets" : [
+            {
+                "Type" : "Text",
+                "Name" : "TextTitle",
+                "Size" : [100, 30],
+                "Position" : [0, 0],
+                "FontSize" : 40,
+                "Text" : "测试"
+            },
+            {
+                "Type" : "Button",
+                "Name" : "BtnNeuronClick",
+                "Size" : [100, 100],
+                "Position" : [0, 0],
+                "Texture" : "G:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
+            }
+        ]
+    }
+}

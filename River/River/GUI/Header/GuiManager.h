@@ -2,6 +2,7 @@
 #include "RiverHead.h"
 
 class Widget;
+class Panel;
 
 class GuiManager
 {
@@ -15,7 +16,7 @@ public:
 public:
 	static Share<Widget> DecodeGUI_File(const String& filePath);
 
-	static Share<Widget> CreateWidgetByTypeName(const char* typeName);
+	static Share<Widget> CreateWidgetByTypeName(const String& typeName, Widget* parent);
 	
 public:
 	static GuiManager* Get()
@@ -23,7 +24,4 @@ public:
 		static GuiManager guiManager;
 		return &guiManager;
 	}
-
-private:
-
 };

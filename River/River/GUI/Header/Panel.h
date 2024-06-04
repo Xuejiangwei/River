@@ -5,7 +5,7 @@
 
 class Image;
 
-// 目前Panel里面没有层级概念，只靠添加顺序，越靠后检测层级越高
+// 目前Panel里面没有层级概念，只靠添加顺序，越靠后检测层级越高，Panel不需要实际渲染数据
 class Panel : public Widget
 {
 public:

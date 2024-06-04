@@ -4,7 +4,6 @@
 #include "Haze/include/HazeVM.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
-#include "GUI/Header/GuiManager.h"
 #include "GUI/Header/Text.h"
 
 static HashMap<HAZE_STRING, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =

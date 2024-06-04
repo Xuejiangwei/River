@@ -72,7 +72,11 @@ public:
 
 	virtual void DrawRenderItem(int renderItemId) override;
 
+	virtual Unique<Texture> CreateTexture(const String& name, const uint8* data, int width, int height, bool isImmediately = false) override;
+
 	virtual Unique<Texture> CreateTexture(const String& name, const String& path, bool isImmediately = false) override;
+
+	virtual Unique<Texture> CreateCubeTexture(const String& name, const uint8* data, int width, int height, bool isImmediately = false) override;
 
 	virtual Unique<Texture> CreateCubeTexture(const String& name, const String& path, bool isImmediately = false) override;
 

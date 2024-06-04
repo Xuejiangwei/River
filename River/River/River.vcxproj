@@ -144,6 +144,7 @@
     <ClCompile Include="Component\Source\SkyBoxComponent.cpp" />
     <ClCompile Include="GUI\Source\Canvas.cpp" />
     <ClCompile Include="GUI\Source\GuiManager.cpp" />
+    <ClCompile Include="GUI\Source\InfiniteCanvas.cpp" />
     <ClCompile Include="GUI\Source\ListWidget.cpp" />
     <ClCompile Include="GUI\Source\TreeWidget.cpp" />
     <ClCompile Include="HazeLib\Source\RiverUiLibrary.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="Component\Header\SkyBoxComponent.h" />
     <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
     <ClInclude Include="GUI\Header\GuiManager.h" />
+    <ClInclude Include="GUI\Header\InfiniteCanvas.h" />
     <ClInclude Include="GUI\Header\ListWidget.h" />
     <ClInclude Include="GUI\Header\TreeWidget.h" />
     <ClInclude Include="GUI\Header\Canvas.h" />

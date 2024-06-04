@@ -4,6 +4,7 @@
 #include "RiverUI.h"
 #include "Renderer/Mesh/Header/Mesh.h"
 #include "Renderer/Header/RenderItem.h"
+#include "GuiManager.h"
 
 enum class WidgetAnchors : uint8
 {
@@ -23,6 +24,7 @@ enum class WidgetAnchors : uint8
 class Widget
 {
 	friend class Panel;
+	friend Share<Widget> GuiManager::CreateWidgetByTypeName(const String& typeName, Widget* parent);
 public:
 	Widget();
 

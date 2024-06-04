@@ -1,11 +1,14 @@
 #include "RiverPch.h"
 #include "RiverFile.h"
-#include "lodepng.h"
 
 //https://zhuanlan.zhihu.com/p/397397536
 //https://vivaxyblog.github.io/2019/12/07/decode-a-png-image-with-javascript-cn.html
 
-#define USE_ 0
+#define USE_LODEPNG 1
+#if USE_LODEPNG
+	#include "lodepng.h"
+#endif // USE_LODEPNG
+
 
 enum class PNG_INDR_ColorType : uint8
 {
@@ -189,7 +192,7 @@ void ReadNumber(char* dst, const char* src, uint64 size)
 
 void LoadPNG(const char* path, V_Array<uint8>& data, uint32& width, uint32& height)
 {
-#if USE_
+#if USE_LODEPNG == 0
 	RiverFile file(path, RiverFile::IOStreamMode::Binary);
 	auto& stream = file.GetStream();
 	//89 50 4E 47 0D 0A 1A 0A
@@ -211,7 +214,7 @@ void LoadPNG(const char* path, V_Array<uint8>& data, uint32& width, uint32& heig
 	LoadPNGChunk(start, info);
 #else
 	unsigned error = lodepng::decode(data, width, height, String(path));
-#endif // USE_
+#endif // USE_LODEPNG
 }
 
 /* Table of CRCs of all 8-bit messages. */

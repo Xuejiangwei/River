@@ -7,12 +7,12 @@
 #include "Renderer/Header/AssetManager.h"
 #include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassUI.h"
-#include "GUI/Header/GuiManager.h"
 #include "GUI/Header/Panel.h"
 #include "GUI/Header/Button.h"
 #include "GUI/Header/Image.h"
 #include "GUI/Header/Text.h"
 #include "GUI/Header/Canvas.h"
+#include "GUI/Header/InfiniteCanvas.h"
 #include "GUI/Header/ListWidget.h"
 #include "GUI/Header/UIWindow.h"
 
@@ -32,19 +32,22 @@ void RiverMainUiLayer::OnAttach()
 {
 	//initialize
 	//RHI::Get()->SetShowUIDebugOutline(true);
-	
+
 	auto panel = DynamicCast<Panel>(
 		GuiManager::DecodeGUI_File(RiverFile::GetPathAddRootPath("UI\\MainUI.json")));
 	/*auto list = DynamicCast<ListWidget>(panel->GetChildWidgetByName("MainList"));
 	list->SetChildWidgetType("Text");
-	list->SetListData<String>({ String(u8"夏"), String(u8"商"), String(u8"周") });
+	list->SetListData<String>({ String(u8"夏"), String(u8"商"), String(u8"周") });*/
 
-	auto canvas = DynamicCast<Canvas>(panel->GetChildWidgetByName("MainCanvas"));
+	auto canvas = DynamicCast<InfiniteCanvas>(panel->GetChildWidgetByName("MainCanvas"));
 	uint8 color[4] = { 0, 255, 255, 255 };
-	canvas->SetBackgroundColor(color);*/
+	canvas->SetBackgroundColor(color);
 
-	auto img = DynamicCast<Image>(panel->GetChildWidgetByName("TestImg"));
-	img->SetTexture(AssetManager::Get()->GetTexture("Block"));
+	V_Array<String> data = { String(u8"武则天") };
+	canvas->SetCanvasChildData(data);
+
+	/*auto img = DynamicCast<Image>(panel->GetChildWidgetByName("TestImg"));
+	img->SetTexture(AssetManager::Get()->GetTexture("Block"));*/
 	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }
 

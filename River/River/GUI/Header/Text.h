@@ -22,6 +22,8 @@ public:
 
 	void SetFont(Texture* font);
 
+	void SetText(const String& text) { SetText(text.c_str()); }
+
 	void SetText(const char* text);
 
 	void SetFontSize(float size) { m_FontSize = size; }

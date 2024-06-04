@@ -40,10 +40,28 @@ Texture* Texture::CreateTexture(const String& name, const String& filePath, bool
 		{
 #ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
-			auto newTexture = dx12Rhi->CreateTexture(name, filePath, isImmediately);
-			texture = newTexture.get();
 
-			assetManager->AddCacheTexture(name, newTexture);
+			if (filePath.find(".png") != std::string::npos)
+			{
+				V_Array<uint8> data;
+				uint32 w, h;
+				extern void LoadPNG(const char* path, V_Array<uint8>&data, uint32 & width, uint32 & height);
+				LoadPNG(filePath.c_str(), data, w, h);
+
+				auto newTexture = dx12Rhi->CreateTexture(name, data.data(), w, h, isImmediately);
+				texture = newTexture.get();
+
+				assetManager->AddCacheTexture(name, newTexture);
+			}
+			else
+			{
+				auto newTexture = dx12Rhi->CreateTexture(name, filePath, isImmediately);
+				texture = newTexture.get();
+
+				assetManager->AddCacheTexture(name, newTexture);
+			}
+
+			
 #endif
 		}
 	}

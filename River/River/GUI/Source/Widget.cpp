@@ -128,7 +128,7 @@ Float2 Widget::GetAbsoluteLeftTopPosition()
     switch (m_WidgetAlign)
     {
     case WidgetAnchors::LeftTop:
-        return m_Position;
+        return m_Position + (m_Parent ? m_Parent->GetAbsoluteLeftTopPosition() : Float2(0.0f, 0.0f));
     case WidgetAnchors::RightTop:
         break;
     case WidgetAnchors::LeftCenter:

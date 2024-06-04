@@ -344,47 +344,6 @@ void DX12RHI::UpdatePassUniform(int index, RenderPass::PassUniform* uniform)
 	currPassCB->CopyData(index, *uniform);
 }
 
-Unique<Texture> DX12RHI::CreateTexture(const String& name, const String& path, bool isImmediately)
-{
-	if (isImmediately)
-	{
-		WaitFence();
-		ResetCmdListAlloc();
-	}
-
-	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::Texture2D);
-	
-	if (isImmediately)
-	{
-		AddDescriptor(texture.get());
-		ExecuteCmdList(false);
-		WaitFence();
-	}
-	
-
-	return texture;
-}
-
-Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const String& path, bool isImmediately)
-{
-	if (isImmediately)
-	{
-		WaitFence();
-		ResetCmdListAlloc();
-	}
-
-	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::CubeTexture);
-
-	if (isImmediately)
-	{
-		AddDescriptor(texture.get());
-		ExecuteCmdList(false);
-		WaitFence();
-	}
-
-	return texture;
-}
-
 Unique<Shader> DX12RHI::CreateShader(const String& name, const String& path, Pair<const ShaderDefine*, const ShaderDefine*> defines, ShaderParam * param)
 {
 	auto layout = &m_InputLayers["default"];
@@ -791,6 +750,88 @@ int DX12RHI::AllocDrawCommand()
 void DX12RHI::DrawRenderItem(int renderItemId)
 {
 	m_DrawItems.push_back(renderItemId);
+}
+
+Unique<Texture> DX12RHI::CreateTexture(const String& name, const uint8* data, bool isImmediately)
+{
+	if (isImmediately)
+	{
+		WaitFence();
+		ResetCmdListAlloc();
+	}
+
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, Texture::Type::Texture2D);
+
+	if (isImmediately)
+	{
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
+	}
+
+
+	return texture;
+}
+
+Unique<Texture> DX12RHI::CreateTexture(const String& name, const String& path, bool isImmediately)
+{
+	if (isImmediately)
+	{
+		WaitFence();
+		ResetCmdListAlloc();
+	}
+
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::Texture2D);
+
+	if (isImmediately)
+	{
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
+	}
+
+
+	return texture;
+}
+
+Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const uint8* data, int width, int height, bool isImmediately)
+{
+	if (isImmediately)
+	{
+		WaitFence();
+		ResetCmdListAlloc();
+	}
+
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, Texture::Type::CubeTexture);
+
+	if (isImmediately)
+	{
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
+	}
+
+	return texture;
+}
+
+Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const String& path, bool isImmediately)
+{
+	if (isImmediately)
+	{
+		WaitFence();
+		ResetCmdListAlloc();
+	}
+
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, path, Texture::Type::CubeTexture);
+
+	if (isImmediately)
+	{
+		AddDescriptor(texture.get());
+		ExecuteCmdList(false);
+		WaitFence();
+	}
+
+	return texture;
 }
 
 void DX12RHI::AddDescriptor(DX12Texture* texture)
