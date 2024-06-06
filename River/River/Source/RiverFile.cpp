@@ -10,6 +10,7 @@
 
 
 String RiverFile::s_RootFilePath = "";
+String RiverFile::s_ApplicationFilePath = "";
 
 RiverFile::RiverFile(const char* path, int mode)
 {
@@ -27,6 +28,7 @@ RiverFile::~RiverFile()
 void RiverFile::Initialize()
 {
 	auto path = std::filesystem::current_path();
+	s_ApplicationFilePath = WString2String(path);
 	s_RootFilePath = WString2String(path.parent_path());
 }
 
@@ -53,9 +55,14 @@ uint64 RiverFile::FileGetSize(FILE* f)
 		!fseek(f, off, SEEK_SET)) ? sz : -1;
 }
 
-String RiverFile::GetPathAddRootPath(const char* relativePath)
+String RiverFile::GetPathAddRootPath(const String& relativePath)
 {
 	return RiverFile::GetRootPath() + "\\" + relativePath;
+}
+
+String RiverFile::GetPathAddApplicationPath(const String& relativePath)
+{
+	return RiverFile::GetApplicationPath() + "\\" + relativePath;
 }
 
 void RiverFile::ReadNumber(char* dst, uint64 size)

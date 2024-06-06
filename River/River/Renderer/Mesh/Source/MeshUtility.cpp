@@ -2,7 +2,7 @@
 #include "Renderer/Mesh/Header/MeshUtility.h"
 #include "Renderer/MeshAnimation/Header/MeshAnimationData.h"
 #include "Renderer/Header/Material.h"
-#include "Renderer/Header/Texture.h"
+#include "Renderer/Texture/Header/Texture.h"
 #include "Renderer/DX12Renderer/Header/DX12DefaultConfig.h"
 #include "Renderer/Header/AssetManager.h"
 

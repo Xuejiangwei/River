@@ -752,7 +752,7 @@ void DX12RHI::DrawRenderItem(int renderItemId)
 	m_DrawItems.push_back(renderItemId);
 }
 
-Unique<Texture> DX12RHI::CreateTexture(const String& name, const uint8* data, bool isImmediately)
+Unique<Texture> DX12RHI::CreateTexture(const String& name, const uint8* data, int width, int height, bool isImmediately)
 {
 	if (isImmediately)
 	{
@@ -760,7 +760,8 @@ Unique<Texture> DX12RHI::CreateTexture(const String& name, const uint8* data, bo
 		ResetCmdListAlloc();
 	}
 
-	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, Texture::Type::Texture2D);
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data,
+		width, height, Texture::Type::Texture2D);
 
 	if (isImmediately)
 	{
@@ -802,7 +803,8 @@ Unique<Texture> DX12RHI::CreateCubeTexture(const String& name, const uint8* data
 		ResetCmdListAlloc();
 	}
 
-	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data, Texture::Type::CubeTexture);
+	auto texture = MakeUnique<DX12Texture>(m_Device.Get(), m_CommandList.Get(), name, data,
+		width, height, Texture::Type::CubeTexture);
 
 	if (isImmediately)
 	{

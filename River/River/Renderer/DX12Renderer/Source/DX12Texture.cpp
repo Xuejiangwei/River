@@ -24,8 +24,8 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	device->CreateShaderResourceView(m_Resource.Get(), &srvDesc, handle);
 }
 
-DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height)
-	: Texture(name, "", Type::Texture2D)
+DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height, Type type)
+	: Texture(name, "", type)
 {
 	D3D12_HEAP_PROPERTIES props;
 	memset(&props, 0, sizeof(D3D12_HEAP_PROPERTIES));
@@ -120,8 +120,8 @@ DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* comman
 	//m_Resource->Release();
 }
 
-DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, int width, int height)
-	: Texture(name, "", Type::Texture2D)
+DX12Texture::DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, int width, int height, Type type)
+	: Texture(name, "", type)
 {
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));

@@ -26,7 +26,11 @@ public:
 
 	static const String& GetRootPath() { return s_RootFilePath; }
 
-	static String GetPathAddRootPath(const char* relativePath);
+	static const String& GetApplicationPath() { return s_ApplicationFilePath; }
+
+	static String GetPathAddRootPath(const String& relativePath);
+
+	static String GetPathAddApplicationPath(const String& relativePath);
 
 	FileStream& GetStream() { return m_FileStream; }
 
@@ -34,6 +38,7 @@ public:
 
 private:
 	static String s_RootFilePath;
+	static String s_ApplicationFilePath;
 
 	FileStream m_FileStream;
 };

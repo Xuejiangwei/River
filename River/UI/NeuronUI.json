@@ -3,7 +3,7 @@
     {
         "Type" : "Panel",
         "Name" : "Root",
-        "Size" : [100, 100],
+        "Size" : [150, 150],
         "Position" : [0, 0],
         "ChildWidgets" : [
             {

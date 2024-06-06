@@ -42,7 +42,8 @@ Application::Application()
 	m_MainUiLayer = MakeShare<RiverMainUiLayer>();
 	AddLayer(m_MainUiLayer);
 	
-	String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
+	String hazeMainFile = RiverFile::GetPathAddApplicationPath("HzCode\\HazeCode.hz");
+	//String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
 	const char* args[4] = { "-m", hazeMainFile.c_str(), "-d", "debug1"};
 	m_HazeVM = HazeMain(4, const_cast<char**>(args));
 	RiverUiLibrary::InitializeLib();
@@ -75,7 +76,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		//m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), m_Time.DeltaTime());
+		m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), m_Time.DeltaTime());
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

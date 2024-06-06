@@ -17,7 +17,7 @@
             {
                 "Type" : "InfiniteCanvas",
                 "Name" : "MainCanvas",
-                "Size" : [150, 150],
+                "Size" : [400, 400],
                 "Position" : [200, 200],
                 "ChildWidget" : "G:\\GitHub\\River\\River\\UI\\NeuronUI.json"
             },

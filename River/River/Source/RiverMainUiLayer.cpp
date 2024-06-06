@@ -43,7 +43,7 @@ void RiverMainUiLayer::OnAttach()
 	uint8 color[4] = { 0, 255, 255, 255 };
 	canvas->SetBackgroundColor(color);
 
-	V_Array<String> data = { String(u8"武则天") };
+	V_Array<String> data = { String(u8"武则天"), String(u8"狄仁杰") };
 	canvas->SetCanvasChildData(data);
 
 	/*auto img = DynamicCast<Image>(panel->GetChildWidgetByName("TestImg"));

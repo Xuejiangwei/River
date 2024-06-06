@@ -8,11 +8,11 @@
 class DX12Texture : public Texture
 {
 public:
-	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path, Type type);
+	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const String& path, Type type = Type::Texture2D);
 
-	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height);
+	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, const uint8* data, int width, int height, Type type = Type::Texture2D);
 
-	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, int width, int height);
+	DX12Texture(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const String& name, int width, int height, Type type = Type::Texture2D);
 
 	virtual ~DX12Texture() override;
 

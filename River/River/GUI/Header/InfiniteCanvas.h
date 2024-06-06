@@ -26,6 +26,8 @@ public:
 			m_Childs.push_back(widget);
 
 			auto panel = DynamicCast<Panel>(widget);
+			auto size = panel->GetSize();
+			panel->SetPosition(i * size.x, i * size.y);
 			auto text = DynamicCast<Text>(panel->GetChildWidgetByName("TextTitle"));
 			text->SetText(data[i]);
 		}
