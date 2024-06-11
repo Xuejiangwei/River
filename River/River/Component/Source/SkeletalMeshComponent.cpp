@@ -3,8 +3,6 @@
 #include "Renderer/Mesh/Header/SkeletalMesh.h"
 #include "Math/Header/Geometric.h"
 
-#include "Haze/include/HazeLog.h"
-
 SkeletalMeshComponent::SkeletalMeshComponent()
 	: m_SkeletalMesh(nullptr), m_AnimTimePos(0.f)
 {

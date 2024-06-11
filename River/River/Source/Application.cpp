@@ -2,10 +2,8 @@
 #include "Application.h"
 #include "GameInstance.h"
 #include "Layer.h"
-#include "Window.h"
 #include "RiverMainUiLayer.h"
 #include "RiverFile.h"
-
 #include "RHI.h"
 #include "Camera.h"
 
@@ -13,12 +11,12 @@
 #include "Renderer/Header/RenderScene.h"
 #include "Physics/Header/PhyScene.h"
 
-#include "Haze/include/Haze.h"
+#include "Haze.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
 Application* Application::s_Instance = nullptr;
 
-Application::Application()
+Application::Application(const WindowParam& windowParam)
 	: m_Running(true)
 {
 	s_Instance = this;
@@ -26,14 +24,13 @@ Application::Application()
 	m_CurrentGameInstance = MakeUnique<GameInstance>();
 
 	m_Window = Window::Create();
-	WindowParam param = { 720, 720 };
-	m_Window->Init(param);
+	m_Window->Init(windowParam);
 
 	m_RenderScene = MakeUnique<RenderScene>();
 
 	RHIInitializeParam rhiParam =
 	{
-		720, 720, m_Window->GetWindowHandle()
+		windowParam.WindowWidth, windowParam.WindowHeight, m_Window->GetWindowHandle()
 	};
 	RHI::SetAPIMode(APIMode::DX12);
 	RHI::Get()->Initialize(rhiParam);
@@ -41,10 +38,10 @@ Application::Application()
 
 	m_MainUiLayer = MakeShare<RiverMainUiLayer>();
 	AddLayer(m_MainUiLayer);
-	
+
 	String hazeMainFile = RiverFile::GetPathAddApplicationPath("HzCode\\HazeCode.hz");
 	//String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
-	const char* args[4] = { "-m", hazeMainFile.c_str(), "-d", "debug1"};
+	const char* args[4] = { "-m", hazeMainFile.c_str(), "-d", "debug1" };
 	m_HazeVM = HazeMain(4, const_cast<char**>(args));
 	RiverUiLibrary::InitializeLib();
 }

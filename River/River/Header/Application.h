@@ -12,11 +12,12 @@ class HazeVM;
 
 #include "Event.h"
 #include "RiverTime.h"
+#include "Window/Header/Window.h"
 
 class Application
 {
 public:
-	Application();
+	Application(const WindowParam& windowParam);
 
 	virtual ~Application();
 
@@ -49,7 +50,7 @@ public:
 protected:
 	bool m_Running;
 	RiverTime m_Time;
-	
+
 	Unique<InputManager> m_InputManager;
 	Unique<RenderScene> m_RenderScene;
 	Unique<PhyScene> m_PhyScene;

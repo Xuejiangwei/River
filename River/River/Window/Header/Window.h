@@ -4,8 +4,11 @@
 
 struct WindowParam
 {
-	int32_t WindowWidth;
-	int32_t WindowHeight;
+	int WindowWidth;
+	int WindowHeight;
+
+	int Icon;
+	int IconSm;
 };
 
 class Window

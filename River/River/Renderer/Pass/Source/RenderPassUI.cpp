@@ -18,7 +18,8 @@ void RenderPassUI::Render()
 	auto& rhi = RHI::Get();
 	rhi->ClearUIRenderItem();
 
-	rhi->SetViewPort(720, 720);
+	auto [w, h] = Application::Get()->GetWindow()->GetWindowSize();
+	rhi->SetViewPort(w, h);
 
 
 	m_RenderVertices.clear();

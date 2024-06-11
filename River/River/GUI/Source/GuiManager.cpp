@@ -2,7 +2,6 @@
 #include "Application.h"
 #include "UILayer.h"
 
-#include "XJson/XJson.h"
 #include "GUI/Header/Panel.h"
 #include "GUI/Header/Text.h"
 #include "GUI/Header/Image.h"
@@ -12,6 +11,8 @@
 #include "GUI/Header/ListWidget.h"
 #include "GUI/Header/TreeWidget.h"
 #include "Renderer/Header/AssetManager.h"
+
+#include "XJson.h"
 
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json)
 {

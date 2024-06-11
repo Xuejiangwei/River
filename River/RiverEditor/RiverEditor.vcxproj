@@ -110,9 +110,10 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\River.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;$(SolutionDir)..\..\Haze\Haze\x64\Debug\Haze.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdLib\Assimp\lib\Debug;$(SolutionDir)ThirdLib\FBX SDK\2020.3.7\lib\x64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\River.lib;d3d12.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ManifestFile>$(ProjectDir)RiverEditor.rc</ManifestFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -140,6 +141,18 @@
     <ClInclude Include="Header\RiverEditorApplication.h" />
     <ClInclude Include="Header\RiverEditorMainLayer.h" />
     <ClInclude Include="Header\RiverEditorMenuLayer.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RiverEditor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="river.ico" />
+    <Image Include="riverSm.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RCa23028" />
+    <None Include="RiverEditor.aps" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

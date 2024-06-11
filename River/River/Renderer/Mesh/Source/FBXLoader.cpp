@@ -10,10 +10,6 @@
 
 #include <fstream>
 
-#include "assimp/Importer.hpp"
-#include "assimp/postprocess.h"
-#include "assimp/scene.h"
-
 #include "Math/Header/Geometric.h"
 
 //#define USE_ASSIMP
@@ -413,6 +409,7 @@ bool LoadFbxMesh(const String& path, SkeletalMeshData* skeletalMeshData)
 	LOG("extra mesh success");
 
 	fbxImporter->Destroy();
+	return true;
 #endif // USE_ASSIMP
 }
 
@@ -646,7 +643,7 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 		skeletalMeshData->Subsets[materialIndex].IndexCount += 3;
 	}
 
-	skeletalMeshData->Subsets[0].VertexCount = skeletalMeshData->Vertices.size();
+	skeletalMeshData->Subsets[0].VertexCount = (uint32)skeletalMeshData->Vertices.size();
 	auto shader = AssetManager::Get()->GetShader("skeletalOpaque");//
 	auto mat = Material::CreateMaterial("womenMat");
 	mat->MatCBIndex = 1;
@@ -672,7 +669,7 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 		auto name = linkBone->GetName();
 
 		int boneIndex = -1;
-		for (size_t i = 0; i < s_Bones.size(); i++)
+		for (int i = 0; i < s_Bones.size(); i++)
 		{
 			if (s_Bones[i].first == name)
 			{
@@ -691,9 +688,9 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 				auto globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
 
 				Matrix4x4 transform((double(*)[4])(&globalBindposeInverseMatrix.mData));
-				for (size_t k = 0; k < 4; k++)
+				for (int k = 0; k < 4; k++)
 				{
-					for (size_t j = 0; j < 4; j++)
+					for (int j = 0; j < 4; j++)
 					{
 						transform.m[k][j] = (float)globalBindposeInverseMatrix.Get(k, j);
 					}
@@ -701,9 +698,9 @@ void Fbx_ParseMesh(const FbxMesh* mesh, SkeletalMeshData* skeletalMeshData)
 				skeletalMeshData->BoneOffsets[i] = transform;
 
 				globalBindposeInverseMatrix = transformMatrix.Inverse();
-				for (size_t k = 0; k < 4; k++)
+				for (int k = 0; k < 4; k++)
 				{
-					for (size_t j = 0; j < 4; j++)
+					for (int j = 0; j < 4; j++)
 					{
 						transform.m[k][j] = (float)globalBindposeInverseMatrix.Get(k, j);
 					}
@@ -828,7 +825,7 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 
 		FbxArray<FbxString*>animStackNameArray;
 		s_FbxScene->FillAnimStackNameArray(animStackNameArray);
-		for (size_t i = 0; i < animStackNameArray.Size(); i++)
+		for (int i = 0; i < animStackNameArray.Size(); i++)
 		{
 			auto animBuffer = s_FbxScene->FindMember<FbxAnimStack>(animStackNameArray[i]->Buffer());
 			s_FbxScene->SetCurrentAnimationStack(animBuffer);
@@ -881,18 +878,18 @@ void Fbx_ParseAniamtion(FbxNode* pNode, SkeletalMeshData* skeletalMeshData)
 					auto rq = boneLocalTransform.GetQ();
 					auto s = boneLocalTransform.GetS();
 
-					frame.Translation.x = t.mData[0];
-					frame.Translation.y = t.mData[1];
-					frame.Translation.z = t.mData[2];
+					frame.Translation.x = (float)t.mData[0];
+					frame.Translation.y = (float)t.mData[1];
+					frame.Translation.z = (float)t.mData[2];
 
-					frame.RotationQuat.x = rq.mData[0];
-					frame.RotationQuat.y = rq.mData[1];
-					frame.RotationQuat.z = rq.mData[2];
-					frame.RotationQuat.w = rq.mData[3];
+					frame.RotationQuat.x = (float)rq.mData[0];
+					frame.RotationQuat.y = (float)rq.mData[1];
+					frame.RotationQuat.z = (float)rq.mData[2];
+					frame.RotationQuat.w = (float)rq.mData[3];
 
-					frame.Scale.x = s.mData[0];
-					frame.Scale.y = s.mData[1];
-					frame.Scale.z = s.mData[2];
+					frame.Scale.x = (float)s.mData[0];
+					frame.Scale.y = (float)s.mData[1];
+					frame.Scale.z = (float)s.mData[2];
 					
 					animationClip.BoneAnimations[i].Keyframes.push_back(frame);
 				}

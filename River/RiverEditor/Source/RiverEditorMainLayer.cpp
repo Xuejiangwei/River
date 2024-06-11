@@ -233,7 +233,7 @@ bool RiverEditorMainLayer::OnMouseMove(const Event& e)
 		float dy = DegreeToRadians(0.25f * static_cast<float>(y - lastPos.y));
 
 		m_MainCamera->Rotate(0.0f, dy, dx);
-		m_MainCamera->StartRotate(x, y);
+		m_MainCamera->StartRotate((int)x, (int)y);
 		return true;
 	}
 	return false;

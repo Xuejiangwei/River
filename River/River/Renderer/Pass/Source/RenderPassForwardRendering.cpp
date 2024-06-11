@@ -22,8 +22,9 @@ void RenderPassForwardRendering::Render()
 {
 	auto& rhi = RHI::Get();
 	auto renderScene = Application::Get()->GetRenderScene();
+	auto [w, h] = Application::Get()->GetWindow()->GetWindowSize();
 
-	rhi->SetViewPort(720, 720);
+	rhi->SetViewPort(w, h);
 
 	//获得光源
 	auto& lightProxys = renderScene->GetRenderLightProxys();
@@ -73,8 +74,8 @@ void RenderPassForwardRendering::Render()
 		}
 
 		m_PassUniform.EyePosW = camera->GetPosition();
-		m_PassUniform.RenderTargetSize = { 720, 720 };
-		m_PassUniform.InvRenderTargetSize = { 1.0f / 720, 1.0f / 720 };
+		m_PassUniform.RenderTargetSize = { (float)w, (float)h };
+		m_PassUniform.InvRenderTargetSize = { 1.0f / w, 1.0f / h };
 		m_PassUniform.NearZ = 1.0f;
 		m_PassUniform.FarZ = 1000.0f;
 		m_PassUniform.TotalTime = 0;//time.TotalTime();

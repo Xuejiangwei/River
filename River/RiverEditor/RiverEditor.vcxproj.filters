@@ -35,5 +35,25 @@
     <ClInclude Include="Header\RiverEditorMainLayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RiverEditor.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="riverSm.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="river.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RiverEditor.aps" />
+    <None Include="RCa23028" />
   </ItemGroup>
 </Project>

@@ -1,8 +1,8 @@
 #include "RiverPch.h"
 #include "RiverFile.h"
+#include "Utils/Header/StringUtils.h"
 
 #include <filesystem>
-#include "Haze/include/HazeUtility.h"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -28,8 +28,8 @@ RiverFile::~RiverFile()
 void RiverFile::Initialize()
 {
 	auto path = std::filesystem::current_path();
-	s_ApplicationFilePath = WString2String(path);
-	s_RootFilePath = WString2String(path.parent_path());
+	s_ApplicationFilePath = WS_2_S(path);
+	s_RootFilePath = WS_2_S(path.parent_path());
 }
 
 FILE* RiverFile::W_OpenFile(const char* path, const char* mode)
@@ -69,7 +69,7 @@ void RiverFile::ReadNumber(char* dst, uint64 size)
 {
 	m_FileStream.read(dst, size);
 
-	int end = size - 1;
+	auto end = size - 1;
 	uint8 tmp;
 	for (int i = 0; i < size / 2; i++)
 	{

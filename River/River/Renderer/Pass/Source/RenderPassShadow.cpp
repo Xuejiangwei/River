@@ -28,8 +28,9 @@ void RenderPassShadow::Render()
 
 	auto& rhi = RHI::Get();
 	auto renderScene = Application::Get()->GetRenderScene();
+	auto [w, h] = Application::Get()->GetWindow()->GetWindowSize();
 
-	rhi->SetViewPort(720, 720);
+	rhi->SetViewPort(w, h);
 
 	LightObject* mainLight = nullptr;
 	auto& lightProxys = renderScene->GetRenderLightProxys();

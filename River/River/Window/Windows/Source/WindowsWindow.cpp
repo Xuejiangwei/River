@@ -4,6 +4,8 @@
 
 #include "Application.h"
 #include "KeyCode.h"
+#include "Utils/Header/StringUtils.h"
+#include "RiverFile.h"
 #include <CommCtrl.h>
 
 #pragma comment(lib, "comctl32.lib")
@@ -215,6 +217,7 @@ void WindowsWindow::Init(const WindowParam& param)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+
 	m_Param = param;
 	HINSTANCE hInstance = ::GetModuleHandle(nullptr);
 
@@ -228,7 +231,10 @@ void WindowsWindow::Init(const WindowParam& param)
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);		//·ÀÖ¹ÎÞÁÄµÄ±³¾°ÖØ»æ
 	wc.lpszClassName = WINDOW_CLASS_NAME;
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(param.Icon));
+	wc.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(param.IconSm));
 	RegisterClassEx(&wc);
+	
 
 	DWORD dwWndStyle = WS_OVERLAPPED | WS_SYSMENU;
 	RECT rtWnd = { 0, 0, param.WindowWidth, param.WindowHeight };
@@ -250,6 +256,9 @@ void WindowsWindow::Init(const WindowParam& param)
 	}
 
 	m_WindowHandle = (void*)hWnd;
+	
+	/*SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+	SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);*/
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);

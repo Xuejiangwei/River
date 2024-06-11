@@ -180,7 +180,7 @@ void ReadNumber(char* dst, const char* src, uint64 size)
 {
 	memcpy(dst, src, size);
 
-	int end = size - 1;
+	auto end = size - 1;
 	uint8 tmp;
 	for (int i = 0; i < size / 2; i++)
 	{

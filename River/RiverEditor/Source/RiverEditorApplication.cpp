@@ -2,9 +2,10 @@
 #include "RiverEditorApplication.h"
 #include "RiverEditorMenuLayer.h"
 #include "RiverEditorMainLayer.h"
+#include "../resource.h"
 
 RiverEditorApplication::RiverEditorApplication()
-	: Application()
+	: Application({ 720, 720, IDI_ICON1, IDI_ICON2 })
 {
 	AddLayer(MakeShare<RiverEditorMenuLayer>());
 	AddLayer(MakeShare<RiverEditorMainLayer>());

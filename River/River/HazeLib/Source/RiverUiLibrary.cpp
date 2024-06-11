@@ -1,7 +1,7 @@
 #include "RiverPch.h"
-#include "Haze/include/HazeLibraryDefine.h"
-#include "Haze/include/HazeStack.h"
-#include "Haze/include/HazeVM.h"
+#include "HazeLibraryDefine.h"
+#include "HazeStack.h"
+#include "HazeVM.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
 #include "GUI/Header/Text.h"
