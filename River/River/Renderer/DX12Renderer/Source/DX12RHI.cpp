@@ -22,11 +22,13 @@
 #include "Renderer/DX12Renderer/Header/DDSTextureLoader.h"
 #include "Renderer/DX12Renderer/Header/DX12DescriptorAllocator.h"
 
+#include "Renderer/Header/RenderScene.h"
 #include "Renderer/Pass/Header/RenderPassShadow.h"
 
 #include "Renderer/Header/GeometryGenerator.h"
 #include "Renderer/Header/Material.h"
 #include "Renderer/Mesh/Header/SkeletalMesh.h"
+#include "Application.h"
 
 #include "DirectXMath.h"
 #include "DirectXCollision.h"
@@ -474,6 +476,8 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
 			commandList->SetGraphicsRootConstantBufferView(1, 0);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 
+				(int)RenderPassType::UI * passCBByteSize);
 			commandList->DrawIndexedInstanced(renderItem.IndexCount, 1,
 				renderItem.StartIndexLocation, renderItem.BaseVertexLocation, 0);
 		}
@@ -530,7 +534,8 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 
 			commandList->SetGraphicsRootShaderResourceView(3, matCB->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootDescriptorTable(5, texDescriptor);
-			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 1 * passCBByteSize);
+			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 
+				(int)RenderPassType::Shadow * passCBByteSize);
 
 			commandList->IASetVertexBuffers(0, 1, &((DX12VertexBuffer*)it.VertexBuffer)->GetView());
 			commandList->IASetIndexBuffer(&((DX12IndexBuffer*)it.IndexBuffer)->GetView());
@@ -1276,6 +1281,7 @@ void DX12RHI::InitBaseGeometry()
 
 void DX12RHI::InitBaseTexture()
 {
+	auto [w, h] = Application::Get()->GetWindow()->GetWindowSize();
 	m_Fonts["default"] = MakeUnique<FontAtlas>(DEFAULT_FONT_PATH_1, 16.0f);
 	Texture::CreateTexture("font", m_Fonts["default"]->GetTextureWidth(), m_Fonts["default"]->GetTextureHeight(), 
 		m_Fonts["default"]->GetTextureDataRGBA32());
@@ -1286,13 +1292,13 @@ void DX12RHI::InitBaseTexture()
 	Texture::CreateTexture("tileNormalMap", DEFAULT_TEXTURE_PATH_15);
 	Texture::CreateTexture("jiulian", DEFAULT_TEXTURE_PATH + "fbx_extra_jiulian.dds");
 	Texture::CreateCubeTexture("skyCubeMap", DEFAULT_TEXTURE_PATH_18);
-	Texture::CreateTexture("ShadowMap", 720, 720);
+	Texture::CreateTexture("ShadowMap", w, h);
 
 	V_Array<uint8> data;
-	uint32 w, h;
+	uint32 width, height;
 	extern void LoadPNG(const char* path, V_Array<uint8>& data, uint32& width, uint32& height);
-	LoadPNG((DEFAULT_TEXTURE_PATH + "GraphPanel_SolidBackground.PNG").c_str(), data, w, h);
-	Texture::CreateTexture("Block", w, h, data.data());
+	LoadPNG((DEFAULT_TEXTURE_PATH + "GraphPanel_SolidBackground.PNG").c_str(), data, width, height);
+	Texture::CreateTexture("Block", width, height, data.data());
 }
 
 void DX12RHI::InitBaseShaders()
@@ -1887,7 +1893,9 @@ void DX12RHI::InitFrameBuffer()
 {
 	for (int i = 0; i < RHI::GetFrameCount(); ++i)
 	{
-		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(), 2, GetRenderItemMaxCount()/*(UINT)m_AllRitems.size()*/,
+		m_FrameBuffer.push_back(MakeUnique<DX12FrameBuffer>(m_Device.Get(),
+			(int)RenderPassType::Max,
+			GetRenderItemMaxCount(),
 			1, GetMaterialMaxCount()));
 	}
 

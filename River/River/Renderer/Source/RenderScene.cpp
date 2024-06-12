@@ -13,7 +13,11 @@ RenderScene::RenderScene()
 {
 	m_UnuseProxyId.clear();
 	m_Proxys.clear();
-	m_RenderPasses.clear();
+
+	for (int i = 0; i < _countof(m_RenderPasses); i++)
+	{
+		m_RenderPasses[i] = nullptr;
+	}
 }
 
 RenderScene::~RenderScene()
@@ -22,9 +26,9 @@ RenderScene::~RenderScene()
 
 void RenderScene::Initialize()
 {
-	m_RenderPasses.push_back(MakeShare<RenderPassShadow>());
-	m_RenderPasses.push_back(MakeShare<RenderPassForwardRendering>());
-	m_RenderPasses.push_back(MakeShare<RenderPassUI>());
+	m_RenderPasses[(int)RenderPassType::ForwardRendering] = MakeShare<RenderPassForwardRendering>();
+	m_RenderPasses[(int)RenderPassType::Shadow] = MakeShare<RenderPassShadow>();
+	m_RenderPasses[(int)RenderPassType::UI] = MakeShare<RenderPassUI>();
 }
 
 void RenderScene::Update(const RiverTime& time)
@@ -134,32 +138,4 @@ void RenderScene::AddUILayer(Share<Layer>& layer)
 			uiPass->AddUILayer(layer);
 		}
 	}
-}
-
-RenderPassShadow* RenderScene::GetShadowRenderPass()
-{
-	for (auto& pass : m_RenderPasses)
-	{
-		auto shadowPass = dynamic_cast<RenderPassShadow*>(pass.get());
-		if (shadowPass)
-		{
-			return shadowPass;
-		}
-	}
-
-	return nullptr;
-}
-
-RenderPassUI* RenderScene::GetUIRenderPass()
-{
-	for (auto& pass : m_RenderPasses)
-	{
-		auto uiPass = dynamic_cast<RenderPassUI*>(pass.get());
-		if (uiPass)
-		{
-			return uiPass;
-		}
-	}
-
-	return nullptr;
 }

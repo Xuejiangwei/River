@@ -24,5 +24,5 @@ private:
 	V_Array<Share<Layer>> m_Layers;
 	V_Array<UIVertex> m_RenderVertices;
 	V_Array<uint16> m_RenderIndices;
-
+	RenderPass::PassUniform m_PassUniform;
 };

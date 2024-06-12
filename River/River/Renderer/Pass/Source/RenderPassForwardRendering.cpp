@@ -66,10 +66,10 @@ void RenderPassForwardRendering::Render()
 		m_PassUniform.InvViewProj = Matrix4x4_Transpose(*(Matrix4x4*)&invViewProj);
 		m_PassUniform.ViewProjTex = Matrix4x4_Transpose(*(Matrix4x4*)&viewProjTex);
 
-		auto shadowPass = Application::Get()->GetRenderScene()->GetShadowRenderPass();
+		auto shadowPass = renderScene->GetRenderPassByType(RenderPassType::Shadow);
 		if (shadowPass)
 		{
-			Matrix4x4 shadowTransform = shadowPass->GetShadowTransform();
+			Matrix4x4 shadowTransform = dynamic_cast<RenderPassShadow*>(shadowPass)->GetShadowTransform();
 			m_PassUniform.ShadowTransform = Matrix4x4_Transpose(*(Matrix4x4*)&shadowTransform);
 		}
 

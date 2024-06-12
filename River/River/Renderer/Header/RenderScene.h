@@ -1,12 +1,11 @@
 #pragma once
 #include "RiverHead.h"
+#include "RiverTime.h"
 #include "Renderer/Header/Material.h"
+#include "Renderer/Pass/Header/RenderPass.h"
 
 enum class BlendMode;
 class RenderProxy;
-class RenderPass;
-class RenderPassUI;
-class RenderPassShadow;
 class Layer;
 
 class RenderScene
@@ -42,9 +41,7 @@ public:
 
 	void AddUILayer(Share<Layer>& layer);
 
-	RenderPassShadow* GetShadowRenderPass();
-
-	RenderPassUI* GetUIRenderPass();
+	RenderPass* GetRenderPassByType(RenderPassType type) { return m_RenderPasses[(int)type].get(); }
 
 private:
 	V_Array<int> m_UnuseProxyId;
@@ -52,5 +49,5 @@ private:
 	V_Array<RenderProxy*> m_Lights;
 	V_Array<RenderProxy*> m_Cameras;
 	V_Array<RenderProxy*> m_SkyBoxs;
-	V_Array<Share<RenderPass>> m_RenderPasses;
+	Share<RenderPass> m_RenderPasses[(int)RenderPassType::Max];
 };

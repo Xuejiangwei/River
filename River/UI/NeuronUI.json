@@ -11,7 +11,7 @@
                 "Name" : "TextTitle",
                 "Size" : [100, 30],
                 "Position" : [0, 0],
-                "FontSize" : 40,
+                "FontSize" : 20,
                 "Text" : "测试"
             },
             {

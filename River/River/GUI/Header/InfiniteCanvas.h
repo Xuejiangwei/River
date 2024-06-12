@@ -1,7 +1,7 @@
 #pragma once
-#include "Widget.h"
+#include "Image.h"
 
-class InfiniteCanvas : public Widget
+class InfiniteCanvas : public Image
 {
 public:
 	InfiniteCanvas();
@@ -9,6 +9,8 @@ public:
 	~InfiniteCanvas();
 
 	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
+	
+	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e) override;
 
 	void SetBackgroundColor(uint8 color[4]);
 

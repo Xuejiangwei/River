@@ -21,13 +21,36 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 			auto& ce = dynamic_cast<KeyPressedEvent&>(e);
 			m_KeyState[ce.GetKeyCode()] = KeyState::Press;
 		}
-		break;
+			break;
 		case EventType::KeyReleased:
 		{
 			auto& ce = dynamic_cast<KeyReleasedEvent&>(e);
 			m_KeyState[ce.GetKeyCode()] = KeyState::Release;
 		}
-		break;
+			break;
+		case EventType::MouseButtonPressed:
+		{
+			auto ce = dynamic_cast<MouseButtonPressedEvent&>(e);
+			m_MouseState[ce.GetMouseButton()] = MouseState::Press;
+			m_LastMousePositon.x = ce.GetMouseX();
+			m_LastMousePositon.y = ce.GetMouseY();
+		}
+			break;
+		case EventType::MouseButtonReleased:
+		{
+			auto ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
+			m_MouseState[ce.GetMouseButton()] = MouseState::Release;
+			m_LastMousePositon.x = ce.GetMouseX();
+			m_LastMousePositon.y = ce.GetMouseY();
+		}
+			break;
+		case EventType::MouseMoved:
+		{
+			auto ce = dynamic_cast<MouseMovedEvent&>(e);
+			m_LastMousePositon.x = ce.GetMouseX();
+			m_LastMousePositon.y = ce.GetMouseY();
+		}
+			break;
 		default:
 			break;
 	}

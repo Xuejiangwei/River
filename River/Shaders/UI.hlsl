@@ -20,6 +20,9 @@ VertexOut VS(VertexIn vin)
 
     // Already in homogeneous clip space.
     //vout.PosH = float4(vin.PosL, 1.0f);
+    vin.PosL.x = (vin.PosL.x / gRenderTargetSize.x) * 2 - 1;
+    vin.PosL.y = -(vin.PosL.y / gRenderTargetSize.y) * 2 + 1;
+    
     vout.PosH = mul(float4(vin.PosL, 1.0f), gWorld);
 	
     vout.TexC = vin.TexC;

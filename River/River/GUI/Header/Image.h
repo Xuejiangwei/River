@@ -3,6 +3,7 @@
 #include "RiverHead.h"
 #include "Widget.h"
 
+class Texture;
 
 //最基本的拥有点击事件的控件
 class Image : public Widget, UIMouseEvent
@@ -14,11 +15,11 @@ public:
 
 	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
 
-	virtual bool OnMouseButtonDown(const class Event& e) override;
+	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e) override;
 
-	virtual bool OnMouseButtonRelease(const class Event& e) override;
+	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e) override;
 
-	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override { return true; }
+	virtual bool OnMouseButtonClick(int mouseButton, int mouseX, int mouseY) override { return true; }
 
 	static const String& GetWidgetTypeName()
 	{
@@ -30,4 +31,9 @@ public:
 
 private:
 	Texture* m_Texture;
+
+	MouseEventCall m_ClickCall;
+	MouseEventCall m_MouseDownCall;
+	MouseEventCall m_MouseUpCall;
+	MouseEventCall m_MouseDragCall;
 };

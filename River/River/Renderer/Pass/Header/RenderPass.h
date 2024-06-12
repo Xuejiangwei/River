@@ -5,6 +5,14 @@
 
 #define MaxLights 16
 
+enum class RenderPassType
+{
+	ForwardRendering,
+	Shadow,
+	UI,
+	Max
+};
+
 class RenderPass
 {
 public:
@@ -36,7 +44,6 @@ public:
 		float FarZ = 0.0f;
 		float TotalTime = 0.0f;
 		float DeltaTime = 0.0f;
-
 		Float4 AmbientLight = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 		Light Lights[MaxLights];

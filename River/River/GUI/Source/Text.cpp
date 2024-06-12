@@ -29,20 +29,12 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
 	auto textSize = font->m_Font->CalcTextSize(m_Text, m_FontSize);
 
-    auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
     Float2 startPos = GetAbsoluteLeftTopPosition();
-    float ndcStartX = startPos.x / width;
-    float ndcStartY = -startPos.y / height;
-
-    ndcStartX = ndcStartX * 2 - 1;
-    ndcStartY = ndcStartY * 2 + 1;
-
-    float x = ndcStartX;//startPos.x / width;//m_Position.x;
-    float y = ndcStartY;//-startPos.y / height; //m_Position.y;
-    float spaceHeight = m_FontSize / 720;
-   
+    float currPosX = startPos.x;
+    float currPosY = startPos.y;
+    float scale = m_FontSize / font->m_Font->GetPixelSize();
+    
     int indicesCount = 0;
-    float scale = spaceHeight / font->m_Font->GetPixelSize();
     auto s = m_Text.begin();
     while (s != m_Text.end())
     {
@@ -57,8 +49,8 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
         {
             if (c == '\n')
             {
-                x = m_Position.x;
-                y += m_FontSize * scale;
+                currPosX = startPos.x;
+                currPosY += m_FontSize;
                 //if (y > clip_rect.w)
                 //    break; // break out of main loop
                 continue;
@@ -77,10 +69,10 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
         if (glyph->Visible)
         {
             // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
-            float x1 = x + glyph->X0 * scale;
-            float x2 = x + glyph->X1 * scale;
-            float y1 = y + glyph->Y0 * scale;
-            float y2 = y + glyph->Y1 * scale;
+            float x1 = currPosX + glyph->X0 * scale;
+            float x2 = currPosX + glyph->X1 * scale;
+            float y1 = currPosY + glyph->Y0 * scale;
+            float y2 = currPosY + glyph->Y1 * scale;
 
             float w = x2 - x1;
             float h = y2 - y1;
@@ -129,10 +121,10 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
                     //0 1
                     //3 2
-                    vertices.push_back(UIVertex(x1, y + h - spaceHeight, 0.0f, u1, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x2, y + h - spaceHeight, 0.0f, u2, v1, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x2, y - spaceHeight, 0.0f, u2, v2, 255, 0, 0, 255));
-                    vertices.push_back(UIVertex(x1, y - spaceHeight, 0.0f, u1, v2, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x1, y1, 0.0f, u1, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, y1, 0.0f, u2, v1, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x2, y2, 0.0f, u2, v2, 255, 0, 0, 255));
+                    vertices.push_back(UIVertex(x1, y2, 0.0f, u1, v2, 255, 0, 0, 255));
 
                     indices.push_back(vs);
                     indices.push_back(vs + 1);
@@ -146,7 +138,7 @@ void Text::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
                 }
             }
         }
-        x += char_width;
+        currPosX += char_width;
     }
 
     RHI::Get()->AddUIRenderItem(renderItem);

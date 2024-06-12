@@ -17,9 +17,9 @@ public:
 
 	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
 
-	virtual bool OnMouseButtonDown(const class Event& e);
+	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e);
 
-	virtual bool OnMouseButtonRelease(const class Event& e);
+	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e);
 	
 	Share<Widget> GetChildWidgetByName(const char* name);
 

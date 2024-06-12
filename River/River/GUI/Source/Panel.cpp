@@ -36,7 +36,7 @@ void Panel::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 	}
 }
 
-bool Panel::OnMouseButtonDown(const Event& e)
+bool Panel::OnMouseButtonDown(const MouseButtonPressedEvent& e)
 {
 	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
 	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
@@ -56,7 +56,7 @@ bool Panel::OnMouseButtonDown(const Event& e)
 	return false;
 }
 
-bool Panel::OnMouseButtonRelease(const Event& e)
+bool Panel::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
 {
 	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
 	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
@@ -93,20 +93,20 @@ void Panel::AddMouseButtonDownDetector(Widget* widget)
 	auto image = dynamic_cast<Image*>(widget);
 	if (image)
 	{
-		m_MouseButtonDownDetector.push_front(image);
+		m_MouseButtonDownDetector.push_back(image);
 	}
 }
 
 bool Panel::MouseIsInPanel(int x, int y)
 {
-	Float2 pos = GetWindowPosition();
+	Float2 pos = GetAbsoluteLeftTopPosition();
 	Float2 size = GetSize();
 	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
 }
 
 bool Panel::MouseInWidget(Widget* widget, int x, int y)
 {
-	Float2 pos = widget->GetWindowPosition();
+	Float2 pos = widget->GetAbsoluteLeftTopPosition();
 	Float2 size = widget->GetSize();
 	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
 }

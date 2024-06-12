@@ -3,7 +3,6 @@
 
 KnowledgeNeuronApplication::KnowledgeNeuronApplication()
 	: Application({ 1600, 900, 0, 0 })
-	//: Application({ 480, 480, 0, 0 })
 {
 }
 

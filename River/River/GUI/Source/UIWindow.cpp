@@ -28,10 +28,10 @@ bool UIWindow::OnEvent(const class Event& e)
 	switch (e.GetEventType())
 	{
 	case EventType::MouseButtonPressed:
-		return OnMouseButtonDown(e);
+		return OnMouseButtonDown(dynamic_cast<const MouseButtonPressedEvent&>(e));
 		break;
 	case EventType::MouseButtonReleased:
-		return OnMouseButtonRelease(e);
+		return OnMouseButtonRelease(dynamic_cast<const MouseButtonReleasedEvent&>(e));
 		break;
 	default:
 		break;
@@ -78,7 +78,7 @@ Widget* UIWindow::GetWidgetByPanel(const char* panelName, const char* widgetName
 	return nullptr;
 }
 
-bool UIWindow::OnMouseButtonDown(const Event& e)
+bool UIWindow::OnMouseButtonDown(const MouseButtonPressedEvent& e)
 {
 	for (auto& it : m_Panels)
 	{
@@ -93,7 +93,7 @@ bool UIWindow::OnMouseButtonDown(const Event& e)
 	return m_RootPanel->OnMouseButtonDown(e);
 }
 
-bool UIWindow::OnMouseButtonRelease(const Event& e)
+bool UIWindow::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
 {
 	for (auto& it : m_Panels)
 	{

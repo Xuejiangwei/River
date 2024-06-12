@@ -79,12 +79,16 @@ bool RiverMainUiLayer::OnEvent(const Event& e)
 
 void RiverMainUiLayer::OnRender()
 {
-	auto uiRenderPass = Application::Get()->GetRenderScene()->GetUIRenderPass();
-	auto& renderVertices = uiRenderPass->GetRenderVertices();
-	auto& renderIndices = uiRenderPass->GetRenderIndices();
-
-	for (auto& window : m_UIWindows)
+	auto pass = Application::Get()->GetRenderScene()->GetRenderPassByType(RenderPassType::UI);
+	if (pass)
 	{
-		window.second->OnRender(renderVertices, renderIndices);
+		auto uiRenderPass = dynamic_cast<RenderPassUI*>(pass);
+		auto& renderVertices = uiRenderPass->GetRenderVertices();
+		auto& renderIndices = uiRenderPass->GetRenderIndices();
+
+		for (auto& window : m_UIWindows)
+		{
+			window.second->OnRender(renderVertices, renderIndices);
+		}
 	}
 }

@@ -11,15 +11,15 @@ public:
 
 	virtual ~Button() override;
 
-	void BindClickFunction(ClickCall func);
+	void BindClickFunction(MouseEventCall func);
 
 	virtual void OnUpdate(float deltaTime) override;
 
-	virtual bool OnMouseButtonDown(const class Event& e) override;
+	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e) override;
 
-	virtual bool OnMouseButtonRelease(const class Event& e) override;
+	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e) override;
 
-	virtual bool OnMouseButtonClick(int mouseX, int mouseY) override;
+	virtual bool OnMouseButtonClick(int mouseButton, int mouseX, int mouseY) override;
 
 	virtual void AddChildWidget(Share<Widget>&& widget);
 
@@ -30,7 +30,7 @@ public:
 	}
 
 private:
-	ClickCall m_ClickCall;
+	MouseEventCall m_ClickCall;
 	bool m_IsMouseButtonDown;
 	float m_MouseButtonClickTimer;
 	float m_MouseButtonClickDetectTime;

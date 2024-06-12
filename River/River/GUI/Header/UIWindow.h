@@ -26,9 +26,9 @@ public:
 	Widget* GetWidgetByPanel(const char* panelName, const char* widgetName);
 
 private:
-	bool OnMouseButtonDown(const class Event& e);
+	bool OnMouseButtonDown(const class MouseButtonPressedEvent& e);
 
-	bool OnMouseButtonRelease(const class Event& e);
+	bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e);
 
 private:
 	//²ã¼¶×îµÍ

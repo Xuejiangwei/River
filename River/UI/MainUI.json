@@ -25,7 +25,8 @@
                 "Type" : "Image",
                 "Name" : "TestImg",
                 "Size" : [400, 400],
-                "Position" : [300, 300]
+                "Position" : [300, 300],
+                "Texture" : "G:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
             },
             {
                 "Type" : "ListWidget",

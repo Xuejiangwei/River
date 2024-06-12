@@ -54,8 +54,6 @@ public:
 
 	Float2 GetAbsoluteLeftTopPosition();
 
-	Float2 GetWindowPosition();
-
 protected:
 	WidgetAnchors m_WidgetAlign;
 	Float2 m_Alignment;
