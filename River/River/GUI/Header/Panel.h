@@ -20,6 +20,8 @@ public:
 	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e);
 
 	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e);
+
+	virtual bool OnMouseMove(const class MouseMovedEvent& e);
 	
 	Share<Widget> GetChildWidgetByName(const char* name);
 
@@ -43,9 +45,9 @@ public:
 private:
 	void AddMouseButtonDownDetector(Widget* widget);
 
-	bool MouseIsInPanel(int x, int y);
+	bool MouseIsInPanel(float x, float y);
 
-	bool MouseInWidget(Widget* widget, int x, int y);
+	bool MouseInWidget(Widget* widget, float x, float y);
 
 private:
 	V_Array<Share<Widget>> m_Children;

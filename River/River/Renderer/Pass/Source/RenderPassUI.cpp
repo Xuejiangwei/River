@@ -33,13 +33,8 @@ void RenderPassUI::Render()
 		layer->OnRender();
 	}
 
-	/*for (auto& vertex : m_RenderVertices)
-	{
-		vertex.Pos.x = (vertex.Pos.x / w) * 2 - 1;
-		vertex.Pos.y = -(vertex.Pos.y / h) * 2 + 1;
-	}*/
-	m_PassUniform.RenderTargetSize.x = w;
-	m_PassUniform.RenderTargetSize.y = h;
+	m_PassUniform.RenderTargetSize.x = (float)w;
+	m_PassUniform.RenderTargetSize.y = (float)h;
 	rhi->UpdatePassUniform(2, &m_PassUniform);
 	RHI::Get()->UpdateUIData(m_RenderVertices, m_RenderIndices);
 	rhi->DrawRenderPass(this, FrameBufferType::UI);

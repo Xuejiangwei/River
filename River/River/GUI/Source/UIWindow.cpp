@@ -33,6 +33,9 @@ bool UIWindow::OnEvent(const class Event& e)
 	case EventType::MouseButtonReleased:
 		return OnMouseButtonRelease(dynamic_cast<const MouseButtonReleasedEvent&>(e));
 		break;
+	case EventType::MouseMoved:
+		return OnMouseMove(dynamic_cast<const MouseMovedEvent&>(e));
+		break;
 	default:
 		break;
 	}
@@ -106,4 +109,19 @@ bool UIWindow::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
 		}
 	}
 	return m_RootPanel->OnMouseButtonRelease(e);
+}
+
+bool UIWindow::OnMouseMove(const MouseMovedEvent& e)
+{
+	for (auto& it : m_Panels)
+	{
+		for (int i = (int)it.second.size() - 1; i >= 0; i--)
+		{
+			if (it.second[i]->OnMouseMove(e))
+			{
+				return true;
+			}
+		}
+	}
+	return m_RootPanel->OnMouseMove(e);
 }

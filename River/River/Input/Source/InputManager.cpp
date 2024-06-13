@@ -12,8 +12,24 @@ InputManager::~InputManager()
 
 void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 {
-	//EventDispatcher dispatcher(e);
+	struct Scope
+	{
+		InputManager* Input;
+		Event& E;
+		Scope(InputManager* input, Event& e) : Input(input), E(e) {}
 
+		~Scope()
+		{
+			if (E.GetEventType() == EventType::MouseMoved)
+			{
+				auto ce = dynamic_cast<MouseMovedEvent&>(E);
+				Input->m_LastMousePositon.x = ce.GetMouseX();
+				Input->m_LastMousePositon.y = ce.GetMouseY();
+			}
+		}
+	};
+
+	Scope scope(this, e);
 	switch (e.GetEventType())
 	{
 		case EventType::KeyPressed:
@@ -32,23 +48,16 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 		{
 			auto ce = dynamic_cast<MouseButtonPressedEvent&>(e);
 			m_MouseState[ce.GetMouseButton()] = MouseState::Press;
-			m_LastMousePositon.x = ce.GetMouseX();
-			m_LastMousePositon.y = ce.GetMouseY();
+			m_LastMousePositon.x = ce.GetMouseFloatX();
+			m_LastMousePositon.y = ce.GetMouseFloatY();
 		}
 			break;
 		case EventType::MouseButtonReleased:
 		{
 			auto ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
 			m_MouseState[ce.GetMouseButton()] = MouseState::Release;
-			m_LastMousePositon.x = ce.GetMouseX();
-			m_LastMousePositon.y = ce.GetMouseY();
-		}
-			break;
-		case EventType::MouseMoved:
-		{
-			auto ce = dynamic_cast<MouseMovedEvent&>(e);
-			m_LastMousePositon.x = ce.GetMouseX();
-			m_LastMousePositon.y = ce.GetMouseY();
+			m_LastMousePositon.x = ce.GetMouseFloatX();
+			m_LastMousePositon.y = ce.GetMouseFloatY();
 		}
 			break;
 		default:
@@ -62,120 +71,6 @@ void InputManager::OnEvent(Event& e, V_Array<Share<Layer>>& layers)
 			return;
 		}
 	}
-
-	//Mouse
-	//dispatcher.DispatchDirect<MouseButtonPressedEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		auto& ce = dynamic_cast<MouseButtonPressedEvent&>(e);
-	//		this->m_MouseState[ce.GetMouseButton()] = MouseState::Press;
-	//		m_LastMousePositon.x = ce.GetMouseX();
-	//		m_LastMousePositon.y = ce.GetMouseY();
-
-	//		for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//		{
-	//			if (layers[i]->OnMousePress(ce.GetMouseButton(), m_LastMousePositon))
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	});
-
-	//dispatcher.DispatchDirect<MouseButtonReleasedEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		auto& ce = dynamic_cast<MouseButtonReleasedEvent&>(e);
-	//		this->m_MouseState[ce.GetMouseButton()] = MouseState::Release;
-	//		m_LastMousePositon.x = ce.GetMouseX();
-	//		m_LastMousePositon.y = ce.GetMouseY();
-
-	//		for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//		{
-	//			if (layers[i]->OnMouseRelease(ce.GetMouseButton(), m_LastMousePositon))
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	});
-
-	//dispatcher.DispatchDirect<MouseMovedEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		bool isDrag = true;
-	//		auto& ce = dynamic_cast<MouseMovedEvent&>(e);
-	//		/*for (auto& state : this->m_MouseState)
-	//		{
-	//			if (state.second == MouseState::Press)
-	//			{
-	//				state.second = MouseState::Drag;
-	//				isDrag = true;
-	//			}
-	//		}*/
-
-	//		m_LastMousePositon.x = (int)ce.GetMouseX();
-	//		m_LastMousePositon.y = (int)ce.GetMouseY();
-
-	//		if (isDrag)
-	//		{
-	//			for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//			{
-	//				if (layers[i]->OnMouseMove(m_LastMousePositon.x, m_LastMousePositon.y))
-	//				{
-	//					return;
-	//				}
-	//			}
-	//		}
-	//	});
-
-	//dispatcher.DispatchDirect<MouseLeaveEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		auto& ce = dynamic_cast<MouseLeaveEvent&>(e);
-
-	//		m_LastMousePositon.x = 0;
-	//		m_LastMousePositon.y = 0;
-
-	//		for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//		{
-	//			if (layers[i]->OnMouseLeave())
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	});
-
-
-	////Key code
-	//dispatcher.DispatchDirect<KeyPressedEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		auto& ce = dynamic_cast<KeyPressedEvent&>(e);
-	//		this->m_KeyState[ce.GetKeyCode()] = KeyState::Press;
-	//		for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//		{
-	//			if (layers[i]->OnKeyPress(ce.GetKeyCode()))
-	//			{
-	//				return;
-	//			}
-	//		}
-	//	});
-
-	//dispatcher.DispatchDirect<KeyReleasedEvent>(
-	//	[this, &layers](auto e) -> decltype(auto)
-	//	{
-	//		auto& ce = dynamic_cast<KeyReleasedEvent&>(e);
-	//		this->m_KeyState[ce.GetKeyCode()] = KeyState::Release;
-
-	//		for (int i = (int)layers.size() - 1; i >= 0; i--)
-	//		{
-	//			if (layers[i]->OnKeyRelease(ce.GetKeyCode()))
-	//			{
-	//				return;
-	//			}
-	//		}
-
-	//		m_KeyState[ce.GetKeyCode()] = KeyState::None;
-	//	});
 }
 
 KeyState InputManager::GetKeyState(KeyCode key)

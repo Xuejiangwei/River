@@ -50,9 +50,7 @@ public:
 
 	Float2 GetSize() const { return m_Size; }
 
-	Float2 GetPosition() const { return m_Position; }
-
-	Float2 GetAbsoluteLeftTopPosition();
+	virtual Float2 GetAbsoluteLeftTopPosition();
 
 protected:
 	WidgetAnchors m_WidgetAlign;

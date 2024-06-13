@@ -38,12 +38,11 @@ void Panel::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices)
 
 bool Panel::OnMouseButtonDown(const MouseButtonPressedEvent& e)
 {
-	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
-	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+	if (MouseIsInPanel(e.GetMouseFloatX(), e.GetMouseFloatY()))
 	{
 		for (auto widget : m_MouseButtonDownDetector)
 		{
-			if (MouseInWidget(widget, mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+			if (MouseInWidget(widget, e.GetMouseFloatX(), e.GetMouseFloatY()))
 			{
 				if (widget->OnMouseButtonDown(e))
 				{
@@ -58,12 +57,11 @@ bool Panel::OnMouseButtonDown(const MouseButtonPressedEvent& e)
 
 bool Panel::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
 {
-	const MouseButtonEvent& mouseButtonEvent = (const MouseButtonEvent&)e;
-	if (MouseIsInPanel(mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+	if (MouseIsInPanel(e.GetMouseFloatX(), e.GetMouseFloatY()))
 	{
 		for (auto widget : m_MouseButtonDownDetector)
 		{
-			if (MouseInWidget(widget, mouseButtonEvent.GetMouseX(), mouseButtonEvent.GetMouseY()))
+			if (MouseInWidget(widget, e.GetMouseFloatX(), e.GetMouseFloatY()))
 			{
 				if (widget->OnMouseButtonRelease(e))
 				{
@@ -73,6 +71,30 @@ bool Panel::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
 			}
 		}
 	}
+	return false;
+}
+
+bool Panel::OnMouseMove(const MouseMovedEvent& e)
+{
+	if (MouseIsInPanel(e.GetMouseX(), e.GetMouseY()))
+	{
+		for (auto widget : m_MouseButtonDownDetector)
+		{
+			if (MouseInWidget(widget, e.GetMouseX(), e.GetMouseY()))
+			{
+				if (widget->OnMouseMove((int)e.GetMouseX(), (int)e.GetMouseY()))
+				{
+					return true;
+				}
+
+			}
+			else
+			{
+				widget->OnMouseOut();
+			}
+		}
+	}
+	
 	return false;
 }
 
@@ -97,16 +119,16 @@ void Panel::AddMouseButtonDownDetector(Widget* widget)
 	}
 }
 
-bool Panel::MouseIsInPanel(int x, int y)
+bool Panel::MouseIsInPanel(float x, float y)
 {
 	Float2 pos = GetAbsoluteLeftTopPosition();
 	Float2 size = GetSize();
-	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
+	return InRectangle(x, y, pos.x, pos.y, size.x, size.y);
 }
 
-bool Panel::MouseInWidget(Widget* widget, int x, int y)
+bool Panel::MouseInWidget(Widget* widget, float x, float y)
 {
 	Float2 pos = widget->GetAbsoluteLeftTopPosition();
 	Float2 size = widget->GetSize();
-	return InRectangle((float)x, (float)y, pos.x, pos.y, size.x, size.y);
+	return InRectangle(x, y, pos.x, pos.y, size.x, size.y);
 }

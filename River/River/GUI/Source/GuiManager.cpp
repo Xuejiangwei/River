@@ -69,6 +69,10 @@ static Share<Widget> CreateWidgetByJson(XJson& json)
 	else if (typeName == InfiniteCanvas::GetWidgetTypeName())
 	{
 		auto infiniteCanvasWidget = MakeShare<InfiniteCanvas>();
+		if (json["Texture"].Data())
+		{
+			infiniteCanvasWidget->SetTexture(AssetManager::Get()->GetOrCreateTexture(json["Texture"].Data(), json["Texture"].Data()));
+		}
 		if (json["ChildWidget"].Data())
 		{
 			infiniteCanvasWidget->SetChildWidgetType(json["ChildWidget"].Data());

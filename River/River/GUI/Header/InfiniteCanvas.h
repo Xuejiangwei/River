@@ -11,6 +11,14 @@ public:
 	virtual void OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& indices) override;
 	
 	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e) override;
+	
+	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e) override;
+
+	virtual bool OnMouseMove(int mouseX, int mouseY) override;
+
+	virtual void OnMouseOut() override;
+
+	virtual Float2 GetAbsoluteLeftTopPosition() override;
 
 	void SetBackgroundColor(uint8 color[4]);
 
@@ -44,8 +52,10 @@ public:
 
 private:
 	uint8 m_BackgroundColor[4];
-
+	bool m_IsMousePressed;
 	bool m_IsDefaultChildWidgetType;
+	
+	Float2 m_MovedPosition;
 	String m_ChildWidgetType;
 	
 	V_Array<Share<Widget>> m_Childs; //第0个为索引中心控件

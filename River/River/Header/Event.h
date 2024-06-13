@@ -216,6 +216,10 @@ public:
 
 	int GetMouseY() const { return m_Y; }
 
+	float GetMouseFloatX() const { return (float)m_X; }
+
+	float GetMouseFloatY() const { return (float)m_Y; }
+
 	EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput | EventCategoryMouseButton)
 protected:
 	MouseButtonEvent(const MouseCode button, int x, int y)

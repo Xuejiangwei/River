@@ -19,7 +19,7 @@
                 "Name" : "BtnNeuronClick",
                 "Size" : [100, 100],
                 "Position" : [0, 0],
-                "Texture" : "G:\\GitHub\\River\\River\\Textures\\WoodCrate02.dds"
+                "Texture" : "G:\\GitHub\\River\\River\\Textures\\CollapsedNode_Body_ColorSpill.png"
             }
         ]
     }

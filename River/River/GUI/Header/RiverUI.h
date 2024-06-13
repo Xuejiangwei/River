@@ -9,5 +9,7 @@ class UIMouseEvent
 public:
 	virtual bool OnMouseButtonDown(const class MouseButtonPressedEvent& e) = 0;
 	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e) = 0;
+	virtual bool OnMouseMove(int mouseX, int mouseY) = 0;
 	virtual bool OnMouseButtonClick(int mouseButton, int mouseX, int mouseY) = 0;
+	virtual void OnMouseOut() = 0;
 };

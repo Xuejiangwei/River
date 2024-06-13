@@ -3,7 +3,7 @@
     {
         "Type" : "Panel",
         "Name" : "Root",
-        "Size" : [720, 720],
+        "Size" : [1600, 900],
         "Position" : [0, 0],
         "ChildWidgets" : [
             {
@@ -17,9 +17,10 @@
             {
                 "Type" : "InfiniteCanvas",
                 "Name" : "MainCanvas",
-                "Size" : [400, 400],
+                "Size" : [1000, 600],
                 "Position" : [200, 200],
-                "ChildWidget" : "G:\\GitHub\\River\\River\\UI\\NeuronUI.json"
+                "ChildWidget" : "G:\\GitHub\\River\\River\\UI\\NeuronUI.json",
+                "Texture" : "G:\\GitHub\\River\\River\\Textures\\GraphPanel_SolidBackground.PNG"
             },
             {
                 "Type" : "Image",

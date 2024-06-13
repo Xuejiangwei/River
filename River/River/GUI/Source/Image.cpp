@@ -66,6 +66,11 @@ bool Image::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
     return true;
 }
 
+bool Image::OnMouseMove(int mouseX, int mouseY)
+{
+    return false;
+}
+
 void Image::SetTexture(Texture* texture)
 {
 	m_Texture = texture;

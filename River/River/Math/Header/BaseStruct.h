@@ -60,6 +60,13 @@ struct BaseStruct2
 		y += other.y;
 		return *this;
 	}
+
+	BaseStruct2& operator-=(const BaseStruct2& other)
+	{
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
 };
 
 template<typename T>

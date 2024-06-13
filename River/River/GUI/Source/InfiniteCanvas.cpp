@@ -1,11 +1,13 @@
 #include "RiverPch.h"
 #include "GUI/Header/InfiniteCanvas.h"
 #include "Application.h"
+#include "Input/Header/InputManager.h"
 #include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"
 #include "GUI/Header/Panel.h"
 
-InfiniteCanvas::InfiniteCanvas() : m_IsDefaultChildWidgetType(false)
+InfiniteCanvas::InfiniteCanvas() 
+    : m_IsMousePressed(false), m_IsDefaultChildWidgetType(false)
 {
     memset(m_BackgroundColor, 0, sizeof(m_BackgroundColor));
 }
@@ -29,13 +31,25 @@ void InfiniteCanvas::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& in
     renderItem.StartIndexLocation = (int)indices.size();
 
     auto [width, height] = Application::Get()->GetWindow()->GetWindowSize();
-    Float2 startPos = GetAbsoluteLeftTopPosition();
+    Float2 startPos = Widget::GetAbsoluteLeftTopPosition();
 
-    int r = m_BackgroundColor[0], g = m_BackgroundColor[1], b = m_BackgroundColor[2], a = m_BackgroundColor[3];
-    vertices.push_back(UIVertex(startPos.x, startPos.y, 0.0f, 0.0f, 0.0f, r, g, b, a));
-    vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y, 0.0f, 1.0f, 0.0f, r, g, b, a));
-    vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y + m_Size.y, 0.0f, 1.0f, 1.0f, r, g, b, a));
-    vertices.push_back(UIVertex(startPos.x, startPos.y + m_Size.y, 0.0f, 0.0f, 1.0f, r, g, b, a));
+    if (m_Texture)
+    {
+        renderItem.RenderTexture = m_Texture;
+        vertices.push_back(UIVertex(startPos.x, startPos.y, 0.0f, 0.0f, 0.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y, 0.0f, 1.0f, 0.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y + m_Size.y, 0.0f,1.0f, 1.0f, 255, 255, 0, 255));
+        vertices.push_back(UIVertex(startPos.x, startPos.y + m_Size.y, 0.0f, 0.0f, 1.0f, 255, 255, 0, 255));
+    }
+    else
+    {
+        renderItem.RenderFlag = (uint32)UIRenderItem::RenderFlag::PointColor;
+        int r = m_BackgroundColor[0], g = m_BackgroundColor[1], b = m_BackgroundColor[2], a = m_BackgroundColor[3];
+        vertices.push_back(UIVertex(startPos.x, startPos.y, 0.0f, 0.0f, 0.0f, r, g, b, a));
+        vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y, 0.0f, 1.0f, 0.0f, r, g, b, a));
+        vertices.push_back(UIVertex(startPos.x + m_Size.x, startPos.y + m_Size.y, 0.0f, 1.0f, 1.0f, r, g, b, a));
+        vertices.push_back(UIVertex(startPos.x, startPos.y + m_Size.y, 0.0f, 0.0f, 1.0f, r, g, b, a));
+    }
 
     indices.push_back(0);
     indices.push_back(1);
@@ -44,7 +58,6 @@ void InfiniteCanvas::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& in
     indices.push_back(2);
     indices.push_back(3);
 
-    renderItem.RenderFlag = (uint32)UIRenderItem::RenderFlag::PointColor;
     RHI::Get()->AddUIRenderItem(renderItem);
 }
 
@@ -59,8 +72,68 @@ bool InfiniteCanvas::OnMouseButtonDown(const MouseButtonPressedEvent& e)
         }
     }
 
-    
+    m_IsMousePressed = true;
+
     return true;
+}
+
+bool InfiniteCanvas::OnMouseButtonRelease(const MouseButtonReleasedEvent& e)
+{
+    if (m_IsMousePressed)
+    {
+        m_IsMousePressed = false;
+        return true;
+    }
+
+    return false;
+}
+
+bool InfiniteCanvas::OnMouseMove(int mouseX, int mouseY)
+{
+    if (m_IsMousePressed)
+    {
+        auto pos = Application::Get()->GetInputManager()->GetLastMousePosition();
+        pos.x -= mouseX;
+        pos.y -= mouseY;
+
+        m_MovedPosition -= pos;
+        return true;
+    }
+
+    return false;
+}
+
+void InfiniteCanvas::OnMouseOut()
+{
+    if (m_IsMousePressed)
+    {
+        m_IsMousePressed = false;
+    }
+}
+
+Float2 InfiniteCanvas::GetAbsoluteLeftTopPosition()
+{
+    switch (m_WidgetAlign)
+    {
+    case WidgetAnchors::LeftTop:
+        return m_MovedPosition + m_Position + (m_Parent ? m_Parent->GetAbsoluteLeftTopPosition() : Float2(0.0f, 0.0f));
+    case WidgetAnchors::RightTop:
+        break;
+    case WidgetAnchors::LeftCenter:
+        break;
+    case WidgetAnchors::RightCenter:
+        break;
+    case WidgetAnchors::Center:
+        break;
+    case WidgetAnchors::LeftBottom:
+        break;
+    case WidgetAnchors::RightBottom:
+        break;
+    default:
+        break;
+    }
+
+    return { 0.0f, 0.0f };
 }
 
 void InfiniteCanvas::SetBackgroundColor(uint8 color[4])

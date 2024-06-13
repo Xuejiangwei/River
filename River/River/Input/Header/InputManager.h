@@ -27,7 +27,7 @@ public:
 
 	~InputManager();
 
-	Int2 GetLastMousePosition() const { return m_LastMousePositon; }
+	Float2 GetLastMousePosition() const { return m_LastMousePositon; }
 
 	void OnEvent(Event& e, V_Array<Share<Layer>>& layers);
 
@@ -40,5 +40,5 @@ public:
 private:
 	HashMap<KeyCode, KeyState> m_KeyState;
 	HashMap<MouseCode, MouseState> m_MouseState;
-	Int2 m_LastMousePositon;
+	Float2 m_LastMousePositon;
 };

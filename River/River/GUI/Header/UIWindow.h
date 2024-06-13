@@ -30,6 +30,8 @@ private:
 
 	bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e);
 
+	bool OnMouseMove(const class MouseMovedEvent& e);
+
 private:
 	//²ã¼¶×îµÍ
 	Share<Panel> m_RootPanel;

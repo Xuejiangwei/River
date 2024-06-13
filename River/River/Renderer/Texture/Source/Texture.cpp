@@ -41,7 +41,7 @@ Texture* Texture::CreateTexture(const String& name, const String& filePath, bool
 #ifdef _WIN32
 			auto dx12Rhi = dynamic_cast<DX12RHI*>(RHI::Get().get());
 
-			if (filePath.find(".png") != std::string::npos)
+			if (filePath.find(".png") != std::string::npos || filePath.find(".PNG") != std::string::npos)
 			{
 				V_Array<uint8> data;
 				uint32 w, h;

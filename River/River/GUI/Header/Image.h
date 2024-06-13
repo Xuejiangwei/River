@@ -19,7 +19,11 @@ public:
 
 	virtual bool OnMouseButtonRelease(const class MouseButtonReleasedEvent& e) override;
 
+	virtual bool OnMouseMove(int mouseX, int mouseY) override;
+
 	virtual bool OnMouseButtonClick(int mouseButton, int mouseX, int mouseY) override { return true; }
+
+	virtual void OnMouseOut() override {}
 
 	static const String& GetWidgetTypeName()
 	{
@@ -29,7 +33,7 @@ public:
 
 	void SetTexture(Texture* texture);
 
-private:
+protected:
 	Texture* m_Texture;
 
 	MouseEventCall m_ClickCall;
