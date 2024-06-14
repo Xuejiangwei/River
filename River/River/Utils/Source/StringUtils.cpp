@@ -22,10 +22,10 @@ std::string WS_2_S(std::wstring wstr)
 	return res;
 }
 
-std::wstring S_2_WS(std::string wstr)
+std::wstring S_2_WS(std::string str)
 {
 	std::wstring res;
-	int len = MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), (int)wstr.size(), nullptr, 0);
+	int len = MultiByteToWideChar(CP_ACP, 0, str.c_str(), (int)str.size(), nullptr, 0);
 	if (len < 0) {
 		return res;
 	}
@@ -33,7 +33,7 @@ std::wstring S_2_WS(std::string wstr)
 	if (buffer == nullptr) {
 		return res;
 	}
-	MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), (int)wstr.size(), buffer, len);
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), (int)str.size(), buffer, len);
 	buffer[len] = '\0';
 	res.append(buffer);
 	delete[] buffer;

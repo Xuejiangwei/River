@@ -121,14 +121,14 @@ void Panel::AddMouseButtonDownDetector(Widget* widget)
 
 bool Panel::MouseIsInPanel(float x, float y)
 {
-	Float2 pos = GetAbsoluteLeftTopPosition();
+	Float2 pos = Widget::GetAbsoluteLeftTopPosition();
 	Float2 size = GetSize();
 	return InRectangle(x, y, pos.x, pos.y, size.x, size.y);
 }
 
 bool Panel::MouseInWidget(Widget* widget, float x, float y)
 {
-	Float2 pos = widget->GetAbsoluteLeftTopPosition();
+	Float2 pos = widget->Widget::GetAbsoluteLeftTopPosition();
 	Float2 size = widget->GetSize();
 	return InRectangle(x, y, pos.x, pos.y, size.x, size.y);
 }

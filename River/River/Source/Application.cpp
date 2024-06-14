@@ -11,6 +11,8 @@
 #include "Renderer/Header/RenderScene.h"
 #include "Physics/Header/PhyScene.h"
 
+#include "GUI/Header/GuiManager.h"
+
 #include "Haze.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
@@ -41,8 +43,21 @@ Application::Application(const WindowParam& windowParam)
 
 	String hazeMainFile = RiverFile::GetPathAddApplicationPath("HzCode\\HazeCode.hz");
 	//String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
-	const char* args[4] = { "-m", hazeMainFile.c_str(), "-d", "debug1" };
-	m_HazeVM = HazeMain(4, const_cast<char**>(args));
+
+	String hazeFiles;
+	for (auto& codePath : GuiManager::Get()->m_HazeCodePaths)
+	{
+		if (!hazeFiles.empty())
+		{
+			hazeFiles += ( " " + codePath);
+		}
+		else
+		{
+			hazeFiles = codePath;
+		}
+	}
+	const char* args[6] = { "-m", hazeMainFile.c_str(), "-d", "debug1", "-f", hazeFiles.c_str() };
+	m_HazeVM = HazeMain(_countof(args), const_cast<char**>(args));
 	RiverUiLibrary::InitializeLib();
 }
 
@@ -53,8 +68,6 @@ Application::~Application()
 void Application::Run()
 {
 	m_Time.Reset();
-
-	//m_HazeVM->CallFunction(HAZE_TEXT("Ìí¼ÓUi"));
 
 	while (m_Running)
 	{

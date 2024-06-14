@@ -45,6 +45,8 @@ public:
 
 	RenderScene* GetRenderScene() const { return m_RenderScene.get(); }
 
+	HazeVM* GetHazeVM() { return m_HazeVM; }
+
 	static Application* Get() { return s_Instance; }
 
 protected:

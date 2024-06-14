@@ -145,12 +145,14 @@
     <ClCompile Include="GUI\Source\Canvas.cpp" />
     <ClCompile Include="GUI\Source\GuiManager.cpp" />
     <ClCompile Include="GUI\Source\InfiniteCanvas.cpp" />
+    <ClCompile Include="GUI\Source\Line.cpp" />
     <ClCompile Include="GUI\Source\ListWidget.cpp" />
     <ClCompile Include="GUI\Source\TreeWidget.cpp" />
     <ClCompile Include="HazeLib\Source\RiverUiLibrary.cpp" />
     <ClCompile Include="Input\Source\InputManager.cpp" />
     <ClCompile Include="Level\Source\Level.cpp" />
     <ClCompile Include="Level\Source\World.cpp" />
+    <ClCompile Include="Math\Source\BezierCurve.cpp" />
     <ClCompile Include="Object\Source\CameraObject.cpp" />
     <ClCompile Include="Object\Source\LightObject.cpp" />
     <ClCompile Include="Object\Source\Object.cpp" />
@@ -244,6 +246,7 @@
     <ClInclude Include="DataStructure\Header\BVH_Tree.h" />
     <ClInclude Include="GUI\Header\GuiManager.h" />
     <ClInclude Include="GUI\Header\InfiniteCanvas.h" />
+    <ClInclude Include="GUI\Header\Line.h" />
     <ClInclude Include="GUI\Header\ListWidget.h" />
     <ClInclude Include="GUI\Header\TreeWidget.h" />
     <ClInclude Include="GUI\Header\Canvas.h" />
@@ -274,6 +277,7 @@
     <ClInclude Include="Math\Header\BaseDefine.h" />
     <ClInclude Include="Math\Header\BaseFunction.h" />
     <ClInclude Include="Math\Header\BaseStruct.h" />
+    <ClInclude Include="Math\Header\BezierCurve.h" />
     <ClInclude Include="Math\Header\Geometric.h" />
     <ClInclude Include="Math\Header\Probability.h" />
     <ClInclude Include="Math\Header\Trigonometric.h" />

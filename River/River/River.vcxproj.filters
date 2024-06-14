@@ -300,6 +300,12 @@
     <ClCompile Include="GUI\Source\InfiniteCanvas.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Source\BezierCurve.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Source\Line.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\RiverHead.h">
@@ -1575,6 +1581,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ThirdLib\Haze\include\HazeVM.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Header\BezierCurve.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Header\Line.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

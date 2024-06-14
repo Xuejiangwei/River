@@ -5,6 +5,7 @@
 #include "Window/Header/Window.h"
 #include "Renderer/Header/RHI.h"
 #include "GUI/Header/Panel.h"
+#include "GUI/Header/Line.h"
 
 InfiniteCanvas::InfiniteCanvas() 
     : m_IsMousePressed(false), m_IsDefaultChildWidgetType(false)
@@ -22,6 +23,18 @@ void InfiniteCanvas::OnRender(V_Array<UIVertex>& vertices, V_Array<uint16_t>& in
     {
         child->OnRender(vertices, indices);
     }
+
+    if (m_Childs.size() > 1)
+    {
+        for (int i = 0; i < m_Childs.size() - 1; i++)
+        {
+            Line line;
+            line.AddPoint(m_Childs[i]->GetAbsoluteLeftTopPosition());
+            line.AddPoint(m_Childs[i + 1]->GetAbsoluteLeftTopPosition());
+            line.DrawLine(vertices, indices, {0, 255, 255, 255});
+        }
+    }
+    
 
     Widget::OnRender(vertices, indices);
 

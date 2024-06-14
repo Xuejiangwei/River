@@ -22,6 +22,15 @@ struct UIVertex
 		Color[3] = a;
 	}
 
+	UIVertex(float x, float y, float z, uint8 r, uint8 g, uint8 b, uint8 a)
+		: Pos(x, y, z), TexC(0.f, 0.f)
+	{
+		Color[0] = r;
+		Color[1] = g;
+		Color[2] = b;
+		Color[3] = a;
+	}
+
 	Float3 Pos;
 	Float2 TexC;
 	uint8 Color[4];

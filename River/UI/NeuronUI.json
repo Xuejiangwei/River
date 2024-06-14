@@ -5,6 +5,7 @@
         "Name" : "Root",
         "Size" : [150, 150],
         "Position" : [0, 0],
+        "Haze" : "HzCode\\神经元控件.hz",
         "ChildWidgets" : [
             {
                 "Type" : "Text",
@@ -19,7 +20,7 @@
                 "Name" : "BtnNeuronClick",
                 "Size" : [100, 100],
                 "Position" : [0, 0],
-                "Texture" : "G:\\GitHub\\River\\River\\Textures\\CollapsedNode_Body_ColorSpill.png"
+                "Texture" : "G:\\GitHub\\River\\River\\Textures\\ice.dds"
             }
         ]
     }

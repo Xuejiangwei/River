@@ -467,19 +467,36 @@ void DX12RHI::DrawRenderPass(RenderPass* renderPass, FrameBufferType frameBuffer
 				dynamicHandle.Offset(1, DescriptorUtils::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 				m_DynamicDescriptorOffset[m_CurrFrameResourceIndex]++;*/
 			}
+			
+			if (renderItem.RenderFlag == 1)
+			{
+				commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
+				commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
+				commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-			commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
-			commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
-			commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + renderItem.ObjCBIndex * objCBByteSize;
 
-			D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + renderItem.ObjCBIndex * objCBByteSize;
+				commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				commandList->SetGraphicsRootConstantBufferView(1, 0);
+				commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() +
+					(int)RenderPassType::UI * passCBByteSize);
+				commandList->DrawInstanced(renderItem.IndexCount, 1, renderItem.BaseVertexLocation, 0);
+			}
+			else
+			{
+				commandList->IASetVertexBuffers(0, 1, &m_UIVertexBuffer->GetView());
+				commandList->IASetIndexBuffer(&m_UIIndexBuffer->GetView());
+				commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-			commandList->SetGraphicsRootConstantBufferView(1, 0);
-			commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() + 
-				(int)RenderPassType::UI * passCBByteSize);
-			commandList->DrawIndexedInstanced(renderItem.IndexCount, 1,
-				renderItem.StartIndexLocation, renderItem.BaseVertexLocation, 0);
+				D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + renderItem.ObjCBIndex * objCBByteSize;
+
+				commandList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+				commandList->SetGraphicsRootConstantBufferView(1, 0);
+				commandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress() +
+					(int)RenderPassType::UI * passCBByteSize);
+				commandList->DrawIndexedInstanced(renderItem.IndexCount, 1,
+					renderItem.StartIndexLocation, renderItem.BaseVertexLocation, 0);
+			}
 		}
 	}
 	else if (frameBufferType == FrameBufferType::ShadowMap)

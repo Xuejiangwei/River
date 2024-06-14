@@ -3,6 +3,7 @@
     {
         "Type" : "Panel",
         "Name" : "Root",
+        "Haze" : "HzCode\\主界面.hz",
         "Size" : [1600, 900],
         "Position" : [0, 0],
         "ChildWidgets" : [

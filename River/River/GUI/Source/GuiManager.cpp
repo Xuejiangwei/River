@@ -1,5 +1,6 @@
 #include "RiverPch.h"
 #include "Application.h"
+#include "RiverFile.h"
 #include "UILayer.h"
 
 #include "GUI/Header/Panel.h"
@@ -11,7 +12,10 @@
 #include "GUI/Header/ListWidget.h"
 #include "GUI/Header/TreeWidget.h"
 #include "Renderer/Header/AssetManager.h"
+#include "Utils/Header/StringUtils.h"
 
+#include "Haze.h"
+#include "HazeUtility.h"
 #include "XJson.h"
 
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json)
@@ -29,6 +33,11 @@ static Share<Widget> CreateWidgetByJson(XJson& json)
 	if (typeName == Panel::GetWidgetTypeName())
 	{
 		widget = MakeShare<Panel>();
+		if (json["Name"].Data() ==  String("Root") && json["Haze"].Data())
+		{
+			auto filePath = RiverFile::GetPathAddApplicationPath(UTF8_2_GB2312(json["Haze"].Data()));
+			GuiManager::Get()->m_HazeCodePaths.insert(filePath);
+		}
 	}
 	else if (typeName == Text::GetWidgetTypeName())
 	{
