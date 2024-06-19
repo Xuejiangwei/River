@@ -26,10 +26,6 @@ RiverMainUiLayer::~RiverMainUiLayer()
 
 void RiverMainUiLayer::OnInitialize()
 {
-}
-
-void RiverMainUiLayer::OnAttach()
-{
 	//initialize
 	//RHI::Get()->SetShowUIDebugOutline(true);
 
@@ -39,21 +35,24 @@ void RiverMainUiLayer::OnAttach()
 	list->SetChildWidgetType("Text");
 	list->SetListData<String>({ String(u8"夏"), String(u8"商"), String(u8"周") });*/
 
-	auto canvas = DynamicCast<InfiniteCanvas>(panel->GetChildWidgetByName("MainCanvas"));
+	auto canvas = dynamic_cast<InfiniteCanvas*>(panel->GetChildWidgetByName("MainCanvas"));
 	uint8 color[4] = { 0, 255, 255, 255 };
 	canvas->SetBackgroundColor(color);
 
 	V_Array<String> data = { String(u8"武则天"), String(u8"狄仁杰") };
-	canvas->SetCanvasChildData(data);
+	//canvas->SetCanvasChildData(data);
 
 	/*auto img = DynamicCast<Image>(panel->GetChildWidgetByName("TestImg"));
 	img->SetTexture(AssetManager::Get()->GetTexture("Block"));*/
 	m_UIWindows[0] = MakeUnique<UIWindow>(River::Move(panel));
 }
 
+void RiverMainUiLayer::OnAttach()
+{
+}
+
 void RiverMainUiLayer::OnDetach()
 {
-
 }
 
 void RiverMainUiLayer::OnUpdate(float deltaTime)

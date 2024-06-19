@@ -40,3 +40,21 @@ std::wstring S_2_WS(std::string str)
 
 	return res;
 }
+
+V_Array<String> Split(const String& str, const String& delimiter)
+{
+	V_Array<String> result;
+
+	char* s = new char[str.size() + 1];
+	s[str.size()] = '\0';
+	strcpy_s(s, str.size() + 1, str.c_str());
+	char* p = nullptr;
+	char* token = strtok_s(s, delimiter.c_str(), &p);
+	while (token)
+	{
+		result.push_back(token);
+		token = strtok_s(NULL, delimiter.c_str(), &p);
+	}
+
+	return result;
+}

@@ -23,7 +23,7 @@ public:
 
 	virtual bool OnMouseMove(const class MouseMovedEvent& e);
 	
-	Share<Widget> GetChildWidgetByName(const char* name);
+	virtual Widget* GetChildWidgetByName(const char* name) override;
 
 	Panel& operator[](Share<Widget> widget)
 	{

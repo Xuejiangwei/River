@@ -28,6 +28,8 @@ public:
 
 	Widget* GetUiByName(const char* panelName, const char* widgetName);
 
+	Widget* GetUiWidgetByPath(const String& path);
+
 protected:
 	GreaterRBTreeMap<int, Unique<UIWindow>> m_UIWindows;
 

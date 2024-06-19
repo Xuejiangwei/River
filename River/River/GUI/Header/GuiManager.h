@@ -13,6 +13,10 @@ public:
 
 	Widget* GetUiWidgetByName(const char* panelName, const char* widgetName);
 
+	Widget* GetUiWidgetByPath(const String& path);
+
+	void PreGenerateInFolder();
+
 public:
 	static Share<Widget> DecodeGUI_File(const String& filePath);
 

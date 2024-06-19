@@ -20,14 +20,18 @@ public:
 
 	virtual Float2 GetAbsoluteLeftTopPosition() override;
 
+	virtual Widget* GetChildWidgetByName(const char* name);
+
 	void SetBackgroundColor(uint8 color[4]);
 
 	void SetChildWidgetType(const char* type);
 
 	void SetCenterWidget(Share<Widget> widget) { m_Childs[0] = widget; }
 
+	void CreateChildWidget(int count);
+
 public:
-	template<typename T>
+	/*template<typename T>
 	void SetCanvasChildData(V_Array<T> data)
 	{
 		for (size_t i = 0; i < data.size(); i++)
@@ -38,10 +42,10 @@ public:
 			auto panel = DynamicCast<Panel>(widget);
 			auto size = panel->GetSize();
 			panel->SetPosition(i * size.x, i * size.y);
-			auto text = DynamicCast<Text>(panel->GetChildWidgetByName("TextTitle"));
+			auto text = dynamic_cast<Text*>(panel->GetChildWidgetByName("TextTitle"));
 			text->SetText(data[i]);
 		}
-	}
+	}*/
 
 public:
 	static const String& GetWidgetTypeName()

@@ -42,6 +42,8 @@ public:
 
 	virtual void AddChildWidget(Share<Widget>&& widget) {}
 
+	virtual Widget* GetChildWidgetByName(const char* name) { return nullptr; }
+
 	const String& GetWidgetName() const { return m_Name; }
 
 	void SetWidgetName(const char* name) { m_Name = name; }

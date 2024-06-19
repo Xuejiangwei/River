@@ -98,13 +98,13 @@ bool Panel::OnMouseMove(const MouseMovedEvent& e)
 	return false;
 }
 
-Share<Widget> Panel::GetChildWidgetByName(const char* name)
+Widget* Panel::GetChildWidgetByName(const char* name)
 {
 	for (auto& widget : m_Children)
 	{
 		if (widget->GetWidgetName() ==  name)
 		{
-			return widget;
+			return widget.get();
 		}
 	}
 	return nullptr;

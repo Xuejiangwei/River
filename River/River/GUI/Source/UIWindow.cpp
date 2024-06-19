@@ -64,7 +64,7 @@ Widget* UIWindow::GetWidgetByPanel(const char* panelName, const char* widgetName
 {
 	if (m_RootPanel->GetWidgetName() == panelName)
 	{
-		return m_RootPanel->GetChildWidgetByName(widgetName).get();
+		return m_RootPanel->GetChildWidgetByName(widgetName);
 	}
 
 	for (auto& panels : m_Panels)
@@ -73,7 +73,28 @@ Widget* UIWindow::GetWidgetByPanel(const char* panelName, const char* widgetName
 		{
 			if (panel->GetWidgetName() == panelName) 
 			{
-				return panel->GetChildWidgetByName(widgetName).get();
+				return panel->GetChildWidgetByName(widgetName);
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+Panel* UIWindow::GetPanel(const String& panelName)
+{
+	if (m_RootPanel->GetWidgetName() == panelName)
+	{
+		return m_RootPanel.get();
+	}
+
+	for (auto& panels : m_Panels)
+	{
+		for (auto& panel : panels.second)
+		{
+			if (panel->GetWidgetName() == panelName)
+			{
+				return panel.get();
 			}
 		}
 	}

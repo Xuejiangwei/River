@@ -41,6 +41,7 @@ Application::Application(const WindowParam& windowParam)
 	m_MainUiLayer = MakeShare<RiverMainUiLayer>();
 	AddLayer(m_MainUiLayer);
 
+	//GuiManager::Get()->PreGenerateInFolder();
 	String hazeMainFile = RiverFile::GetPathAddApplicationPath("HzCode\\HazeCode.hz");
 	//String hazeMainFile = RiverFile::GetPathAddRootPath("HzCode\\HazeCode.hz");
 

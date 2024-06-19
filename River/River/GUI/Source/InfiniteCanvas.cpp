@@ -154,8 +154,28 @@ void InfiniteCanvas::SetBackgroundColor(uint8 color[4])
     memcpy(m_BackgroundColor, color, sizeof(m_BackgroundColor));
 }
 
+Widget* InfiniteCanvas::GetChildWidgetByName(const char* name)
+{
+    return nullptr;
+}
+
 void InfiniteCanvas::SetChildWidgetType(const char* type)
 {
     m_ChildWidgetType = type;
     m_IsDefaultChildWidgetType = m_ChildWidgetType.find(".json") == std::string::npos;
+}
+
+void InfiniteCanvas::CreateChildWidget(int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        auto widget = GuiManager::CreateWidgetByTypeName(m_ChildWidgetType, this);
+        m_Childs.push_back(widget);
+
+        auto panel = DynamicCast<Panel>(widget);
+        auto size = panel->GetSize();
+        panel->SetPosition(i * size.x, i * size.y);
+        //auto text = dynamic_cast<Text*>(panel->GetChildWidgetByName("TextTitle"));
+        //text->SetText(data[i]);
+    }
 }

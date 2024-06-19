@@ -65,6 +65,20 @@ String RiverFile::GetPathAddApplicationPath(const String& relativePath)
 	return RiverFile::GetApplicationPath() + "\\" + relativePath;
 }
 
+V_Array<String> RiverFile::GetFolderAllFiles(const String& folderPath)
+{
+	V_Array<String> files;
+	for (auto& path : std::filesystem::directory_iterator(folderPath))
+	{
+		if (std::filesystem::is_regular_file(path))
+		{
+			files.push_back(WS_2_S(path.path()));
+		}
+	}
+
+	return files;
+}
+
 void RiverFile::ReadNumber(char* dst, uint64 size)
 {
 	m_FileStream.read(dst, size);

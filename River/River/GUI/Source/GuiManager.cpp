@@ -18,6 +18,8 @@
 #include "HazeUtility.h"
 #include "XJson.h"
 
+#include <filesystem>
+
 static void InitWidgetSetting(Share<Widget>& widget, XJson& json)
 {
 	widget->SetWidgetName(json["Name"].Data());
@@ -137,6 +139,22 @@ GuiManager::~GuiManager()
 Widget* GuiManager::GetUiWidgetByName(const char* panelName, const char* widgetName)
 {
 	return Application::Get()->GetMainUiLayer()->GetUiByName(panelName, widgetName);
+}
+
+Widget* GuiManager::GetUiWidgetByPath(const String& path)
+{
+	return Application::Get()->GetMainUiLayer()->GetUiWidgetByPath(path);
+}
+
+void GuiManager::PreGenerateInFolder()
+{
+	String hazeFileFolder = RiverFile::GetPathAddApplicationPath("HzCode\\");
+	auto files = RiverFile::GetFolderAllFiles(hazeFileFolder);
+
+	for (auto& file : files)
+	{
+		DecodeGUI_File(file);
+	}
 }
 
 Share<Widget> GuiManager::DecodeGUI_File(const String& filePath)

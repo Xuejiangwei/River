@@ -25,6 +25,8 @@ public:
 
 	Widget* GetWidgetByPanel(const char* panelName, const char* widgetName);
 
+	Panel* GetPanel(const String& panelName);
+
 private:
 	bool OnMouseButtonDown(const class MouseButtonPressedEvent& e);
 

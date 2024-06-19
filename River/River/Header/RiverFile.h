@@ -32,6 +32,8 @@ public:
 
 	static String GetPathAddApplicationPath(const String& relativePath);
 
+	static V_Array<String> GetFolderAllFiles(const String& folderPath);
+
 	FileStream& GetStream() { return m_FileStream; }
 
 	void ReadNumber(char* dst, uint64 size);
