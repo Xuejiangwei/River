@@ -14,6 +14,7 @@ static HashMap<HAZE_STRING, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =
 	{ HAZE_TEXT("UI初始化") , &RiverUiLibrary::UiInitialize },
 	{ HAZE_TEXT("通过名字获得UI") , &RiverUiLibrary::GetUiByName },
 	{ HAZE_TEXT("获得控件") , &RiverUiLibrary::GetWidget },
+	{ HAZE_TEXT("获得子控件") , &RiverUiLibrary::GetWidget },
 	{ HAZE_TEXT("设置控件文本"), &RiverUiLibrary::SetText },
 	{ HAZE_TEXT("测试加法"), &RiverUiLibrary::TestAdd },
 
@@ -71,6 +72,26 @@ void RiverUiLibrary::GetWidget(HAZE_STD_CALL_PARAM)
 }
 
 Widget* RiverUiLibrary::GetWidgetCall(const HAZE_STRING* path)
+{
+	return GuiManager::Get()->GetUiWidgetByPath(WString2String(*path));
+}
+
+void RiverUiLibrary::GetChildWidget(HAZE_STD_CALL_PARAM)
+{
+	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
+	int* panel;
+	HAZE_STRING* path;
+
+	GET_PARAM_START();
+	GET_PARAM(panel, address);
+	GET_PARAM(path, address);
+
+	auto widget = GetChildWidgetCall(panel, path);
+	uint64 widgetPtr = (uint64)widget;
+	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
+}
+
+Widget* RiverUiLibrary::GetChildWidgetCall(void* widget, const HAZE_STRING* path)
 {
 	return GuiManager::Get()->GetUiWidgetByPath(WString2String(*path));
 }
