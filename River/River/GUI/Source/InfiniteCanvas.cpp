@@ -159,6 +159,16 @@ Widget* InfiniteCanvas::GetChildWidgetByName(const char* name)
     return nullptr;
 }
 
+Widget* InfiniteCanvas::GetChildWidget(int index)
+{
+    if (m_Childs.size() < index)
+    {
+        return nullptr;
+    }
+
+    return m_Childs[index].get();
+}
+
 void InfiniteCanvas::SetChildWidgetType(const char* type)
 {
     m_ChildWidgetType = type;

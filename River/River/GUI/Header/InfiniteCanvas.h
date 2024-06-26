@@ -20,6 +20,8 @@ public:
 
 	virtual Float2 GetAbsoluteLeftTopPosition() override;
 
+	virtual Widget* GetChildWidget(int index) override;
+
 	virtual Widget* GetChildWidgetByName(const char* name);
 
 	void SetBackgroundColor(uint8 color[4]);
