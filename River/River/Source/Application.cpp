@@ -14,6 +14,7 @@
 #include "GUI/Header/GuiManager.h"
 
 #include "Haze.h"
+#include "HazeVM.h"
 #include "HazeLib/Header/RiverUiLibrary.h"
 
 Application* Application::s_Instance = nullptr;
@@ -87,7 +88,7 @@ void Application::Run()
 
 		m_CurrentGameInstance->OnUpdate(m_Time);
 
-		m_HazeVM->CallFunction(HAZE_TEXT("每帧更新"), m_Time.DeltaTime());
+		m_HazeVM->CallFunction(H_TEXT("每帧更新"), m_Time.DeltaTime());
 
 		RHI::Get()->OnUpdate(m_Time);
 		m_RenderScene->Update(m_Time);

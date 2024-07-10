@@ -10,7 +10,7 @@
 #include "GUI/Header/InfiniteCanvas.h"
 #include "GUI/Header/Panel.h"
 
-static HashMap<HAZE_STRING, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =
+static HashMap<HString, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =
 {
 	{ HAZE_TEXT("UI初始化") , &RiverUiLibrary::UiInitialize },
 	{ HAZE_TEXT("通过名字获得UI") , &RiverUiLibrary::GetUiByName },
@@ -18,6 +18,7 @@ static HashMap<HAZE_STRING, void(*)(HAZE_STD_CALL_PARAM)> s_HashMap_Functions =
 	{ HAZE_TEXT("获得子控件") , &RiverUiLibrary::GetChildWidget },
 	{ HAZE_TEXT("通过名字获得子控件") , &RiverUiLibrary::GetChildWidgetByName },
 	{ HAZE_TEXT("设置控件文本"), &RiverUiLibrary::SetText },
+
 	{ HAZE_TEXT("无限画布生成子UI"), &RiverUiLibrary::InfiniteCanvasCreateChildItems },
 };
 
@@ -41,8 +42,8 @@ void RiverUiLibrary::UiInitializeCall()
 void RiverUiLibrary::GetUiByName(HAZE_STD_CALL_PARAM)
 {
 	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
-	HAZE_STRING* panelName;
-	HAZE_STRING* widgetName;
+	HChar* panelName;
+	HChar* widgetName;
 
 	GET_PARAM_START();
 	GET_PARAM(panelName, address);
@@ -52,15 +53,15 @@ void RiverUiLibrary::GetUiByName(HAZE_STD_CALL_PARAM)
 	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
 }
 
-Widget* RiverUiLibrary::GetUiByNameCall(const HAZE_STRING* panelName, const HAZE_STRING* widgetName)
+Widget* RiverUiLibrary::GetUiByNameCall(const HChar* panelName, const HChar* widgetName)
 {
-	return GuiManager::Get()->GetUiWidgetByName(WString2String(*panelName).c_str(), WString2String(*widgetName).c_str());
+	return GuiManager::Get()->GetUiWidgetByName(WString2String(panelName).c_str(), WString2String(widgetName).c_str());
 }
 
 void RiverUiLibrary::GetWidget(HAZE_STD_CALL_PARAM)
 {
 	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
-	HAZE_STRING* path;
+	HChar* path;
 
 	GET_PARAM_START();
 	GET_PARAM(path, address);
@@ -69,9 +70,9 @@ void RiverUiLibrary::GetWidget(HAZE_STD_CALL_PARAM)
 	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
 }
 
-Widget* RiverUiLibrary::GetWidgetCall(const HAZE_STRING* path)
+Widget* RiverUiLibrary::GetWidgetCall(const HChar* path)
 {
-	return GuiManager::Get()->GetUiWidgetByPath(WString2String(*path));
+	return GuiManager::Get()->GetUiWidgetByPath(WString2String(path));
 }
 
 void RiverUiLibrary::GetChildWidget(HAZE_STD_CALL_PARAM)
@@ -85,7 +86,7 @@ void RiverUiLibrary::GetChildWidget(HAZE_STD_CALL_PARAM)
 	GET_PARAM(index, address);
 
 	auto widget = GetChildWidgetCall(panel, index);
-	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
+	SET_RET_BY_TYPE(HazeValueType::PointerBase, widget);
 }
 
 Widget* RiverUiLibrary::GetChildWidgetCall(void* widget, uint64 index)
@@ -97,7 +98,7 @@ void RiverUiLibrary::SetText(HAZE_STD_CALL_PARAM)
 {
 	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
 	int* widget;
-	HAZE_STRING* text;
+	HChar* text;
 
 	GET_PARAM_START();
 	GET_PARAM(widget, address);
@@ -106,11 +107,11 @@ void RiverUiLibrary::SetText(HAZE_STD_CALL_PARAM)
 	SetTextCall(widget, text);
 }
 
-void RiverUiLibrary::SetTextCall(void* widget, const HAZE_STRING* text)
+void RiverUiLibrary::SetTextCall(void* widget, const HChar* text)
 {
 	Text* textWidget = (Text*)widget;
 
-	textWidget->SetText(GB2312_2_UFT8(WString2String(*text).c_str()));
+	textWidget->SetText(GB2312_2_UFT8(WString2String(text).c_str()));
 }
 
 void RiverUiLibrary::InfiniteCanvasCreateChildItems(HAZE_STD_CALL_PARAM)
@@ -139,23 +140,23 @@ void RiverUiLibrary::GetChildWidgetByName(HAZE_STD_CALL_PARAM)
 {
 	auto address = stack->GetAddressByESP(HAZE_ADDRESS_SIZE);
 	int* panel;
-	HAZE_STRING* name;
+	HChar* name;
 
 	GET_PARAM_START();
 	GET_PARAM(panel);
 	GET_PARAM(name);
 
 	auto widget = GetChildWidgetByNameCall(panel, name);
-	SET_RET_BY_TYPE(HazeValueType::UnsignedLong, widget);
+	SET_RET_BY_TYPE(HazeValueType::PointerBase, widget);
 }
 
 
-Widget* RiverUiLibrary::GetChildWidgetByNameCall(void* widget, const HAZE_STRING* name)
+Widget* RiverUiLibrary::GetChildWidgetByNameCall(void* widget, const HChar* name)
 {
 	Panel* panel = (Panel*)widget;
 	if (panel)
 	{
-		return panel->GetChildWidgetByName(WString2String(*name).c_str());
+		return panel->GetChildWidgetByName(WString2String(name).c_str());
 	}
 
 	return nullptr;
